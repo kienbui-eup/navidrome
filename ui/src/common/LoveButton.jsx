@@ -6,7 +6,7 @@ import IconButton from '@material-ui/core/IconButton'
 import { makeStyles } from '@material-ui/core/styles'
 import clsx from 'clsx'
 import { useToggleLove } from './useToggleLove'
-import { useRecordContext } from 'react-admin'
+import { useRecordContext, useTranslate } from 'react-admin'
 import config from '../config'
 import { isDateSet } from '../utils/validations'
 
@@ -38,8 +38,13 @@ export const LoveButton = ({
   ...rest
 }) => {
   const record = useRecordContext({ record: recordProp }) || {}
+  const translate = useTranslate()
   const classes = useStyles({ color, visible, loved: record.starred })
   const [toggleLove, loading] = useToggleLove(resource, record)
+  // Icon-only button: give assistive tech a text label describing the action.
+  const ariaLabel = record.starred
+    ? translate('ra.action.unstar', { _: 'Remove from favourites' })
+    : translate('ra.action.star', { _: 'Add to favourites' })
 
   const handleToggleLove = useCallback(
     (e) => {
@@ -57,6 +62,7 @@ export const LoveButton = ({
     <Button
       onClick={handleToggleLove}
       size={'small'}
+      aria-label={ariaLabel}
       disabled={disabled || loading || record.missing}
       className={clsx(classes.love, className)}
       title={

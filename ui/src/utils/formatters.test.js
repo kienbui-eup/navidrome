@@ -5,6 +5,7 @@ import {
   formatFullDate,
   formatNumber,
   formatShortDuration,
+  localeToBCP47,
 } from './formatters'
 
 describe('formatBytes', () => {
@@ -151,5 +152,52 @@ describe('formatFullDate', () => {
     expect(formatFullDate('2011-06', 'en-CA')).toEqual('Jun 2011')
     expect(formatFullDate('1985-01-01', 'en-CA')).toEqual('Jan 1, 1985')
     expect(formatFullDate('199704')).toEqual('')
+  })
+})
+
+describe('Vietnamese locale support', () => {
+  describe('localeToBCP47', () => {
+    it('maps vi to vi-VN and passes other locales through', () => {
+      expect(localeToBCP47('vi')).toEqual('vi-VN')
+      expect(localeToBCP47('en')).toEqual('en')
+      expect(localeToBCP47('de')).toEqual('de')
+    })
+  })
+
+  describe('formatDuration2 with vi locale', () => {
+    it('uses Vietnamese units (ng/g/ph/gi)', () => {
+      expect(formatDuration2(3661, 'vi')).toEqual('1g 1ph 1gi')
+      expect(formatDuration2(0, 'vi')).toEqual('0gi')
+      expect(formatDuration2(90061, 'vi')).toEqual('1ng 1g 1ph')
+    })
+    it('returns 0gi for null/negative in vi', () => {
+      expect(formatDuration2(null, 'vi')).toEqual('0gi')
+      expect(formatDuration2(-5, 'vi')).toEqual('0gi')
+    })
+    it('never emits English unit letters after a number in vi', () => {
+      for (const s of [59, 61, 3661, 86400, 90061]) {
+        expect(formatDuration2(s, 'vi')).not.toMatch(/\d+[dhms]\b/)
+      }
+    })
+    it('keeps English units unchanged by default', () => {
+      expect(formatDuration2(3661)).toEqual('1h 1m 1s')
+      expect(formatDuration2(0)).toEqual('0s')
+    })
+  })
+
+  describe('formatNumber with vi-VN', () => {
+    it('uses dot for thousands and comma for decimals', () => {
+      expect(formatNumber(1234, 'vi-VN')).toContain('.')
+      expect(formatNumber(1234.56, 'vi-VN')).toEqual('1.234,56')
+    })
+  })
+
+  describe('formatFullDate with vi-VN', () => {
+    it('produces a non-empty localized date round-trippable to the year', () => {
+      const out = formatFullDate('2024-03-15', 'vi-VN')
+      expect(out).not.toEqual('')
+      expect(out).toContain('2024')
+      expect(out).toContain('15')
+    })
   })
 })

@@ -3,6 +3,7 @@ import deepmerge from 'deepmerge'
 import dataProvider from '../dataProvider'
 import en from './en.json'
 import { i18nProvider } from './index'
+import config from '../config'
 
 // Only returns current selected locale if its translations are found in localStorage
 const defaultLocale = function () {
@@ -14,6 +15,27 @@ const defaultLocale = function () {
       i18nProvider.changeLocale(locale)
     })
     return locale
+  }
+  // No user-selected locale yet: honor the server's DefaultLanguage so the
+  // Login page and initial render use it too. polyglotI18nProvider requires
+  // the initial locale's messages synchronously, so we can only boot straight
+  // into the default language when its translation is already cached.
+  if (!locale && config.defaultLanguage && config.defaultLanguage !== 'en') {
+    if (current && current.id === config.defaultLanguage) {
+      return config.defaultLanguage
+    }
+    // First visit: fetch the translation, persist the locale and reload once.
+    // The 'locale' key set before reloading guarantees this cannot loop; on
+    // fetch failure (unknown language) we silently stay in English.
+    retrieveTranslation(config.defaultLanguage)
+      .then(() => {
+        const chosen = localStorage.getItem('locale')
+        if (!chosen || chosen === config.defaultLanguage) {
+          localStorage.setItem('locale', config.defaultLanguage)
+          window.location.reload()
+        }
+      })
+      .catch(() => {})
   }
   return 'en'
 }

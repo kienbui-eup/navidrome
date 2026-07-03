@@ -4,13 +4,14 @@ import {
   ShowContextProvider,
   useShowContext,
   useShowController,
+  useTranslate,
   Title as RaTitle,
 } from 'react-admin'
 import { makeStyles } from '@material-ui/core/styles'
 import AlbumSongs from './AlbumSongs'
 import AlbumDetails from './AlbumDetails'
 import AlbumActions from './AlbumActions'
-import { useResourceRefresh, Title } from '../common'
+import { useResourceRefresh, Title, Breadcrumb } from '../common'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -27,11 +28,28 @@ const AlbumShowLayout = (props) => {
   const { loading, ...context } = useShowContext(props)
   const { record } = context
   const classes = useStyles()
+  const translate = useTranslate()
   useResourceRefresh('album', 'song')
+
+  const breadcrumbItems = record
+    ? [
+        { label: translate('menu.albumList'), to: '/album' },
+        ...(record.albumArtist && record.artistId
+          ? [
+              {
+                label: record.albumArtist,
+                to: `/artist/${record.artistId}/show`,
+              },
+            ]
+          : []),
+        { label: record.name },
+      ]
+    : []
 
   return (
     <>
       {record && <RaTitle title={<Title subTitle={record.name} />} />}
+      {record && <Breadcrumb items={breadcrumbItems} />}
       {record && <AlbumDetails {...context} />}
       {record && (
         <ReferenceManyField

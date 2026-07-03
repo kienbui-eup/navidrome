@@ -1,7 +1,9 @@
 // React Hook to get a list of all languages available. English is hardcoded
-import { useGetList } from 'react-admin'
+import { useGetList, useLocale } from 'react-admin'
+import { localeToBCP47 } from '../utils'
 
 const useGetLanguageChoices = () => {
+  const locale = useLocale()
   const { ids, data, loaded, loading } = useGetList(
     'translation',
     { page: 1, perPage: -1 },
@@ -13,7 +15,10 @@ const useGetLanguageChoices = () => {
   if (loaded) {
     ids.forEach((id) => choices.push({ id: id, name: data[id].name }))
   }
-  choices.sort((a, b) => a.name.localeCompare(b.name))
+  // Locale-aware sort so language names order correctly under the active locale
+  // (e.g. Vietnamese diacritics with Intl.Collator('vi-VN')).
+  const collator = new Intl.Collator(localeToBCP47(locale))
+  choices.sort((a, b) => collator.compare(a.name, b.name))
 
   return { choices, loaded, loading }
 }

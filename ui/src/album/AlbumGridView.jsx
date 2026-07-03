@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   GridList,
   GridListTile,
@@ -6,6 +6,7 @@ import {
   GridListTileBar,
   useMediaQuery,
 } from '@material-ui/core'
+import AlbumIcon from '@material-ui/icons/Album'
 import { makeStyles } from '@material-ui/core/styles'
 import withWidth from '@material-ui/core/withWidth'
 import { Link } from 'react-router-dom'
@@ -95,7 +96,7 @@ const useStyles = makeStyles(
   { name: 'NDAlbumGridView' },
 )
 
-const useCoverStyles = makeStyles({
+const useCoverStyles = makeStyles((theme) => ({
   coverContainer: {
     width: '100%',
     aspectRatio: '1',
@@ -111,7 +112,21 @@ const useCoverStyles = makeStyles({
   coverLoading: {
     opacity: 0,
   },
-})
+  // Shown instead of a broken-image icon when the cover art fails to load.
+  placeholder: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: (props) => props.height,
+    backgroundColor: theme.palette.action.hover,
+    color: theme.palette.action.disabled,
+  },
+  placeholderIcon: {
+    width: '40%',
+    height: '40%',
+  },
+}))
 
 const getColsForWidth = (width) => {
   if (width === 'xs') return 2
@@ -140,15 +155,23 @@ const Cover = withContentRect('bounds')(({
 
   const url = subsonic.getCoverArtUrl(record, config.uiCoverArtSize, true)
   const { imgUrl, loading: imageLoading } = useImageUrl(url)
+  const [hasError, setHasError] = useState(false)
 
   return (
     <div ref={measureRef} className={classes.coverContainer}>
       <div ref={dragAlbumRef}>
-        <img
-          src={imgUrl || undefined}
-          alt={record.name}
-          className={`${classes.cover} ${imageLoading ? classes.coverLoading : ''}`}
-        />
+        {hasError ? (
+          <div className={classes.placeholder}>
+            <AlbumIcon className={classes.placeholderIcon} />
+          </div>
+        ) : (
+          <img
+            src={imgUrl || undefined}
+            alt={record.name}
+            onError={() => setHasError(true)}
+            className={`${classes.cover} ${imageLoading ? classes.coverLoading : ''}`}
+          />
+        )}
       </div>
     </div>
   )

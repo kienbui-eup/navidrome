@@ -1,6 +1,7 @@
 import { GrDocumentMissing } from 'react-icons/gr'
-import MissingList from './MissingFilesList'
+import { lazyPage } from '../common/lazyPage'
 export default {
-  list: MissingList,
+  // Admin-only page: code-split to shrink initial bundle.
+  list: lazyPage(() => import('./MissingFilesList')),
   icon: GrDocumentMissing,
 }

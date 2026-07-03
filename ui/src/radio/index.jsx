@@ -1,13 +1,14 @@
 import RadioCreate from './RadioCreate'
 import RadioEdit from './RadioEdit'
-import RadioList from './RadioList'
 import DynamicMenuIcon from '../layout/DynamicMenuIcon'
 import RadioIcon from '@material-ui/icons/Radio'
 import RadioOutlinedIcon from '@material-ui/icons/RadioOutlined'
+import { lazyPage } from '../common/lazyPage'
 import React from 'react'
 
 const all = {
-  list: RadioList,
+  // Code-split the list to shrink the initial bundle.
+  list: lazyPage(() => import('./RadioList')),
   icon: (
     <DynamicMenuIcon
       path={'radio'}

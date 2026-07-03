@@ -1,5 +1,8 @@
 export const REST_URL = '/api'
 
+// User-facing application/brand name (browser tab, login page, page titles).
+export const APP_NAME = 'Trợ lý nhạc'
+
 export const INSIGHTS_DOC_URL =
   'https://navidrome.org/docs/getting-started/insights'
 

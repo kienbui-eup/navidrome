@@ -14,6 +14,7 @@ import {
   ChipField,
   Link,
   SingleFieldList,
+  useLocale,
   useRecordContext,
   useTranslate,
 } from 'react-admin'
@@ -32,7 +33,7 @@ import {
   useAlbumsPerPage,
   useImageLoadingState,
 } from '../common'
-import { formatFullDate, intersperse } from '../utils'
+import { formatFullDate, intersperse, localeToBCP47 } from '../utils'
 import AlbumExternalLinks from './AlbumExternalLinks'
 import { SafeHTML } from '../common/SafeHTML'
 
@@ -154,6 +155,7 @@ const GenreList = () => {
 export const Details = (props) => {
   const isXsmall = useMediaQuery((theme) => theme.breakpoints.down('xs'))
   const translate = useTranslate()
+  const locale = localeToBCP47(useLocale())
   const record = useRecordContext(props)
 
   // Create an array of detail elements
@@ -165,12 +167,13 @@ export const Details = (props) => {
 
   // Calculate date related fields
   const yearRange = formatRange(record, 'year')
-  const date = record.date ? formatFullDate(record.date) : yearRange
+  const date = record.date ? formatFullDate(record.date, locale) : yearRange
 
   const originalDate = record.originalDate
-    ? formatFullDate(record.originalDate)
+    ? formatFullDate(record.originalDate, locale)
     : formatRange(record, 'originalYear')
-  const releaseDate = record?.releaseDate && formatFullDate(record.releaseDate)
+  const releaseDate =
+    record?.releaseDate && formatFullDate(record.releaseDate, locale)
 
   const dateToUse = originalDate || date
   const isOriginalDate = originalDate && dateToUse !== date

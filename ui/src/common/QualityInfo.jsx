@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import PropTypes from 'prop-types'
 import Chip from '@material-ui/core/Chip'
+import { useTranslate } from 'react-admin'
 import config from '../config'
 import { makeStyles } from '@material-ui/core'
 import clsx from 'clsx'
@@ -8,6 +9,23 @@ import { calculateGain } from '../utils/calculateReplayGain'
 
 const llFormats = new Set(config.losslessFormats.split(','))
 const placeholder = 'N/A'
+
+// Quality tiers -> chip accent color (req: green lossless/hi-res, blue high
+// lossy >=256kbps, yellow low lossy <256kbps, undefined/grey when unknown).
+const QUALITY_COLORS = {
+  lossless: '#3FB950',
+  highLossy: '#58A6FF',
+  lowLossy: '#E3B341',
+}
+
+const getQualityColor = ({ suffix, bitRate, bitDepth, isLossless }) => {
+  if (isLossless || bitDepth > 16) return QUALITY_COLORS.lossless
+  if (suffix && llFormats.has(suffix)) return QUALITY_COLORS.lossless
+  if (bitRate > 0) {
+    return bitRate >= 256 ? QUALITY_COLORS.highLossy : QUALITY_COLORS.lowLossy
+  }
+  return undefined
+}
 
 const useStyle = makeStyles(
   (theme) => ({
@@ -30,8 +48,19 @@ export const QualityInfo = ({
   isDirectPlay,
 }) => {
   const classes = useStyle()
-  let { suffix, bitRate, rgAlbumGain, rgAlbumPeak, rgTrackGain, rgTrackPeak } =
-    record
+  const translate = useTranslate()
+  let {
+    suffix,
+    bitRate,
+    bitDepth,
+    sampleRate,
+    channels,
+    isRadio,
+    rgAlbumGain,
+    rgAlbumPeak,
+    rgTrackGain,
+    rgTrackPeak,
+  } = record
   let info = placeholder
 
   if (suffix) {
@@ -41,6 +70,9 @@ export const QualityInfo = ({
       info += ' ' + bitRate
     }
   }
+
+  // Color reflects the quality actually delivered: source by default...
+  let qualityColor = getQualityColor({ suffix, bitRate, bitDepth })
 
   // Show transcode target when transcoding (not direct play)
   if (transcodeStream && !isDirectPlay) {
@@ -54,6 +86,12 @@ export const QualityInfo = ({
     }
     const sourceSuffix = suffix || placeholder
     info = `${sourceSuffix} → ${targetInfo}`
+    // ...but when transcoding, the target format/bitrate is what the user hears.
+    qualityColor = getQualityColor({
+      suffix: targetCodec,
+      bitRate: targetBitrate,
+      isLossless: llFormats.has(targetCodec),
+    })
   }
 
   const extra = useMemo(() => {
@@ -70,12 +108,42 @@ export const QualityInfo = ({
     return ''
   }, [gainMode, preAmp, rgAlbumGain, rgAlbumPeak, rgTrackGain, rgTrackPeak])
 
+  // Radio streams have no reliable quality metadata: don't show a badge.
+  if (isRadio) {
+    return null
+  }
+
+  // Full technical breakdown shown on hover (req: sample rate, bit depth,
+  // bitrate, channels, and direct-play vs transcoded status).
+  const details = []
+  if (suffix) details.push(suffix)
+  if (sampleRate > 0) details.push(`${(sampleRate / 1000).toFixed(1)} kHz`)
+  if (bitDepth > 0) details.push(`${bitDepth}-bit`)
+  if (bitRate > 0) details.push(`${bitRate} kbps`)
+  if (channels > 0) {
+    details.push(
+      channels === 1 ? 'Mono' : channels === 2 ? 'Stereo' : `${channels}ch`,
+    )
+  }
+  if (transcodeStream && !isDirectPlay) {
+    details.push(translate('player.transcoded', { _: 'Transcoded' }))
+  } else if (isDirectPlay) {
+    details.push(translate('player.directPlay', { _: 'Direct Play' }))
+  }
+  const title = details.join(' • ') || undefined
+
   return (
     <Chip
       className={clsx(classes.chip, className)}
       variant="outlined"
       size={size}
       label={`${info}${extra}`}
+      title={title}
+      style={
+        qualityColor
+          ? { borderColor: qualityColor, color: qualityColor }
+          : undefined
+      }
     />
   )
 }

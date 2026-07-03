@@ -1,9 +1,9 @@
 import { VscExtensions } from 'react-icons/vsc'
-import PluginList from './PluginList'
-import PluginShow from './PluginShow'
+import { lazyPage } from '../common/lazyPage'
 
 export default {
   icon: VscExtensions,
-  list: PluginList,
-  show: PluginShow,
+  // Admin/plugins-only pages: code-split to shrink initial bundle.
+  list: lazyPage(() => import('./PluginList')),
+  show: lazyPage(() => import('./PluginShow')),
 }

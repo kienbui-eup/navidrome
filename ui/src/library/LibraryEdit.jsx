@@ -7,6 +7,7 @@ import {
   required,
   SaveButton,
   DateField,
+  useLocale,
   useTranslate,
   useMutation,
   useNotify,
@@ -49,6 +50,7 @@ const CustomToolbar = ({ showDelete, ...props }) => (
 
 const LibraryEdit = (props) => {
   const translate = useTranslate()
+  const locale = useLocale()
   const [mutate] = useMutation()
   const notify = useNotify()
   const redirect = useRedirect()
@@ -185,7 +187,7 @@ const LibraryEdit = (props) => {
                         label={translate(
                           'resources.library.fields.totalDuration',
                         )}
-                        format={formatDuration2}
+                        format={(v) => formatDuration2(v, locale)}
                         fullWidth
                         variant="outlined"
                       />

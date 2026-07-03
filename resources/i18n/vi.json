@@ -1,0 +1,725 @@
+{
+  "languageName": "Tiếng Việt",
+  "resources": {
+    "song": {
+      "name": "Bài hát |||| Bài hát",
+      "fields": {
+        "albumArtist": "Nghệ sĩ album",
+        "duration": "Thời gian",
+        "trackNumber": "#",
+        "playCount": "Lượt phát",
+        "title": "Tiêu đề",
+        "artist": "Nghệ sĩ",
+        "composer": "Nhà soạn nhạc",
+        "album": "Album",
+        "path": "Đường dẫn tệp",
+        "libraryName": "Thư viện",
+        "genre": "Thể loại",
+        "compilation": "Tuyển tập",
+        "year": "Năm",
+        "size": "Dung lượng tệp",
+        "updatedAt": "Cập nhật lúc",
+        "bitRate": "Bitrate",
+        "bitDepth": "Độ sâu bit",
+        "sampleRate": "Tần số lấy mẫu",
+        "albumGain": "Gain album",
+        "trackGain": "Gain bản nhạc",
+        "channels": "Kênh",
+        "disc": "Đĩa %{discNumber}",
+        "discSubtitle": "Phụ đề đĩa",
+        "starred": "Yêu thích",
+        "comment": "Bình luận",
+        "rating": "Đánh giá",
+        "quality": "Chất lượng",
+        "bpm": "BPM",
+        "playDate": "Phát lần cuối",
+        "createdAt": "Ngày thêm",
+        "grouping": "Nhóm",
+        "mood": "Tâm trạng",
+        "participants": "Người tham gia khác",
+        "tags": "Thẻ bổ sung",
+        "mappedTags": "Thẻ đã ánh xạ",
+        "rawTags": "Thẻ gốc",
+        "missing": "Thiếu"
+      },
+      "actions": {
+        "addToQueue": "Phát sau",
+        "playNow": "Phát ngay",
+        "addToPlaylist": "Thêm vào danh sách phát",
+        "showInPlaylist": "Hiện trong danh sách phát",
+        "shuffleAll": "Phát ngẫu nhiên tất cả",
+        "download": "Tải xuống",
+        "playNext": "Phát tiếp theo",
+        "info": "Xem thông tin",
+        "instantMix": "Mix nhanh"
+      }
+    },
+    "album": {
+      "name": "Album |||| Album",
+      "fields": {
+        "albumArtist": "Nghệ sĩ album",
+        "artist": "Nghệ sĩ",
+        "duration": "Thời gian",
+        "songCount": "Số bài hát",
+        "playCount": "Lượt phát",
+        "size": "Dung lượng",
+        "name": "Tên",
+        "libraryName": "Thư viện",
+        "genre": "Thể loại",
+        "compilation": "Tuyển tập",
+        "year": "Năm",
+        "date": "Ngày thu âm",
+        "originalDate": "Bản gốc",
+        "releaseDate": "Ngày phát hành",
+        "releases": "Bản phát hành |||| Bản phát hành",
+        "released": "Đã phát hành",
+        "updatedAt": "Cập nhật lúc",
+        "comment": "Bình luận",
+        "rating": "Đánh giá",
+        "createdAt": "Ngày thêm",
+        "recordLabel": "Hãng đĩa",
+        "catalogNum": "Mã danh mục",
+        "releaseType": "Loại",
+        "grouping": "Nhóm",
+        "media": "Phương tiện",
+        "mood": "Tâm trạng",
+        "missing": "Thiếu"
+      },
+      "actions": {
+        "playAll": "Phát",
+        "playNext": "Phát tiếp theo",
+        "addToQueue": "Phát sau",
+        "share": "Chia sẻ",
+        "shuffle": "Phát ngẫu nhiên",
+        "addToPlaylist": "Thêm vào danh sách phát",
+        "download": "Tải xuống",
+        "info": "Xem thông tin"
+      },
+      "lists": {
+        "all": "Tất cả",
+        "random": "Ngẫu nhiên",
+        "recentlyAdded": "Mới thêm gần đây",
+        "recentlyPlayed": "Đã nghe gần đây",
+        "mostPlayed": "Nghe nhiều nhất",
+        "starred": "Yêu thích",
+        "topRated": "Đánh giá cao nhất"
+      }
+    },
+    "artist": {
+      "name": "Nghệ sĩ |||| Nghệ sĩ",
+      "fields": {
+        "name": "Tên",
+        "albumCount": "Số album",
+        "songCount": "Số bài hát",
+        "size": "Dung lượng",
+        "playCount": "Lượt phát",
+        "rating": "Đánh giá",
+        "genre": "Thể loại",
+        "role": "Vai trò",
+        "missing": "Thiếu"
+      },
+      "roles": {
+        "albumartist": "Nghệ sĩ album |||| Nghệ sĩ album",
+        "artist": "Nghệ sĩ |||| Nghệ sĩ",
+        "composer": "Nhà soạn nhạc |||| Nhà soạn nhạc",
+        "conductor": "Nhạc trưởng |||| Nhạc trưởng",
+        "lyricist": "Tác giả lời |||| Tác giả lời",
+        "arranger": "Người phối khí |||| Người phối khí",
+        "producer": "Nhà sản xuất |||| Nhà sản xuất",
+        "director": "Đạo diễn |||| Đạo diễn",
+        "engineer": "Kỹ sư âm thanh |||| Kỹ sư âm thanh",
+        "mixer": "Người phối âm |||| Người phối âm",
+        "remixer": "Người remix |||| Người remix",
+        "djmixer": "DJ Mixer |||| DJ Mixer",
+        "performer": "Người biểu diễn |||| Người biểu diễn",
+        "maincredit": "Nghệ sĩ album hoặc Nghệ sĩ |||| Nghệ sĩ album hoặc Nghệ sĩ"
+      },
+      "actions": {
+        "topSongs": "Bài hát nổi bật",
+        "shuffle": "Phát ngẫu nhiên",
+        "radio": "Radio"
+      }
+    },
+    "user": {
+      "name": "Người dùng |||| Người dùng",
+      "fields": {
+        "userName": "Tên đăng nhập",
+        "isAdmin": "Là quản trị viên",
+        "lastLoginAt": "Đăng nhập lần cuối",
+        "lastAccessAt": "Truy cập lần cuối",
+        "updatedAt": "Cập nhật lúc",
+        "name": "Tên",
+        "password": "Mật khẩu",
+        "createdAt": "Tạo lúc",
+        "changePassword": "Đổi mật khẩu?",
+        "currentPassword": "Mật khẩu hiện tại",
+        "newPassword": "Mật khẩu mới",
+        "token": "Token",
+        "libraries": "Thư viện"
+      },
+      "helperTexts": {
+        "name": "Thay đổi tên chỉ có hiệu lực ở lần đăng nhập tiếp theo",
+        "libraries": "Chọn thư viện cụ thể cho người dùng này, hoặc để trống để dùng thư viện mặc định"
+      },
+      "notifications": {
+        "created": "Đã tạo người dùng",
+        "updated": "Đã cập nhật người dùng",
+        "deleted": "Đã xoá người dùng"
+      },
+      "validation": {
+        "librariesRequired": "Phải chọn ít nhất một thư viện cho người dùng không phải quản trị viên"
+      },
+      "message": {
+        "listenBrainzToken": "Nhập token người dùng ListenBrainz của bạn.",
+        "clickHereForToken": "Nhấn vào đây để lấy token",
+        "selectAllLibraries": "Chọn tất cả thư viện",
+        "adminAutoLibraries": "Quản trị viên tự động có quyền truy cập tất cả thư viện"
+      }
+    },
+    "player": {
+      "name": "Trình phát |||| Trình phát",
+      "fields": {
+        "name": "Tên",
+        "transcodingId": "Chuyển mã",
+        "maxBitRate": "Bitrate tối đa",
+        "client": "Client",
+        "userName": "Tên đăng nhập",
+        "lastSeen": "Hoạt động lần cuối",
+        "reportRealPath": "Báo cáo đường dẫn thực",
+        "scrobbleEnabled": "Gửi lượt nghe đến dịch vụ bên ngoài"
+      }
+    },
+    "transcoding": {
+      "name": "Chuyển mã |||| Chuyển mã",
+      "fields": {
+        "name": "Tên",
+        "targetFormat": "Định dạng đích",
+        "defaultBitRate": "Bitrate mặc định",
+        "command": "Lệnh"
+      }
+    },
+    "playlist": {
+      "name": "Danh sách phát |||| Danh sách phát",
+      "fields": {
+        "name": "Tên",
+        "duration": "Thời lượng",
+        "ownerName": "Chủ sở hữu",
+        "public": "Công khai",
+        "updatedAt": "Cập nhật lúc",
+        "createdAt": "Tạo lúc",
+        "songCount": "Số bài hát",
+        "comment": "Bình luận",
+        "sync": "Tự động nhập",
+        "path": "Nhập từ"
+      },
+      "actions": {
+        "selectPlaylist": "Chọn một danh sách phát:",
+        "addNewPlaylist": "Tạo \"%{name}\"",
+        "export": "Xuất",
+        "saveQueue": "Lưu hàng chờ thành danh sách phát",
+        "makePublic": "Đặt công khai",
+        "makePrivate": "Đặt riêng tư",
+        "searchOrCreate": "Tìm danh sách phát hoặc gõ để tạo mới...",
+        "pressEnterToCreate": "Nhấn Enter để tạo danh sách phát mới",
+        "removeFromSelection": "Xoá khỏi lựa chọn"
+      },
+      "message": {
+        "duplicate_song": "Thêm bài hát trùng lặp",
+        "song_exist": "Có bài hát trùng lặp đang được thêm vào danh sách phát. Bạn muốn thêm bản trùng hay bỏ qua?",
+        "noPlaylistsFound": "Không tìm thấy danh sách phát",
+        "noPlaylists": "Không có danh sách phát nào"
+      }
+    },
+    "radio": {
+      "name": "Radio |||| Radio",
+      "fields": {
+        "name": "Tên",
+        "streamUrl": "URL luồng phát",
+        "homePageUrl": "URL trang chủ",
+        "updatedAt": "Cập nhật lúc",
+        "createdAt": "Tạo lúc"
+      },
+      "actions": {
+        "playNow": "Phát ngay"
+      }
+    },
+    "share": {
+      "name": "Chia sẻ |||| Chia sẻ",
+      "fields": {
+        "username": "Chia sẻ bởi",
+        "url": "URL",
+        "description": "Mô tả",
+        "downloadable": "Cho phép tải xuống?",
+        "contents": "Nội dung",
+        "expiresAt": "Hết hạn",
+        "lastVisitedAt": "Truy cập lần cuối",
+        "visitCount": "Lượt truy cập",
+        "format": "Định dạng",
+        "maxBitRate": "Bitrate tối đa",
+        "updatedAt": "Cập nhật lúc",
+        "createdAt": "Tạo lúc"
+      },
+      "notifications": {},
+      "actions": {}
+    },
+    "missing": {
+      "name": "Tệp bị thiếu |||| Tệp bị thiếu",
+      "empty": "Không có tệp bị thiếu",
+      "fields": {
+        "path": "Đường dẫn",
+        "size": "Dung lượng",
+        "libraryName": "Thư viện",
+        "updatedAt": "Biến mất lúc"
+      },
+      "actions": {
+        "remove": "Xoá",
+        "remove_all": "Xoá tất cả"
+      },
+      "notifications": {
+        "removed": "Đã xoá tệp bị thiếu"
+      }
+    },
+    "library": {
+      "name": "Thư viện |||| Thư viện",
+      "fields": {
+        "name": "Tên",
+        "path": "Đường dẫn",
+        "remotePath": "Đường dẫn từ xa",
+        "lastScanAt": "Quét lần cuối",
+        "songCount": "Số bài hát",
+        "albumCount": "Số album",
+        "artistCount": "Số nghệ sĩ",
+        "totalSongs": "Số bài hát",
+        "totalAlbums": "Số album",
+        "totalArtists": "Số nghệ sĩ",
+        "totalFolders": "Số thư mục",
+        "totalFiles": "Số tệp",
+        "totalMissingFiles": "Tệp bị thiếu",
+        "totalSize": "Tổng dung lượng",
+        "totalDuration": "Thời lượng",
+        "defaultNewUsers": "Mặc định cho người dùng mới",
+        "createdAt": "Đã tạo",
+        "updatedAt": "Đã cập nhật"
+      },
+      "sections": {
+        "basic": "Thông tin cơ bản",
+        "statistics": "Thống kê"
+      },
+      "actions": {
+        "scan": "Quét thư viện",
+        "quickScan": "Quét nhanh",
+        "fullScan": "Quét toàn bộ",
+        "manageUsers": "Quản lý quyền truy cập người dùng",
+        "viewDetails": "Xem chi tiết"
+      },
+      "notifications": {
+        "created": "Đã tạo thư viện thành công",
+        "updated": "Đã cập nhật thư viện thành công",
+        "deleted": "Đã xoá thư viện thành công",
+        "scanStarted": "Đã bắt đầu quét thư viện",
+        "quickScanStarted": "Đã bắt đầu quét nhanh",
+        "fullScanStarted": "Đã bắt đầu quét toàn bộ",
+        "scanError": "Lỗi khi bắt đầu quét. Kiểm tra nhật ký",
+        "scanCompleted": "Đã hoàn tất quét thư viện"
+      },
+      "validation": {
+        "nameRequired": "Tên thư viện là bắt buộc",
+        "pathRequired": "Đường dẫn thư viện là bắt buộc",
+        "pathNotDirectory": "Đường dẫn thư viện phải là một thư mục",
+        "pathNotFound": "Không tìm thấy đường dẫn thư viện",
+        "pathNotAccessible": "Không thể truy cập đường dẫn thư viện",
+        "pathInvalid": "Đường dẫn thư viện không hợp lệ"
+      },
+      "messages": {
+        "deleteConfirm": "Bạn có chắc muốn xoá thư viện này? Thao tác này sẽ xoá toàn bộ dữ liệu liên quan và quyền truy cập của người dùng.",
+        "scanInProgress": "Đang quét...",
+        "noLibrariesAssigned": "Chưa có thư viện nào được gán cho người dùng này"
+      }
+    },
+    "plugin": {
+      "name": "Plugin |||| Plugin",
+      "fields": {
+        "id": "ID",
+        "name": "Tên",
+        "description": "Mô tả",
+        "version": "Phiên bản",
+        "author": "Tác giả",
+        "website": "Trang web",
+        "permissions": "Quyền",
+        "enabled": "Đã bật",
+        "status": "Trạng thái",
+        "path": "Đường dẫn",
+        "lastError": "Lỗi",
+        "hasError": "Lỗi",
+        "updatedAt": "Đã cập nhật",
+        "createdAt": "Đã cài đặt",
+        "configKey": "Khoá",
+        "configValue": "Giá trị",
+        "allUsers": "Cho phép tất cả người dùng",
+        "selectedUsers": "Người dùng đã chọn",
+        "allLibraries": "Cho phép tất cả thư viện",
+        "selectedLibraries": "Thư viện đã chọn",
+        "allowWriteAccess": "Cho phép quyền ghi"
+      },
+      "sections": {
+        "status": "Trạng thái",
+        "info": "Thông tin plugin",
+        "configuration": "Cấu hình",
+        "manifest": "Manifest",
+        "usersPermission": "Quyền người dùng",
+        "libraryPermission": "Quyền thư viện"
+      },
+      "status": {
+        "enabled": "Đã bật",
+        "disabled": "Đã tắt"
+      },
+      "actions": {
+        "enable": "Bật",
+        "disable": "Tắt",
+        "disabledDueToError": "Khắc phục lỗi trước khi bật",
+        "disabledUsersRequired": "Chọn người dùng trước khi bật",
+        "disabledLibrariesRequired": "Chọn thư viện trước khi bật",
+        "addConfig": "Thêm cấu hình",
+        "rescan": "Quét lại"
+      },
+      "notifications": {
+        "enabled": "Đã bật plugin",
+        "disabled": "Đã tắt plugin",
+        "updated": "Đã cập nhật plugin",
+        "error": "Lỗi khi cập nhật plugin"
+      },
+      "validation": {
+        "invalidJson": "Cấu hình phải là JSON hợp lệ"
+      },
+      "messages": {
+        "configHelp": "Cấu hình plugin bằng các cặp khoá-giá trị. Để trống nếu plugin không cần cấu hình.",
+        "configValidationError": "Xác thực cấu hình thất bại:",
+        "schemaRenderError": "Không thể hiển thị biểu mẫu cấu hình. Schema của plugin có thể không hợp lệ.",
+        "clickPermissions": "Nhấn vào một quyền để xem chi tiết",
+        "noConfig": "Chưa có cấu hình",
+        "allUsersHelp": "Khi bật, plugin sẽ có quyền truy cập tất cả người dùng, kể cả những người được tạo trong tương lai.",
+        "noUsers": "Chưa chọn người dùng nào",
+        "permissionReason": "Lý do",
+        "usersRequired": "Plugin này cần quyền truy cập thông tin người dùng. Chọn người dùng mà plugin được phép truy cập, hoặc bật 'Cho phép tất cả người dùng'.",
+        "allLibrariesHelp": "Khi bật, plugin sẽ có quyền truy cập tất cả thư viện, kể cả những thư viện được tạo trong tương lai.",
+        "noLibraries": "Chưa chọn thư viện nào",
+        "librariesRequired": "Plugin này cần quyền truy cập thông tin thư viện. Chọn thư viện mà plugin được phép truy cập, hoặc bật 'Cho phép tất cả thư viện'.",
+        "allowWriteAccessHelp": "Khi bật, plugin có thể sửa đổi tệp trong thư mục thư viện. Mặc định, plugin chỉ có quyền đọc.",
+        "requiredHosts": "Host bắt buộc"
+      },
+      "placeholders": {
+        "configKey": "khoá",
+        "configValue": "giá trị"
+      }
+    }
+  },
+  "ra": {
+    "auth": {
+      "welcome1": "Cảm ơn bạn đã cài đặt Trợ lý nhạc!",
+      "welcome2": "Để bắt đầu, hãy tạo một người dùng quản trị",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "buttonCreateAdmin": "Tạo quản trị viên",
+      "auth_check_error": "Vui lòng đăng nhập để tiếp tục",
+      "user_menu": "Hồ sơ",
+      "username": "Tên đăng nhập",
+      "password": "Mật khẩu",
+      "sign_in": "Đăng nhập",
+      "sign_in_error": "Xác thực thất bại, vui lòng thử lại",
+      "logout": "Đăng xuất",
+      "insightsCollectionNote": "Trợ lý nhạc thu thập dữ liệu sử dụng ẩn danh để\ngiúp cải thiện dự án. Nhấn [here] để tìm hiểu\nthêm và từ chối nếu bạn muốn"
+    },
+    "validation": {
+      "invalidChars": "Vui lòng chỉ sử dụng chữ cái và số",
+      "passwordDoesNotMatch": "Mật khẩu không khớp",
+      "required": "Bắt buộc",
+      "minLength": "Phải có ít nhất %{min} ký tự",
+      "maxLength": "Không được quá %{max} ký tự",
+      "minValue": "Phải lớn hơn hoặc bằng %{min}",
+      "maxValue": "Phải nhỏ hơn hoặc bằng %{max}",
+      "number": "Phải là một số",
+      "email": "Phải là email hợp lệ",
+      "oneOf": "Phải là một trong: %{options}",
+      "regex": "Phải khớp định dạng cụ thể (regexp): %{pattern}",
+      "unique": "Phải là duy nhất",
+      "url": "Phải là URL hợp lệ"
+    },
+    "action": {
+      "add_filter": "Thêm bộ lọc",
+      "add": "Thêm",
+      "back": "Quay lại",
+      "bulk_actions": "Đã chọn 1 mục |||| Đã chọn %{smart_count} mục",
+      "bulk_actions_mobile": "1 |||| %{smart_count}",
+      "cancel": "Huỷ",
+      "clear_input_value": "Xoá giá trị",
+      "clone": "Nhân bản",
+      "confirm": "Xác nhận",
+      "create": "Tạo",
+      "delete": "Xoá",
+      "edit": "Sửa",
+      "export": "Xuất",
+      "list": "Danh sách",
+      "refresh": "Làm mới",
+      "remove_filter": "Xoá bộ lọc này",
+      "remove": "Xoá",
+      "save": "Lưu",
+      "search": "Tìm kiếm",
+      "show": "Hiện",
+      "sort": "Sắp xếp",
+      "undo": "Hoàn tác",
+      "expand": "Mở rộng",
+      "close": "Đóng",
+      "open_menu": "Mở menu",
+      "close_menu": "Đóng menu",
+      "unselect": "Bỏ chọn",
+      "skip": "Bỏ qua",
+      "share": "Chia sẻ",
+      "download": "Tải xuống"
+    },
+    "boolean": {
+      "true": "Có",
+      "false": "Không"
+    },
+    "page": {
+      "create": "Tạo %{name}",
+      "dashboard": "Bảng điều khiển",
+      "edit": "%{name} #%{id}",
+      "error": "Đã xảy ra lỗi",
+      "list": "%{name}",
+      "loading": "Đang tải",
+      "not_found": "Không tìm thấy",
+      "show": "%{name} #%{id}",
+      "empty": "Chưa có %{name}.",
+      "invite": "Bạn có muốn thêm một mục không?"
+    },
+    "input": {
+      "file": {
+        "upload_several": "Kéo thả tệp vào đây để tải lên, hoặc nhấn để chọn một tệp.",
+        "upload_single": "Kéo thả tệp vào đây để tải lên, hoặc nhấn để chọn."
+      },
+      "image": {
+        "upload_several": "Kéo thả ảnh vào đây để tải lên, hoặc nhấn để chọn một ảnh.",
+        "upload_single": "Kéo thả ảnh vào đây để tải lên, hoặc nhấn để chọn."
+      },
+      "references": {
+        "all_missing": "Không thể tìm thấy dữ liệu tham chiếu.",
+        "many_missing": "Ít nhất một trong các tham chiếu liên quan không còn khả dụng.",
+        "single_missing": "Tham chiếu liên quan không còn khả dụng."
+      },
+      "password": {
+        "toggle_visible": "Ẩn mật khẩu",
+        "toggle_hidden": "Hiện mật khẩu"
+      }
+    },
+    "message": {
+      "about": "Giới thiệu",
+      "are_you_sure": "Bạn có chắc không?",
+      "bulk_delete_content": "Bạn có chắc muốn xoá %{name} này? |||| Bạn có chắc muốn xoá %{smart_count} mục này?",
+      "bulk_delete_title": "Xoá %{name} |||| Xoá %{smart_count} %{name}",
+      "delete_content": "Bạn có chắc muốn xoá mục này?",
+      "delete_title": "Xoá %{name} #%{id}",
+      "details": "Chi tiết",
+      "error": "Đã xảy ra lỗi phía client và yêu cầu của bạn không thể hoàn tất.",
+      "invalid_form": "Biểu mẫu không hợp lệ. Vui lòng kiểm tra lại lỗi",
+      "loading": "Trang đang tải, vui lòng đợi trong giây lát",
+      "no": "Không",
+      "not_found": "Bạn đã nhập sai URL, hoặc đã theo một liên kết không hợp lệ.",
+      "yes": "Có",
+      "unsaved_changes": "Một số thay đổi của bạn chưa được lưu. Bạn có chắc muốn bỏ qua chúng không?"
+    },
+    "navigation": {
+      "no_results": "Không tìm thấy kết quả",
+      "no_more_results": "Số trang %{page} vượt quá giới hạn. Hãy thử trang trước.",
+      "page_out_of_boundaries": "Số trang %{page} vượt quá giới hạn",
+      "page_out_from_end": "Không thể vượt qua trang cuối",
+      "page_out_from_begin": "Không thể lùi trước trang 1",
+      "page_range_info": "%{offsetBegin}-%{offsetEnd} trong %{total}",
+      "page_rows_per_page": "Số mục mỗi trang:",
+      "next": "Tiếp",
+      "prev": "Trước",
+      "skip_nav": "Bỏ qua đến nội dung"
+    },
+    "notification": {
+      "updated": "Đã cập nhật phần tử |||| Đã cập nhật %{smart_count} phần tử",
+      "created": "Đã tạo phần tử",
+      "deleted": "Đã xoá phần tử |||| Đã xoá %{smart_count} phần tử",
+      "bad_item": "Phần tử không hợp lệ",
+      "item_doesnt_exist": "Phần tử không tồn tại",
+      "http_error": "Lỗi giao tiếp với máy chủ",
+      "data_provider_error": "Lỗi dataProvider. Kiểm tra console để biết chi tiết.",
+      "i18n_error": "Không thể tải bản dịch cho ngôn ngữ đã chọn",
+      "canceled": "Đã huỷ thao tác",
+      "logged_out": "Phiên làm việc của bạn đã kết thúc, vui lòng kết nối lại.",
+      "new_version": "Có phiên bản mới! Vui lòng làm mới cửa sổ này."
+    },
+    "toggleFieldsMenu": {
+      "columnsToDisplay": "Cột hiển thị",
+      "layout": "Bố cục",
+      "grid": "Lưới",
+      "table": "Bảng"
+    }
+  },
+  "message": {
+    "uploadCover": "Tải lên ảnh bìa",
+    "removeCover": "Xoá ảnh bìa",
+    "coverUploaded": "Đã cập nhật ảnh bìa",
+    "coverRemoved": "Đã xoá ảnh bìa",
+    "coverUploadError": "Lỗi khi tải lên ảnh bìa",
+    "coverRemoveError": "Lỗi khi xoá ảnh bìa",
+    "note": "GHI CHÚ",
+    "transcodingDisabled": "Thay đổi cấu hình chuyển mã qua giao diện web đã bị vô hiệu hoá vì lý do bảo mật. Nếu bạn muốn thay đổi (sửa hoặc thêm) tuỳ chọn chuyển mã, hãy khởi động lại máy chủ với tuỳ chọn cấu hình %{config}.",
+    "transcodingEnabled": "Trợ lý nhạc hiện đang chạy với %{config}, cho phép chạy lệnh hệ thống từ cài đặt chuyển mã bằng giao diện web. Chúng tôi khuyến nghị tắt tuỳ chọn này vì lý do bảo mật và chỉ bật khi cần cấu hình tuỳ chọn Chuyển mã.",
+    "songsAddedToPlaylist": "Đã thêm 1 bài hát vào danh sách phát |||| Đã thêm %{smart_count} bài hát vào danh sách phát",
+    "noSimilarSongsFound": "Không tìm thấy bài hát tương tự",
+    "startingInstantMix": "Đang tải Mix nhanh...",
+    "noTopSongsFound": "Không tìm thấy bài hát nổi bật",
+    "noPlaylistsAvailable": "Không có sẵn",
+    "delete_user_title": "Xoá người dùng '%{name}'",
+    "delete_user_content": "Bạn có chắc muốn xoá người dùng này và toàn bộ dữ liệu của họ (bao gồm danh sách phát và tuỳ chọn)?",
+    "remove_missing_title": "Xoá tệp bị thiếu",
+    "remove_missing_content": "Bạn có chắc muốn xoá các tệp bị thiếu đã chọn khỏi cơ sở dữ liệu? Thao tác này sẽ xoá vĩnh viễn mọi tham chiếu đến chúng, bao gồm lượt phát và đánh giá.",
+    "remove_all_missing_title": "Xoá tất cả tệp bị thiếu",
+    "remove_all_missing_content": "Bạn có chắc muốn xoá tất cả tệp bị thiếu khỏi cơ sở dữ liệu? Thao tác này sẽ xoá vĩnh viễn mọi tham chiếu đến chúng, bao gồm lượt phát và đánh giá.",
+    "notifications_blocked": "Bạn đã chặn Thông báo cho trang này trong cài đặt trình duyệt",
+    "notifications_not_available": "Trình duyệt này không hỗ trợ thông báo trên máy tính hoặc bạn không truy cập Trợ lý nhạc qua https",
+    "lastfmLinkSuccess": "Liên kết Last.fm thành công và đã bật ghi nhận lượt nghe",
+    "lastfmLinkFailure": "Không thể liên kết Last.fm",
+    "lastfmUnlinkSuccess": "Đã huỷ liên kết Last.fm và tắt ghi nhận lượt nghe",
+    "lastfmUnlinkFailure": "Không thể huỷ liên kết Last.fm",
+    "listenBrainzLinkSuccess": "Liên kết ListenBrainz thành công và đã bật ghi nhận lượt nghe với người dùng: %{user}",
+    "listenBrainzLinkFailure": "Không thể liên kết ListenBrainz: %{error}",
+    "listenBrainzUnlinkSuccess": "Đã huỷ liên kết ListenBrainz và tắt ghi nhận lượt nghe",
+    "listenBrainzUnlinkFailure": "Không thể huỷ liên kết ListenBrainz",
+    "openIn": {
+      "lastfm": "Mở trong Last.fm",
+      "musicbrainz": "Mở trong MusicBrainz"
+    },
+    "lastfmLink": "Đọc thêm...",
+    "shareOriginalFormat": "Chia sẻ ở định dạng gốc",
+    "shareDialogTitle": "Chia sẻ %{resource} '%{name}'",
+    "shareBatchDialogTitle": "Chia sẻ 1 %{resource} |||| Chia sẻ %{smart_count} %{resource}",
+    "shareCopyToClipboard": "Sao chép vào clipboard: Ctrl+C, Enter",
+    "shareSuccess": "Đã sao chép URL vào clipboard: %{url}",
+    "shareFailure": "Lỗi khi sao chép URL %{url} vào clipboard",
+    "downloadDialogTitle": "Tải xuống %{resource} '%{name}' (%{size})",
+    "downloadOriginalFormat": "Tải xuống ở định dạng gốc"
+  },
+  "menu": {
+    "library": "Thư viện",
+    "librarySelector": {
+      "allLibraries": "Tất cả thư viện (%{count})",
+      "multipleLibraries": "%{selected}/%{total} thư viện",
+      "selectLibraries": "Chọn thư viện",
+      "none": "Không có"
+    },
+    "settings": "Cài đặt",
+    "version": "Phiên bản",
+    "theme": "Giao diện",
+    "personal": {
+      "name": "Cá nhân",
+      "options": {
+        "theme": "Giao diện",
+        "language": "Ngôn ngữ",
+        "defaultView": "Chế độ xem mặc định",
+        "desktop_notifications": "Thông báo trên máy tính",
+        "lastfmNotConfigured": "Chưa cấu hình API-Key của Last.fm",
+        "lastfmScrobbling": "Ghi nhận lượt nghe lên Last.fm",
+        "listenBrainzScrobbling": "Ghi nhận lượt nghe lên ListenBrainz",
+        "replaygain": "Chế độ ReplayGain",
+        "preAmp": "ReplayGain PreAmp (dB)",
+        "gain": {
+          "none": "Đã tắt",
+          "album": "Dùng Gain album",
+          "track": "Dùng Gain bản nhạc"
+        }
+      }
+    },
+    "albumList": "Album",
+    "playlists": "Danh sách phát",
+    "sharedPlaylists": "Danh sách phát được chia sẻ",
+    "about": "Giới thiệu"
+  },
+  "player": {
+    "playListsText": "Hàng chờ phát",
+    "openText": "Mở",
+    "closeText": "Đóng",
+    "notContentText": "Không có nhạc",
+    "clickToPlayText": "Nhấn để phát",
+    "clickToPauseText": "Nhấn để tạm dừng",
+    "nextTrackText": "Bản nhạc tiếp theo",
+    "previousTrackText": "Bản nhạc trước",
+    "reloadText": "Tải lại",
+    "volumeText": "Âm lượng",
+    "toggleLyricText": "Bật/tắt lời bài hát",
+    "toggleMiniModeText": "Thu nhỏ",
+    "destroyText": "Huỷ",
+    "downloadText": "Tải xuống",
+    "removeAudioListsText": "Xoá danh sách âm thanh",
+    "clickToDeleteText": "Nhấn để xoá %{name}",
+    "emptyLyricText": "Không có lời bài hát",
+    "playModeText": {
+      "order": "Theo thứ tự",
+      "orderLoop": "Lặp lại",
+      "singleLoop": "Lặp lại một bài",
+      "shufflePlay": "Phát ngẫu nhiên"
+    }
+  },
+  "about": {
+    "links": {
+      "homepage": "Trang chủ",
+      "source": "Mã nguồn",
+      "featureRequests": "Yêu cầu tính năng",
+      "lastInsightsCollection": "Lần thu thập insight cuối",
+      "insights": {
+        "disabled": "Đã tắt",
+        "waiting": "Đang chờ"
+      }
+    },
+    "tabs": {
+      "about": "Giới thiệu",
+      "config": "Cấu hình"
+    },
+    "config": {
+      "configName": "Tên cấu hình",
+      "environmentVariable": "Biến môi trường",
+      "currentValue": "Giá trị hiện tại",
+      "configurationFile": "Tệp cấu hình",
+      "exportToml": "Xuất cấu hình (TOML)",
+      "downloadToml": "Tải xuống cấu hình (TOML)",
+      "exportSuccess": "Đã xuất cấu hình vào clipboard theo định dạng TOML",
+      "exportFailed": "Sao chép cấu hình thất bại",
+      "devFlagsHeader": "Cờ phát triển (có thể thay đổi/loại bỏ)",
+      "devFlagsComment": "Đây là các cài đặt thử nghiệm và có thể bị loại bỏ trong các phiên bản sau"
+    }
+  },
+  "activity": {
+    "title": "Hoạt động",
+    "totalScanned": "Tổng số thư mục đã quét",
+    "quickScan": "Nhanh",
+    "fullScan": "Toàn bộ",
+    "selectiveScan": "Chọn lọc",
+    "serverUptime": "Thời gian hoạt động máy chủ",
+    "serverDown": "NGOẠI TUYẾN",
+    "scanType": "Quét lần cuối",
+    "status": "Lỗi quét",
+    "elapsedTime": "Thời gian đã trôi qua"
+  },
+  "nowPlaying": {
+    "title": "Đang phát",
+    "empty": "Không có gì đang phát",
+    "minutesAgo": "%{smart_count} phút trước |||| %{smart_count} phút trước"
+  },
+  "help": {
+    "title": "Phím tắt Trợ lý nhạc",
+    "hotkeys": {
+      "show_help": "Hiện trợ giúp này",
+      "toggle_menu": "Bật/tắt thanh menu",
+      "toggle_play": "Phát / Tạm dừng",
+      "prev_song": "Bài hát trước",
+      "next_song": "Bài hát tiếp theo",
+      "current_song": "Đến bài hát hiện tại",
+      "vol_up": "Tăng âm lượng",
+      "vol_down": "Giảm âm lượng",
+      "toggle_love": "Thêm bản nhạc này vào yêu thích"
+    }
+  }
+}

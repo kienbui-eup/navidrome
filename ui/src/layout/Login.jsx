@@ -22,7 +22,7 @@ import Notification from './Notification'
 import useCurrentTheme from '../themes/useCurrentTheme'
 import config from '../config'
 import { clearQueue } from '../actions'
-import { INSIGHTS_DOC_URL } from '../consts.js'
+import { INSIGHTS_DOC_URL, APP_NAME } from '../consts.js'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -32,7 +32,14 @@ const useStyles = makeStyles(
       minHeight: '100vh',
       alignItems: 'center',
       justifyContent: 'flex-start',
-      background: `url(${config.loginBackgroundURL})`,
+      // A theme-based gradient always sits underneath the (optional) background
+      // image. If loginBackgroundURL is empty, or the remote image fails to load
+      // / times out, the gradient shows through instead of a blank white/black
+      // page. When the image loads it fully covers the gradient (backgroundSize
+      // cover), so there is no visible overlay of the two.
+      background: config.loginBackgroundURL
+        ? `url(${config.loginBackgroundURL}), linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.main}22 100%)`
+        : `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.main}22 100%)`,
       backgroundRepeat: 'no-repeat',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
@@ -132,7 +139,7 @@ const FormLogin = ({ loading, handleSubmit, validate }) => {
                   rel="noopener noreferrer"
                   className={classes.systemNameLink}
                 >
-                  Navidrome
+                  {APP_NAME}
                 </a>
               </div>
               {config.welcomeMessage && (
