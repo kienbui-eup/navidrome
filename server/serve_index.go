@@ -53,6 +53,7 @@ func serveIndex(ds model.DataStore, fs fs.FS, shareInfo *model.Share) http.Handl
 			"enableStarRating":          conf.Server.EnableStarRating,
 			"defaultTheme":              conf.Server.DefaultTheme,
 			"defaultLanguage":           conf.Server.DefaultLanguage,
+			"googleDriveEnabled":        conf.Server.GoogleDriveAPIKey != "",
 			"defaultUIVolume":           conf.Server.DefaultUIVolume,
 			"uiSearchDebounceMs":        conf.Server.UISearchDebounceMs,
 			"uiCoverArtSize":            conf.Server.UICoverArtSize,

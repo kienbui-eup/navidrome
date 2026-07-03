@@ -19,6 +19,7 @@ const defaultConfig = {
   enableStarRating: true,
   defaultTheme: 'Dark',
   defaultLanguage: '',
+  googleDriveEnabled: false,
   defaultUIVolume: 100,
   uiSearchDebounceMs: 200,
   uiCoverArtSize: 600,

@@ -23,6 +23,7 @@ var Set = wire.NewSet(
 	playlists.NewPlaylists,
 	NewLibrary,
 	NewUser,
+	NewImporter,
 	NewMaintenance,
 	NewImageUploadService,
 	wire.Bind(new(playlists.ImageUploadService), new(ImageUploadService)),

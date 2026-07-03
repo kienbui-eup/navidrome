@@ -25,6 +25,9 @@ vi.mock('./ActivityPanel', () => ({
 vi.mock('./PersonalMenu', () => ({
   default: () => <div />,
 }))
+vi.mock('./ImportMenu', () => ({
+  default: () => <div />,
+}))
 vi.mock('./UserMenu', () => ({
   default: ({ children }) => <div>{children}</div>,
 }))

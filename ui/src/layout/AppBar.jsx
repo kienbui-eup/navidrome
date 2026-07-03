@@ -13,6 +13,7 @@ import ViewListIcon from '@material-ui/icons/ViewList'
 import { Dialogs } from '../dialogs/Dialogs'
 import { AboutDialog } from '../dialogs'
 import PersonalMenu from './PersonalMenu'
+import ImportMenu from './ImportMenu'
 import ActivityPanel from './ActivityPanel'
 import NowPlayingPanel from './NowPlayingPanel'
 import UserMenu from './UserMenu'
@@ -126,6 +127,9 @@ const CustomUserMenu = ({ onClick, ...rest }) => {
       {config.devActivityPanel && permissions === 'admin' && <ActivityPanel />}
       <UserMenu {...rest}>
         <PersonalMenu sidebarIsOpen={true} onClick={onClick} />
+        {permissions === 'admin' && (
+          <ImportMenu sidebarIsOpen={true} onClick={onClick} />
+        )}
         <Divider />
         {renderUserMenuItemLink()}
         {resources

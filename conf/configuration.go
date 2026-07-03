@@ -90,6 +90,7 @@ type configOptions struct {
 	DefaultDownloadableShare        bool
 	DefaultTheme                    string
 	DefaultLanguage                 string
+	GoogleDriveAPIKey               string
 	DefaultUIVolume                 int
 	UISearchDebounceMs              int
 	UICoverArtSize                  int
@@ -783,6 +784,7 @@ func setViperDefaults() {
 	viper.SetDefault("enableuserediting", true)
 	viper.SetDefault("defaulttheme", "Dark")
 	viper.SetDefault("defaultlanguage", "")
+	viper.SetDefault("googledriveapikey", "")
 	viper.SetDefault("defaultuivolume", consts.DefaultUIVolume)
 	viper.SetDefault("uisearchdebouncems", consts.DefaultUISearchDebounceMs)
 	viper.SetDefault("uicoverartsize", consts.DefaultUICoverArtSize)
