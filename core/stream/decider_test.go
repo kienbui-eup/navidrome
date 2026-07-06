@@ -746,6 +746,27 @@ var _ = Describe("Decider", func() {
 				Expect(decision.TargetBitDepth).To(Equal(24))
 			})
 
+			It("normalizes real ffprobe DSD output (rate÷8, bits_per_sample=8) to the TagLib convention", func() {
+				// Real ffprobe reports DSD64 as 352800 Hz / 8-bit (not 2822400 Hz / 1-bit)
+				probe := ffmpeg.AudioProbeResult{Codec: "dsd_lsbf_planar", BitRate: 5644, SampleRate: 352800, BitDepth: 8, Channels: 2}
+				data, _ := json.Marshal(probe)
+				mf := &model.MediaFile{ID: "1", Suffix: "dsf", Codec: "DSD", BitRate: 5644, Channels: 2,
+					SampleRate: 2822400, BitDepth: new(1), ProbeData: string(data)}
+				ci := &ClientInfo{
+					TranscodingProfiles: []Profile{
+						{Container: "flac", AudioCodec: "flac", Protocol: ProtocolHTTP},
+					},
+				}
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(decision.CanTranscode).To(BeTrue())
+				// 352800*8 = 2822400 raw DSD, then ÷8 = 352800 PCM-equivalent (not ÷8 twice = 44100)
+				Expect(decision.SourceStream.SampleRate).To(Equal(2822400))
+				Expect(decision.TargetSampleRate).To(Equal(352800))
+				// bits_per_sample=8 → 1-bit DSD → 24-bit PCM output
+				Expect(decision.TargetBitDepth).To(Equal(24))
+			})
+
 			It("transcodes DFF (DSDIFF) files with a non-required samplerate limitation, like the web UI sends", func() {
 				// DFF has no dedicated Codec tag here: exercises inferCodecFromSuffix (dff → dsd)
 				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "dff", BitRate: 5644, Channels: 2, SampleRate: 2822400, BitDepth: new(1)})

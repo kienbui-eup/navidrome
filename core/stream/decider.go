@@ -139,6 +139,15 @@ func buildSourceStream(mf *model.MediaFile, probe *ffmpeg.AudioProbeResult) Deta
 		sd.SampleRate = probe.SampleRate
 		sd.BitDepth = probe.BitDepth
 		sd.Channels = probe.Channels
+		// ffprobe reports DSD streams with the PCM-equivalent byte rate (DSD
+		// rate ÷ 8) and bits_per_sample=8, while TagLib reports the raw DSD
+		// rate and 1-bit. Convert ffprobe-shaped values (bit depth != 1) to
+		// the TagLib convention so downstream normalization
+		// (normalizeSourceSampleRate/BitDepth) treats both sources identically.
+		if sd.Codec == "dsd" && sd.BitDepth != 1 {
+			sd.SampleRate *= 8
+			sd.BitDepth = 1
+		}
 	} else {
 		sd.Codec = mf.AudioCodec()
 		sd.Bitrate = mf.BitRate
