@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { detectBrowserProfile, CODEC_PROBES } from './browserProfile'
+import {
+  detectBrowserProfile,
+  CODEC_PROBES,
+  MAX_TRANSCODE_SAMPLE_RATE,
+} from './browserProfile'
 
 describe('detectBrowserProfile', () => {
   let mockCanPlayType
@@ -101,10 +105,36 @@ describe('detectBrowserProfile', () => {
     expect(codecs).toEqual(['flac', 'opus', 'mp3'])
   })
 
-  it('sets codecProfiles to empty array', () => {
+  it('caps flac transcode sample rate via a non-required codec profile', () => {
     mockCanPlayType.mockReturnValue('probably')
 
     const profile = detectBrowserProfile()
+    expect(profile.codecProfiles).toEqual([
+      {
+        type: 'AudioCodec',
+        name: 'flac',
+        limitations: [
+          {
+            name: 'audioSamplerate',
+            comparison: 'LessThanEqual',
+            values: [String(MAX_TRANSCODE_SAMPLE_RATE)],
+            required: false,
+          },
+        ],
+      },
+    ])
+  })
+
+  it('omits codecProfiles when flac transcoding is not supported', () => {
+    mockCanPlayType.mockImplementation((mime) => {
+      if (mime === 'audio/mpeg; codecs="mp3"') return 'probably'
+      return ''
+    })
+
+    const profile = detectBrowserProfile()
+    expect(profile.transcodingProfiles.map((p) => p.audioCodec)).toEqual([
+      'mp3',
+    ])
     expect(profile.codecProfiles).toEqual([])
   })
 
@@ -151,6 +181,7 @@ describe('detectBrowserProfile', () => {
       const profile = detectBrowserProfile()
       const codecs = profile.transcodingProfiles.map((p) => p.audioCodec)
       expect(codecs).toEqual(['mp3'])
+      expect(profile.codecProfiles).toEqual([])
     })
 
     it('does NOT restrict transcoding on Chrome', () => {

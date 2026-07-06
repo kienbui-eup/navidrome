@@ -746,6 +746,63 @@ var _ = Describe("Decider", func() {
 				Expect(decision.TargetBitDepth).To(Equal(24))
 			})
 
+			It("transcodes DFF (DSDIFF) files with a non-required samplerate limitation, like the web UI sends", func() {
+				// DFF has no dedicated Codec tag here: exercises inferCodecFromSuffix (dff → dsd)
+				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "dff", BitRate: 5644, Channels: 2, SampleRate: 2822400, BitDepth: new(1)})
+				ci := &ClientInfo{
+					DirectPlayProfiles: []DirectPlayProfile{
+						{Containers: []string{"flac"}, AudioCodecs: []string{"flac"}, Protocols: []string{ProtocolHTTP}},
+						{Containers: []string{"mp3"}, AudioCodecs: []string{"mp3"}, Protocols: []string{ProtocolHTTP}},
+					},
+					TranscodingProfiles: []Profile{
+						{Container: "flac", AudioCodec: "flac", Protocol: ProtocolHTTP},
+						{Container: "mp3", AudioCodec: "mp3", Protocol: ProtocolHTTP},
+					},
+					CodecProfiles: []CodecProfile{
+						{
+							Type: CodecProfileTypeAudio,
+							Name: "flac",
+							Limitations: []Limitation{
+								{Name: LimitationAudioSamplerate, Comparison: ComparisonLessThanEqual, Values: []string{"96000"}, Required: false},
+							},
+						},
+					},
+				}
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(decision.CanDirectPlay).To(BeFalse())
+				Expect(decision.CanTranscode).To(BeTrue())
+				Expect(decision.TargetFormat).To(Equal("flac"))
+				// DSD64 2822400 / 8 = 352800, clamped by the non-required limitation
+				Expect(decision.TranscodeStream.SampleRate).To(Equal(96000))
+				Expect(decision.TargetSampleRate).To(Equal(96000))
+				Expect(decision.TranscodeStream.BitDepth).To(Equal(24))
+			})
+
+			It("does not block hi-res FLAC direct play with a non-required samplerate limitation", func() {
+				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "flac", Codec: "FLAC", BitRate: 4600, Channels: 2, SampleRate: 192000, BitDepth: new(24)})
+				ci := &ClientInfo{
+					DirectPlayProfiles: []DirectPlayProfile{
+						{Containers: []string{"flac"}, AudioCodecs: []string{"flac"}, Protocols: []string{ProtocolHTTP}},
+					},
+					TranscodingProfiles: []Profile{
+						{Container: "flac", AudioCodec: "flac", Protocol: ProtocolHTTP},
+					},
+					CodecProfiles: []CodecProfile{
+						{
+							Type: CodecProfileTypeAudio,
+							Name: "flac",
+							Limitations: []Limitation{
+								{Name: LimitationAudioSamplerate, Comparison: ComparisonLessThanEqual, Values: []string{"96000"}, Required: false},
+							},
+						},
+					},
+				}
+				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
+				Expect(err).ToNot(HaveOccurred())
+				Expect(decision.CanDirectPlay).To(BeTrue())
+			})
+
 			It("applies audioBitdepth limitation to DSD-converted bit depth", func() {
 				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "dsf", Codec: "DSD", BitRate: 5644, Channels: 2, SampleRate: 2822400, BitDepth: new(1)})
 				ci := &ClientInfo{

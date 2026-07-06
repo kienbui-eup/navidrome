@@ -23,6 +23,13 @@ const TRANSCODE_CODECS = ['flac', 'opus', 'mp3']
 // transcoded streams), and FLAC transcoding also fails in practice.
 const SAFARI_TRANSCODE_CODECS = ['mp3']
 
+// Cap for lossless (FLAC) transcode targets. DSD sources (.dsf/.dff) decode to
+// 352.8kHz+ PCM, which browser audio stacks don't reliably play and which wastes
+// bandwidth; downsampling in ffmpeg also filters out DSD ultrasonic noise.
+// Sent as a non-required limitation so direct play of hi-res FLAC files is
+// unaffected — only transcoded streams get clamped.
+export const MAX_TRANSCODE_SAMPLE_RATE = 96000
+
 function canPlay(audio, mimeList) {
   return mimeList.some((m) => {
     const result = audio.canPlayType(m)
@@ -70,11 +77,28 @@ export function detectBrowserProfile() {
     return profiles
   }, [])
 
+  const codecProfiles = transcodingProfiles.some((p) => p.audioCodec === 'flac')
+    ? [
+        {
+          type: 'AudioCodec',
+          name: 'flac',
+          limitations: [
+            {
+              name: 'audioSamplerate',
+              comparison: 'LessThanEqual',
+              values: [String(MAX_TRANSCODE_SAMPLE_RATE)],
+              required: false,
+            },
+          ],
+        },
+      ]
+    : []
+
   return {
     name: 'NavidromeUI',
     platform: navigator.userAgent,
     directPlayProfiles,
     transcodingProfiles,
-    codecProfiles: [],
+    codecProfiles,
   }
 }
