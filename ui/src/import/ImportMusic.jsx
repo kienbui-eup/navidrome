@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Title, useNotify, usePermissions } from 'react-admin'
 import {
   Card,
@@ -15,22 +15,53 @@ import {
   ListItemSecondaryAction,
   IconButton,
   CircularProgress,
+  LinearProgress,
   Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Chip,
 } from '@material-ui/core'
 import GetAppIcon from '@material-ui/icons/GetApp'
 import SearchIcon from '@material-ui/icons/Search'
 import { makeStyles } from '@material-ui/core/styles'
 import { httpClient } from '../dataProvider'
 import { APP_NAME } from '../consts'
+import { formatBytes } from '../utils'
 import config from '../config'
 
 const useStyles = makeStyles((theme) => ({
   root: { marginTop: '1em' },
   field: { marginRight: theme.spacing(1), minWidth: 320 },
-  actions: { marginTop: theme.spacing(2), display: 'flex', gap: theme.spacing(1), flexWrap: 'wrap' },
+  libSelect: { minWidth: 220, marginBottom: theme.spacing(2) },
+  actions: {
+    marginTop: theme.spacing(2),
+    display: 'flex',
+    gap: theme.spacing(1),
+    flexWrap: 'wrap',
+  },
   section: { marginTop: theme.spacing(3) },
   hint: { color: theme.palette.text.secondary, marginTop: theme.spacing(1) },
   itemMeta: { color: theme.palette.text.secondary, fontSize: '0.8rem' },
+  progress: {
+    marginTop: theme.spacing(2),
+    padding: theme.spacing(2),
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: theme.shape.borderRadius,
+  },
+  errBox: {
+    marginTop: theme.spacing(1),
+    maxHeight: 120,
+    overflow: 'auto',
+    fontSize: '0.75rem',
+    color: theme.palette.error.main,
+  },
 }))
 
 // Extract a readable error message from a react-admin HttpError.
@@ -45,11 +76,18 @@ const ImportMusic = () => {
   // shared busy flag keyed by an action id so individual buttons can spin
   const [busy, setBusy] = useState(null)
 
+  // target library
+  const [libraries, setLibraries] = useState([])
+  const [libraryId, setLibraryId] = useState(0)
+
+  // background job + history
+  const [job, setJob] = useState(null)
+  const [history, setHistory] = useState(null)
+
   // URL / RSS tab state
   const [url, setUrl] = useState('')
   const [feedItems, setFeedItems] = useState(null)
   const [driveFiles, setDriveFiles] = useState(null)
-
   const isDrive = /drive\.google\.com/.test(url)
 
   // Internet Archive tab state
@@ -58,12 +96,79 @@ const ImportMusic = () => {
   const [openItem, setOpenItem] = useState(null)
   const [files, setFiles] = useState(null)
 
+  const loadHistory = useCallback(() => {
+    httpClient('/api/import/history')
+      .then(({ json }) => setHistory(json || []))
+      .catch(() => {})
+  }, [])
+
+  // Load the list of libraries to pick an import destination.
+  useEffect(() => {
+    httpClient('/api/library')
+      .then(({ json }) => {
+        const libs = json || []
+        setLibraries(libs)
+        const def = libs.find((l) => l.id === 1) || libs[0]
+        if (def) setLibraryId(def.id)
+      })
+      .catch(() => {})
+  }, [])
+
+  // Poll the running job for progress.
+  useEffect(() => {
+    if (!job || job.status !== 'running') return undefined
+    const t = setTimeout(() => {
+      httpClient(`/api/import/job/${job.id}`)
+        .then(({ json }) => {
+          setJob(json)
+          if (json.status !== 'running') {
+            notify(
+              `Hoàn tất: ${json.completed} tải, ${json.skipped} trùng, ${json.failed} lỗi`,
+              json.failed > 0 ? 'warning' : 'info',
+            )
+            loadHistory()
+          }
+        })
+        .catch(() => setJob((j) => (j ? { ...j, status: 'error' } : j)))
+    }, 1200)
+    return () => clearTimeout(t)
+  }, [job, notify, loadHistory])
+
   const triggerScan = () =>
     httpClient('/api/import/scan', { method: 'POST' }).catch(() => {})
 
   const afterImport = (name) => {
     notify(`Đã tải "${name}". Đang quét thư viện...`, 'info')
     triggerScan()
+    loadHistory()
+  }
+
+  const startJob = async (items) => {
+    if (!items || items.length === 0) return
+    setBusy('job')
+    try {
+      const { json } = await httpClient('/api/import/job', {
+        method: 'POST',
+        body: JSON.stringify({ items, libraryId }),
+      })
+      setJob({
+        id: json.jobId,
+        status: 'running',
+        total: items.length,
+        completed: 0,
+        failed: 0,
+        skipped: 0,
+        errors: [],
+      })
+    } catch (e) {
+      notify(`Không bắt đầu được: ${errMsg(e)}`, 'warning')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const cancelJob = () => {
+    if (job) httpClient(`/api/import/job/${job.id}/cancel`, { method: 'POST' })
   }
 
   const importFromUrl = async (target, id) => {
@@ -71,7 +176,7 @@ const ImportMusic = () => {
     try {
       const { json } = await httpClient('/api/import/url', {
         method: 'POST',
-        body: JSON.stringify({ url: target }),
+        body: JSON.stringify({ url: target, libraryId }),
       })
       afterImport(json.savedName)
     } catch (e) {
@@ -124,7 +229,7 @@ const ImportMusic = () => {
     try {
       const { json } = await httpClient('/api/import/drive/file', {
         method: 'POST',
-        body: JSON.stringify({ id: file.id, name: file.name }),
+        body: JSON.stringify({ id: file.id, name: file.name, libraryId }),
       })
       afterImport(json.savedName)
     } catch (e) {
@@ -132,26 +237,6 @@ const ImportMusic = () => {
     } finally {
       setBusy(null)
     }
-  }
-
-  const importAllDrive = async () => {
-    if (!driveFiles || driveFiles.length === 0) return
-    setBusy('drive-all')
-    let ok = 0
-    for (const file of driveFiles) {
-      try {
-        await httpClient('/api/import/drive/file', {
-          method: 'POST',
-          body: JSON.stringify({ id: file.id, name: file.name }),
-        })
-        ok++
-      } catch (e) {
-        notify(`Lỗi "${file.name || file.id}": ${errMsg(e)}`, 'warning')
-      }
-    }
-    setBusy(null)
-    notify(`Đã tải ${ok}/${driveFiles.length} file. Đang quét thư viện...`, 'info')
-    triggerScan()
   }
 
   const search = async () => {
@@ -202,7 +287,7 @@ const ImportMusic = () => {
     try {
       const { json } = await httpClient('/api/import/archive', {
         method: 'POST',
-        body: JSON.stringify({ identifier, filename: file.name }),
+        body: JSON.stringify({ identifier, filename: file.name, libraryId }),
       })
       afterImport(json.savedName)
     } catch (e) {
@@ -210,6 +295,11 @@ const ImportMusic = () => {
     } finally {
       setBusy(null)
     }
+  }
+
+  const handleTab = (e, v) => {
+    setTab(v)
+    if (v === 2) loadHistory()
   }
 
   if (permsLoaded && permissions !== 'admin') {
@@ -225,6 +315,10 @@ const ImportMusic = () => {
     )
   }
 
+  const jobRunning = job && job.status === 'running'
+  const jobDone = job ? job.completed + job.skipped + job.failed : 0
+  const jobPct = job && job.total ? Math.round((jobDone / job.total) * 100) : 0
+
   return (
     <Card className={classes.root}>
       <Title title={`${APP_NAME} - Import nhạc`} />
@@ -236,15 +330,61 @@ const ImportMusic = () => {
           quyền tải.
         </Typography>
 
+        {libraries.length > 1 && (
+          <FormControl className={classes.libSelect} margin="normal">
+            <InputLabel>Thư viện đích</InputLabel>
+            <Select
+              value={libraryId}
+              onChange={(e) => setLibraryId(e.target.value)}
+            >
+              {libraries.map((l) => (
+                <MenuItem key={l.id} value={l.id}>
+                  {l.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+
+        {job && (
+          <Box className={classes.progress}>
+            <Typography>
+              {jobRunning ? 'Đang import' : 'Import xong'}: {jobDone}/{job.total}
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={jobPct}
+              style={{ marginTop: 8, marginBottom: 8 }}
+            />
+            <Typography className={classes.hint}>
+              Xong {job.completed} • Trùng {job.skipped} • Lỗi {job.failed}
+              {job.current ? ` • Đang tải: ${job.current}` : ''}
+            </Typography>
+            {jobRunning && (
+              <Button size="small" onClick={cancelJob} style={{ marginTop: 8 }}>
+                Hủy
+              </Button>
+            )}
+            {job.errors && job.errors.length > 0 && (
+              <div className={classes.errBox}>
+                {job.errors.map((err, i) => (
+                  <div key={i}>{err}</div>
+                ))}
+              </div>
+            )}
+          </Box>
+        )}
+
         <Box className={classes.section}>
           <Tabs
             value={tab}
-            onChange={(e, v) => setTab(v)}
+            onChange={handleTab}
             indicatorColor="primary"
             textColor="primary"
           >
             <Tab label="URL / RSS" />
             <Tab label="Internet Archive" />
+            <Tab label="Lịch sử" />
           </Tabs>
         </Box>
 
@@ -265,11 +405,7 @@ const ImportMusic = () => {
                 variant="contained"
                 color="primary"
                 startIcon={
-                  busy === 'url' ? (
-                    <CircularProgress size={16} />
-                  ) : (
-                    <GetAppIcon />
-                  )
+                  busy === 'url' ? <CircularProgress size={16} /> : <GetAppIcon />
                 }
                 disabled={!url || busy === 'url'}
                 onClick={() => importFromUrl(url, 'url')}
@@ -314,15 +450,17 @@ const ImportMusic = () => {
                   <Button
                     variant="contained"
                     color="primary"
-                    startIcon={
-                      busy === 'drive-all' ? (
-                        <CircularProgress size={16} />
-                      ) : (
-                        <GetAppIcon />
+                    startIcon={<GetAppIcon />}
+                    disabled={jobRunning || busy === 'job'}
+                    onClick={() =>
+                      startJob(
+                        driveFiles.map((f) => ({
+                          type: 'drive',
+                          id: f.id,
+                          name: f.name,
+                        })),
                       )
                     }
-                    disabled={busy === 'drive-all'}
-                    onClick={importAllDrive}
                   >
                     Import tất cả ({driveFiles.length})
                   </Button>
@@ -335,7 +473,7 @@ const ImportMusic = () => {
                         <IconButton
                           edge="end"
                           aria-label="Tải"
-                          disabled={busy === file.id || busy === 'drive-all'}
+                          disabled={busy === file.id}
                           onClick={() => importDriveFile(file)}
                         >
                           {busy === file.id ? (
@@ -352,30 +490,51 @@ const ImportMusic = () => {
             )}
 
             {feedItems && feedItems.length > 0 && (
-              <List className={classes.section}>
-                {feedItems.map((item, i) => (
-                  <ListItem key={i} divider>
-                    <ListItemText
-                      primary={item.title || item.url}
-                      secondary={item.type}
-                    />
-                    <ListItemSecondaryAction>
-                      <IconButton
-                        edge="end"
-                        aria-label="Tải"
-                        disabled={busy === item.url}
-                        onClick={() => importFromUrl(item.url, item.url)}
-                      >
-                        {busy === item.url ? (
-                          <CircularProgress size={20} />
-                        ) : (
-                          <GetAppIcon />
-                        )}
-                      </IconButton>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-              </List>
+              <>
+                <Box className={classes.actions}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<GetAppIcon />}
+                    disabled={jobRunning || busy === 'job'}
+                    onClick={() =>
+                      startJob(
+                        feedItems.map((it) => ({
+                          type: 'url',
+                          url: it.url,
+                          name: it.title,
+                        })),
+                      )
+                    }
+                  >
+                    Import tất cả ({feedItems.length})
+                  </Button>
+                </Box>
+                <List>
+                  {feedItems.map((item, i) => (
+                    <ListItem key={i} divider>
+                      <ListItemText
+                        primary={item.title || item.url}
+                        secondary={item.type}
+                      />
+                      <ListItemSecondaryAction>
+                        <IconButton
+                          edge="end"
+                          aria-label="Tải"
+                          disabled={busy === item.url}
+                          onClick={() => importFromUrl(item.url, item.url)}
+                        >
+                          {busy === item.url ? (
+                            <CircularProgress size={20} />
+                          ) : (
+                            <GetAppIcon />
+                          )}
+                        </IconButton>
+                      </ListItemSecondaryAction>
+                    </ListItem>
+                  ))}
+                </List>
+              </>
             )}
           </Box>
         )}
@@ -426,15 +585,34 @@ const ImportMusic = () => {
                           </span>
                         }
                       />
-                      {busy === item.identifier && (
-                        <CircularProgress size={20} />
-                      )}
+                      {busy === item.identifier && <CircularProgress size={20} />}
                     </ListItem>
                     {openItem === item.identifier && files && (
                       <>
                         {files.length === 0 && (
                           <ListItem>
                             <ListItemText secondary="Không có file audio" />
+                          </ListItem>
+                        )}
+                        {files.length > 0 && (
+                          <ListItem style={{ paddingLeft: 32 }}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<GetAppIcon />}
+                              disabled={jobRunning || busy === 'job'}
+                              onClick={() =>
+                                startJob(
+                                  files.map((f) => ({
+                                    type: 'archive',
+                                    identifier: item.identifier,
+                                    filename: f.name,
+                                  })),
+                                )
+                              }
+                            >
+                              Import tất cả ({files.length})
+                            </Button>
                           </ListItem>
                         )}
                         {files.map((f) => {
@@ -470,6 +648,54 @@ const ImportMusic = () => {
                   </React.Fragment>
                 ))}
               </List>
+            )}
+          </Box>
+        )}
+
+        {tab === 2 && (
+          <Box className={classes.section}>
+            {(!history || history.length === 0) && (
+              <Typography className={classes.hint}>
+                Chưa có lịch sử import.
+              </Typography>
+            )}
+            {history && history.length > 0 && (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Thời gian</TableCell>
+                    <TableCell>Nguồn</TableCell>
+                    <TableCell>Tên file</TableCell>
+                    <TableCell>Dung lượng</TableCell>
+                    <TableCell>Người</TableCell>
+                    <TableCell>Trạng thái</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {history.map((rec, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        {new Date(rec.time).toLocaleString()}
+                      </TableCell>
+                      <TableCell>{rec.source}</TableCell>
+                      <TableCell>{rec.savedName}</TableCell>
+                      <TableCell>{formatBytes(rec.bytes || 0)}</TableCell>
+                      <TableCell>{rec.user}</TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={
+                            rec.status === 'duplicate' ? 'Trùng' : 'Đã import'
+                          }
+                          color={
+                            rec.status === 'duplicate' ? 'default' : 'primary'
+                          }
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </Box>
         )}

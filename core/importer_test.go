@@ -58,15 +58,15 @@ func TestSafeAudioFilenameNoTraversal(t *testing.T) {
 
 func TestValidatePublicURLRejects(t *testing.T) {
 	bad := []string{
-		"ftp://example.com/a.mp3", // scheme
-		"file:///etc/passwd",      // scheme
-		"http://127.0.0.1/a.mp3",  // loopback
-		"http://[::1]/a.mp3",      // loopback v6
-		"http://10.0.0.1/a.mp3",   // private
+		"ftp://example.com/a.mp3",  // scheme
+		"file:///etc/passwd",       // scheme
+		"http://127.0.0.1/a.mp3",   // loopback
+		"http://[::1]/a.mp3",       // loopback v6
+		"http://10.0.0.1/a.mp3",    // private
 		"http://192.168.1.5/a.mp3", // private
 		"http://169.254.1.1/a.mp3", // link-local
-		"http:///nohost",          // no host
-		"not a url",               // parse/scheme
+		"http:///nohost",           // no host
+		"not a url",                // parse/scheme
 	}
 	for _, u := range bad {
 		if _, err := validatePublicURL(u); err == nil {
@@ -112,9 +112,9 @@ func TestSafeJoin(t *testing.T) {
 
 func TestDriveFolderAndFileID(t *testing.T) {
 	folderURLs := map[string]string{
-		"https://drive.google.com/drive/folders/1iTdnBUG9N1m4yQVZsCdq52O1JM8zAnPh":      "1iTdnBUG9N1m4yQVZsCdq52O1JM8zAnPh",
-		"https://drive.google.com/drive/u/0/folders/ABC-123_xyz":                        "ABC-123_xyz",
-		"https://drive.google.com/drive/folders/ABC?usp=sharing":                        "ABC",
+		"https://drive.google.com/drive/folders/1iTdnBUG9N1m4yQVZsCdq52O1JM8zAnPh": "1iTdnBUG9N1m4yQVZsCdq52O1JM8zAnPh",
+		"https://drive.google.com/drive/u/0/folders/ABC-123_xyz":                   "ABC-123_xyz",
+		"https://drive.google.com/drive/folders/ABC?usp=sharing":                   "ABC",
 	}
 	for u, want := range folderURLs {
 		m := reDriveFolderID.FindStringSubmatch(u)
@@ -124,9 +124,9 @@ func TestDriveFolderAndFileID(t *testing.T) {
 	}
 
 	fileURLs := map[string]string{
-		"https://drive.google.com/file/d/FILEID123/view?usp=sharing":      "FILEID123",
-		"https://drive.google.com/open?id=FILEID456":                      "FILEID456",
-		"https://drive.google.com/uc?export=download&id=FILEID789":        "FILEID789",
+		"https://drive.google.com/file/d/FILEID123/view?usp=sharing": "FILEID123",
+		"https://drive.google.com/open?id=FILEID456":                 "FILEID456",
+		"https://drive.google.com/uc?export=download&id=FILEID789":   "FILEID789",
 	}
 	for u, want := range fileURLs {
 		m := reDriveFileID.FindStringSubmatch(u)
@@ -212,6 +212,23 @@ func TestDriveAPIErrorMessage(t *testing.T) {
 	long := strings.Repeat("x", 500)
 	if got := driveAPIErrorMessage([]byte(long)); len(got) != 200 {
 		t.Errorf("long body should be truncated to 200, got %d", len(got))
+	}
+}
+
+func TestImportJobItemLabel(t *testing.T) {
+	cases := []struct {
+		it   ImportJobItem
+		want string
+	}{
+		{ImportJobItem{Name: "Song.flac"}, "Song.flac"},
+		{ImportJobItem{Type: "archive", Filename: "a/b.mp3"}, "a/b.mp3"},
+		{ImportJobItem{Type: "url", URL: "https://x/y.mp3"}, "https://x/y.mp3"},
+		{ImportJobItem{Type: "drive", ID: "abc"}, "abc"},
+	}
+	for _, c := range cases {
+		if got := c.it.label(); got != c.want {
+			t.Errorf("label(%+v) = %q, want %q", c.it, got, c.want)
+		}
 	}
 }
 
