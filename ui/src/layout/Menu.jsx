@@ -64,17 +64,30 @@ const Menu = ({ dense = false }) => {
     setState((state) => ({ ...state, [menu]: !state[menu] }))
   }
 
-  const renderResourceMenuItemLink = (resource) => (
-    <MenuItemLink
-      key={resource.name}
-      to={`/${resource.name}`}
-      activeClassName={classes.active}
-      primaryText={translatedResourceName(resource, translate)}
-      leftIcon={resource.icon || <ViewListIcon />}
-      sidebarIsOpen={open}
-      dense={dense}
-    />
-  )
+  const renderResourceMenuItemLink = (resource) => {
+    // The artist resource's plain list entry shares the /artist pathname
+    // with the composer/conductor role links below. Without a custom
+    // isActive it would render as active on those role-filtered views too.
+    const isArtist = resource.name === 'artist'
+
+    return (
+      <MenuItemLink
+        key={resource.name}
+        to={`/${resource.name}`}
+        activeClassName={classes.active}
+        primaryText={translatedResourceName(resource, translate)}
+        leftIcon={resource.icon || <ViewListIcon />}
+        sidebarIsOpen={open}
+        dense={dense}
+        {...(isArtist && {
+          isActive: (match, location) =>
+            location.pathname === '/artist' &&
+            !location.search.includes('"role":"composer"') &&
+            !location.search.includes('"role":"conductor"'),
+        })}
+      />
+    )
+  }
 
   const renderAlbumMenuItemLink = (type, al) => {
     const resource = resources.find((r) => r.name === 'album')
@@ -102,6 +115,45 @@ const Menu = ({ dense = false }) => {
     )
   }
 
+  // Renders a menu entry that links to the artist list pre-filtered by
+  // participant role (e.g. composer, conductor). Reuses the artist resource
+  // (icon) and the artist list's existing `role` filter — no new resource.
+  const renderArtistRoleMenuItemLink = (role) => {
+    const resource = resources.find((r) => r.name === 'artist')
+    if (!resource) {
+      return null
+    }
+
+    const roleAddress = `/artist?filter={"role":"${role}"}`
+    const roleFilterFragment = `"role":"${role}"`
+
+    const name = translate(`resources.artist.roles.${role}`, {
+      smart_count: 2,
+    })
+
+    // NavLink (via MenuItemLink's ...rest passthrough) only matches on
+    // pathname by default, so the plain Artists entry and both role links
+    // would all be active at once on /artist. Restrict activation to an
+    // exact pathname match plus the role's own filter fragment in the
+    // query string.
+    const isRoleActive = (match, location) =>
+      location.pathname === '/artist' &&
+      location.search.includes(roleFilterFragment)
+
+    return (
+      <MenuItemLink
+        key={roleAddress}
+        to={roleAddress}
+        isActive={isRoleActive}
+        activeClassName={classes.active}
+        primaryText={name}
+        leftIcon={resource.icon || <ViewListIcon />}
+        sidebarIsOpen={open}
+        dense={dense}
+      />
+    )
+  }
+
   const subItems = (subMenu) => (resource) =>
     resource.hasList && resource.options && resource.options.subMenu === subMenu
 
@@ -125,7 +177,17 @@ const Menu = ({ dense = false }) => {
           renderAlbumMenuItemLink(type, albumLists[type]),
         )}
       </SubMenu>
-      {resources.filter(subItems(undefined)).map(renderResourceMenuItemLink)}
+      {resources.filter(subItems(undefined)).map((resource) => (
+        <React.Fragment key={resource.name}>
+          {renderResourceMenuItemLink(resource)}
+          {resource.name === 'artist' && (
+            <>
+              {renderArtistRoleMenuItemLink('composer')}
+              {renderArtistRoleMenuItemLink('conductor')}
+            </>
+          )}
+        </React.Fragment>
+      ))}
       {config.devSidebarPlaylists && open ? (
         <>
           <Divider />

@@ -62,6 +62,18 @@ const AlbumFilter = (props) => {
       >
         <AutocompleteInput emptyText="-- None --" />
       </ReferenceInput>
+      <ReferenceInput
+        label={translate('resources.artist.roles.composer', {
+          smart_count: 1,
+        })}
+        source="role_composer_id"
+        reference="artist"
+        sort={{ field: 'name', order: 'ASC' }}
+        filter={{ role: 'composer' }}
+        filterToQuery={(searchText) => ({ name: [searchText] })}
+      >
+        <AutocompleteInput emptyText="-- None --" />
+      </ReferenceInput>
       <ReferenceArrayInput
         label={translate('resources.album.fields.genre')}
         source="genre_id"
