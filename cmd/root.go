@@ -85,6 +85,7 @@ func runNavidrome(ctx context.Context) {
 	g.Go(startScheduler(ctx))
 	g.Go(startPlaybackServer(ctx))
 	g.Go(schedulePeriodicBackup(ctx))
+	g.Go(scheduleUpgradeScan(ctx))
 	g.Go(startInsightsCollector(ctx))
 	g.Go(scheduleDBOptimizer(ctx))
 	g.Go(startPluginManager(ctx))
@@ -161,6 +162,33 @@ func schedulePeriodicScan(ctx context.Context) func() error {
 		})
 		if err != nil {
 			log.Error(ctx, "Error scheduling periodic scan", err)
+		}
+		return nil
+	}
+}
+
+// scheduleUpgradeScan schedules a periodic full-library Quality Upgrader scan,
+// if configured (Upgrade.Enabled and Upgrade.Schedule both set). Only wires
+// the cron entry: the job it runs is a full-library StartScan, the same scan
+// an admin can trigger manually (Phase 4's POST /api/upgrade/scan).
+func scheduleUpgradeScan(ctx context.Context) func() error {
+	return func() error {
+		if !conf.Server.Upgrade.Enabled || conf.Server.Upgrade.Schedule == "" {
+			log.Info(ctx, "Periodic quality-upgrade scan is DISABLED")
+			return nil
+		}
+
+		u := CreateUpgrader(ctx)
+		schedulerInstance := scheduler.GetInstance()
+
+		log.Info("Scheduling periodic quality-upgrade scan", "schedule", conf.Server.Upgrade.Schedule)
+		_, err := schedulerInstance.Add(conf.Server.Upgrade.Schedule, func() {
+			if err := u.StartScan(ctx, 0, nil); err != nil {
+				log.Error(ctx, "Error starting periodic quality-upgrade scan", err)
+			}
+		})
+		if err != nil {
+			log.Error(ctx, "Error scheduling periodic quality-upgrade scan", err)
 		}
 		return nil
 	}

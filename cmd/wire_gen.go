@@ -204,6 +204,27 @@ func CreateScanWatcher(ctx context.Context) scanner.Watcher {
 	return watcher
 }
 
+func CreateUpgrader(ctx context.Context) core.Upgrader {
+	sqlDB := db.Db()
+	dataStore := persistence.New(sqlDB)
+	fileCache := artwork.GetImageCache()
+	fFmpeg := ffmpeg.New()
+	broker := events.GetBroker()
+	metricsMetrics := metrics.GetPrometheusInstance(dataStore)
+	manager := plugins.GetManager(dataStore, broker, metricsMetrics)
+	agentsAgents := agents.GetAgents(dataStore, manager)
+	matcherMatcher := matcher.New(dataStore)
+	provider := external.NewProvider(dataStore, agentsAgents, matcherMatcher)
+	artworkArtwork := artwork.NewArtwork(dataStore, fileCache, fFmpeg, provider)
+	cacheWarmer := artwork.NewCacheWarmer(artworkArtwork, fileCache)
+	imageUploadService := core.NewImageUploadService()
+	playlistsPlaylists := playlists.NewPlaylists(dataStore, imageUploadService)
+	modelScanner := scanner.New(ctx, dataStore, cacheWarmer, broker, playlistsPlaylists, metricsMetrics)
+	importer := core.NewImporter(dataStore, modelScanner)
+	upgrader := core.NewUpgrader(dataStore, importer)
+	return upgrader
+}
+
 func GetPlaybackServer() playback.PlaybackServer {
 	sqlDB := db.Db()
 	dataStore := persistence.New(sqlDB)
