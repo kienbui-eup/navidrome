@@ -86,6 +86,7 @@ func runNavidrome(ctx context.Context) {
 	g.Go(startPlaybackServer(ctx))
 	g.Go(schedulePeriodicBackup(ctx))
 	g.Go(scheduleUpgradeScan(ctx))
+	g.Go(runUpgradeRecovery(ctx))
 	g.Go(startInsightsCollector(ctx))
 	g.Go(scheduleDBOptimizer(ctx))
 	g.Go(startPluginManager(ctx))
@@ -189,6 +190,23 @@ func scheduleUpgradeScan(ctx context.Context) func() error {
 		})
 		if err != nil {
 			log.Error(ctx, "Error scheduling periodic quality-upgrade scan", err)
+		}
+		return nil
+	}
+}
+
+// runUpgradeRecovery is the Quality Upgrader's startup hook: it re-enqueues
+// candidates that a restart interrupted mid-download (downloading → approved,
+// per the design doc's "Xử lý lỗi") and prunes expired upgrade backups. Runs
+// once, only when the feature is enabled.
+func runUpgradeRecovery(ctx context.Context) func() error {
+	return func() error {
+		if !conf.Server.Upgrade.Enabled {
+			return nil
+		}
+		u := CreateUpgrader(ctx)
+		if err := u.Recover(ctx); err != nil {
+			log.Error(ctx, "Error recovering interrupted quality upgrades", err)
 		}
 		return nil
 	}

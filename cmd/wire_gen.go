@@ -221,7 +221,7 @@ func CreateUpgrader(ctx context.Context) core.Upgrader {
 	playlistsPlaylists := playlists.NewPlaylists(dataStore, imageUploadService)
 	modelScanner := scanner.New(ctx, dataStore, cacheWarmer, broker, playlistsPlaylists, metricsMetrics)
 	importer := core.NewImporter(dataStore, modelScanner)
-	upgrader := core.NewUpgrader(dataStore, importer)
+	upgrader := core.NewUpgrader(dataStore, importer, fFmpeg)
 	return upgrader
 }
 

@@ -22,6 +22,7 @@ type MockFFmpeg struct {
 	Error            error
 	ProbeAudioResult *ffmpeg.AudioProbeResult
 	ProbeAvailable   bool
+	LRAResult        float64
 }
 
 func (ff *MockFFmpeg) IsAvailable() bool {
@@ -68,6 +69,13 @@ func (ff *MockFFmpeg) ProbeAudioStream(context.Context, string) (*ffmpeg.AudioPr
 		return nil, ff.Error
 	}
 	return ff.ProbeAudioResult, nil
+}
+
+func (ff *MockFFmpeg) MeasureLRA(context.Context, string) (float64, error) {
+	if ff.Error != nil {
+		return 0, ff.Error
+	}
+	return ff.LRAResult, nil
 }
 
 func (ff *MockFFmpeg) CmdPath() (string, error) {

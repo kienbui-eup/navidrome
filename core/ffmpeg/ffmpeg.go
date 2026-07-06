@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -49,6 +50,9 @@ type FFmpeg interface {
 	ConvertAnimatedImage(ctx context.Context, reader io.Reader, maxSize int, quality int) (io.ReadCloser, error)
 	Probe(ctx context.Context, files []string) (string, error)
 	ProbeAudioStream(ctx context.Context, filePath string) (*AudioProbeResult, error)
+	// MeasureLRA decodes filePath through ffmpeg's ebur128 filter and returns
+	// the measured Loudness Range (LRA), in LU, from the filter's summary.
+	MeasureLRA(ctx context.Context, filePath string) (float64, error)
 	CmdPath() (string, error)
 	IsAvailable() bool
 	IsProbeAvailable() bool
@@ -68,6 +72,7 @@ const (
 	extractImageCmd     = "ffmpeg -i %s -map 0:v -map -0:V -vcodec copy -f image2pipe -"
 	probeCmd            = "ffmpeg %s -f ffmetadata"
 	probeAudioStreamCmd = "ffprobe -v quiet -select_streams a:0 -print_format json -show_streams -show_format %s"
+	measureLRACmd       = "ffmpeg -hide_banner -nostats -i %s -map 0:a:0 -filter:a ebur128 -f null -"
 )
 
 type ffmpeg struct{}
@@ -169,6 +174,45 @@ func (e *ffmpeg) ProbeAudioStream(ctx context.Context, filePath string) (*AudioP
 		return nil, fmt.Errorf("running ffprobe on %q: %w", filePath, err)
 	}
 	return parseProbeOutput(output)
+}
+
+// MeasureLRA runs ffmpeg's ebur128 filter over filePath (decoding to a null
+// muxer, so nothing is written) and parses the Loudness Range from the
+// summary the filter prints at the end of the run.
+func (e *ffmpeg) MeasureLRA(ctx context.Context, filePath string) (float64, error) {
+	if _, err := ffmpegCmd(); err != nil {
+		return 0, err
+	}
+	if err := fileExists(filePath); err != nil {
+		return 0, err
+	}
+	args := createFFmpegCommand(measureLRACmd, filePath, 0, 0)
+	log.Trace(ctx, "Executing ffmpeg command", "args", args)
+	cmd := exec.CommandContext(ctx, args[0], args[1:]...) // #nosec
+	// The ebur128 summary is printed to stderr, so capture both streams.
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return 0, fmt.Errorf("running ebur128 on %q: %w", filePath, err)
+	}
+	return parseLRAOutput(output)
+}
+
+// reLRA matches the "LRA: 6.5 LU" line of the ebur128 summary. The summary's
+// "LRA low:"/"LRA high:" lines do not match, since they have a word between
+// "LRA" and the colon.
+var reLRA = regexp.MustCompile(`(?m)^\s*LRA:\s*(-?\d+(?:\.\d+)?)\s*LU\s*$`)
+
+func parseLRAOutput(output []byte) (float64, error) {
+	matches := reLRA.FindAllSubmatch(output, -1)
+	if len(matches) == 0 {
+		return 0, fmt.Errorf("no LRA found in ebur128 output")
+	}
+	// Take the last match: the summary block is printed at the end of the run.
+	v, err := strconv.ParseFloat(string(matches[len(matches)-1][1]), 64)
+	if err != nil {
+		return 0, fmt.Errorf("parsing LRA value: %w", err)
+	}
+	return v, nil
 }
 
 type probeOutput struct {

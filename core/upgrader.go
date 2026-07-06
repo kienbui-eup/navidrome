@@ -10,6 +10,7 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/navidrome/navidrome/conf"
+	"github.com/navidrome/navidrome/core/ffmpeg"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
 )
@@ -38,12 +39,19 @@ var upgradeSearchDelay = 1500 * time.Millisecond
 // running. Phase 4's HTTP handler is expected to map this to a 409 response.
 var ErrUpgradeScanInProgress = errors.New("upgrade scan already in progress")
 
+// ErrUpgradeInvalidStatus is returned by Approve/Reject when the candidate
+// exists but is not in a status that allows the operation (e.g. approving an
+// already-replaced candidate, or approving a needs_review candidate without
+// force). Phase 4's HTTP handler is expected to map this to a 409 response
+// (a missing candidate is model.ErrNotFound → 404).
+var ErrUpgradeInvalidStatus = errors.New("upgrade candidate is not in a valid status for this operation")
+
 // Upgrader finds higher-quality versions of tracks already in the library,
 // searching the same public sources Importer downloads from (Internet
-// Archive, Google Drive, RSS), and queues them (status "pending") for admin
-// review. It does not download, verify, or replace anything — see
-// docs/superpowers/specs/2026-07-06-quality-upgrader-design.md, "Luồng xử lý"
-// steps 1-4 (steps 5-8 are Phase 3/4).
+// Archive, Google Drive, RSS), queues them (status "pending") for admin
+// review, and — once approved — downloads, verifies (ffprobe + ebur128
+// dynamic range + tag comparison) and safely replaces the original file. See
+// docs/superpowers/specs/2026-07-06-quality-upgrader-design.md.
 type Upgrader interface {
 	// StartScan starts a background scan for upgrade candidates. When
 	// mediaFileIDs is non-empty, only those tracks are considered; otherwise
@@ -58,6 +66,29 @@ type Upgrader interface {
 	// CancelScan requests cancellation of a running scan; a no-op if none is
 	// running.
 	CancelScan()
+	// Approve marks a pending candidate as approved (recording the reviewing
+	// admin from ctx) and enqueues it for sequential background processing:
+	// download → verify → replace. force=true additionally allows approving a
+	// needs_review candidate, skipping the metadata gate; when the file
+	// downloaded during the earlier verification pass is still present it is
+	// reused, otherwise it is downloaded again. Returns model.ErrNotFound if
+	// the candidate does not exist and ErrUpgradeInvalidStatus if its status
+	// does not allow approval.
+	Approve(ctx context.Context, candidateID string, force bool) error
+	// Reject marks a pending or needs_review candidate as rejected (recording
+	// the reviewing admin) and discards any staged download. Returns
+	// model.ErrNotFound / ErrUpgradeInvalidStatus like Approve.
+	Reject(ctx context.Context, candidateID string) error
+	// ApproveBatch approves the pending candidates among ids (each like
+	// Approve with force=false). Candidates that are missing or not pending
+	// are skipped; the returned list contains only the ids actually approved
+	// and enqueued.
+	ApproveBatch(ctx context.Context, ids []string) (accepted []string, err error)
+	// Recover is the startup hook: it resets candidates left in "downloading"
+	// by an interrupted shutdown back to "approved", re-enqueues them (plus
+	// any still-approved ones) for processing, and prunes backup folders
+	// older than Upgrade.BackupRetentionDays.
+	Recover(ctx context.Context) error
 }
 
 // upgradeScanState is the mutex-guarded progress of the current/last scan,
@@ -73,16 +104,49 @@ type upgradeScanState struct {
 type upgrader struct {
 	ds  model.DataStore
 	imp Importer
+	ffm ffmpeg.FFmpeg
 
-	mu    sync.Mutex
-	state upgradeScanState
+	mu            sync.Mutex
+	state         upgradeScanState
+	queue         []upgradeQueueItem
+	workerRunning bool
+
+	// Verification/replacement steps that shell out to external tools or the
+	// network, held as function fields so tests can stub them (the same
+	// dependency-injection-by-field style stubImporter uses for the Importer
+	// search methods). NewUpgrader wires the real implementations.
+	downloadFn func(ctx context.Context, c *model.UpgradeCandidate) (string, error)
+	probeFn    func(ctx context.Context, path string) (*ffmpeg.AudioProbeResult, error)
+	lraFn      func(ctx context.Context, path string) (float64, error)
+	tagsFn     func(ctx context.Context, path string) (*trackTags, error)
+	scanFn     func(ctx context.Context)
+	auditFn    func(ctx context.Context, c *model.UpgradeCandidate, savedName string, size int64, sum string)
 }
 
 // NewUpgrader creates an Upgrader backed by ds and imp. imp's
 // SearchArchive/ArchiveFiles/ListDrive/ParseFeed methods are reused to find
-// candidates; nothing is downloaded here (that's Phase 3).
-func NewUpgrader(ds model.DataStore, imp Importer) Upgrader {
-	return &upgrader{ds: ds, imp: imp}
+// candidates, its download pipeline (same SSRF guard and size caps) to fetch
+// approved ones into the staging area, and ffm to verify them (ffprobe +
+// ebur128) before replacement.
+func NewUpgrader(ds model.DataStore, imp Importer, ffm ffmpeg.FFmpeg) Upgrader {
+	u := &upgrader{ds: ds, imp: imp, ffm: ffm}
+	u.downloadFn = u.downloadCandidate
+	u.probeFn = func(ctx context.Context, path string) (*ffmpeg.AudioProbeResult, error) {
+		if u.ffm == nil {
+			return nil, errors.New("ffmpeg is not configured")
+		}
+		return u.ffm.ProbeAudioStream(ctx, path)
+	}
+	u.lraFn = func(ctx context.Context, path string) (float64, error) {
+		if u.ffm == nil {
+			return 0, errors.New("ffmpeg is not configured")
+		}
+		return u.ffm.MeasureLRA(ctx, path)
+	}
+	u.tagsFn = extractTrackTags
+	u.scanFn = func(ctx context.Context) { u.imp.TriggerScan(ctx) }
+	u.auditFn = u.recordUpgradeAudit
+	return u
 }
 
 func (u *upgrader) StartScan(ctx context.Context, libraryID int, mediaFileIDs []string) error {

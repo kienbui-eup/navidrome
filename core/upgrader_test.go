@@ -110,7 +110,7 @@ func TestUpgraderStartScanQueuesWinningCandidate(t *testing.T) {
 			return []ArchiveFile{{Name: "bohemian_rhapsody.flac", Format: "Flac", Title: "Bohemian Rhapsody"}}, nil
 		},
 	}
-	u := NewUpgrader(ds, imp)
+	u := NewUpgrader(ds, imp, nil)
 
 	if err := u.StartScan(context.Background(), 0, nil); err != nil {
 		t.Fatalf("StartScan() error = %v", err)
@@ -164,7 +164,7 @@ func TestUpgraderStartScanSkipsLosslessTracks(t *testing.T) {
 			return nil, nil
 		},
 	}
-	u := NewUpgrader(ds, imp)
+	u := NewUpgrader(ds, imp, nil)
 
 	if err := u.StartScan(context.Background(), 0, nil); err != nil {
 		t.Fatalf("StartScan() error = %v", err)
@@ -201,7 +201,7 @@ func TestUpgraderStartScanDedupesAcrossRuns(t *testing.T) {
 			return []ArchiveFile{{Name: "bohemian_rhapsody.flac", Format: "Flac", Title: "Bohemian Rhapsody"}}, nil
 		},
 	}
-	u := NewUpgrader(ds, imp)
+	u := NewUpgrader(ds, imp, nil)
 
 	for i := 0; i < 2; i++ {
 		if err := u.StartScan(context.Background(), 0, nil); err != nil {
@@ -228,7 +228,7 @@ func TestUpgraderStartScanContinuesAfterSourceError(t *testing.T) {
 			return nil, errors.New("archive.org is down")
 		},
 	}
-	u := NewUpgrader(ds, imp)
+	u := NewUpgrader(ds, imp, nil)
 
 	if err := u.StartScan(context.Background(), 0, nil); err != nil {
 		t.Fatalf("StartScan() error = %v", err)
@@ -264,7 +264,7 @@ func TestUpgraderStartScanRejectsConcurrentScans(t *testing.T) {
 			return nil, nil
 		},
 	}
-	u := NewUpgrader(ds, imp)
+	u := NewUpgrader(ds, imp, nil)
 
 	if err := u.StartScan(context.Background(), 0, nil); err != nil {
 		t.Fatalf("StartScan() error = %v", err)
@@ -297,7 +297,7 @@ func TestUpgraderMaxCandidatesPerScan(t *testing.T) {
 			return []ArchiveFile{{Name: identifier + ".flac", Format: "Flac", Title: identifier}}, nil
 		},
 	}
-	u := NewUpgrader(ds, imp)
+	u := NewUpgrader(ds, imp, nil)
 
 	if err := u.StartScan(context.Background(), 0, nil); err != nil {
 		t.Fatalf("StartScan() error = %v", err)
@@ -328,7 +328,7 @@ func TestUpgraderCancelScan(t *testing.T) {
 			return nil, nil
 		},
 	}
-	u := NewUpgrader(ds, imp)
+	u := NewUpgrader(ds, imp, nil)
 
 	if err := u.StartScan(context.Background(), 0, nil); err != nil {
 		t.Fatalf("StartScan() error = %v", err)
