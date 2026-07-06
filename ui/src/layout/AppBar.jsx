@@ -14,6 +14,7 @@ import { Dialogs } from '../dialogs/Dialogs'
 import { AboutDialog } from '../dialogs'
 import PersonalMenu from './PersonalMenu'
 import ImportMenu from './ImportMenu'
+import UpgradeMenu from './UpgradeMenu'
 import ActivityPanel from './ActivityPanel'
 import NowPlayingPanel from './NowPlayingPanel'
 import UserMenu from './UserMenu'
@@ -129,6 +130,9 @@ const CustomUserMenu = ({ onClick, ...rest }) => {
         <PersonalMenu sidebarIsOpen={true} onClick={onClick} />
         {permissions === 'admin' && (
           <ImportMenu sidebarIsOpen={true} onClick={onClick} />
+        )}
+        {permissions === 'admin' && (
+          <UpgradeMenu sidebarIsOpen={true} onClick={onClick} />
         )}
         <Divider />
         {renderUserMenuItemLink()}
