@@ -8,28 +8,29 @@ import (
 )
 
 type MockDataStore struct {
-	RealDS               model.DataStore
-	MockedLibrary        model.LibraryRepository
-	MockedFolder         model.FolderRepository
-	MockedGenre          model.GenreRepository
-	MockedAlbum          model.AlbumRepository
-	MockedArtist         model.ArtistRepository
-	MockedMediaFile      model.MediaFileRepository
-	MockedTag            model.TagRepository
-	MockedUser           model.UserRepository
-	MockedProperty       model.PropertyRepository
-	MockedPlayer         model.PlayerRepository
-	MockedPlaylist       model.PlaylistRepository
-	MockedPlayQueue      model.PlayQueueRepository
-	MockedShare          model.ShareRepository
-	MockedTranscoding    model.TranscodingRepository
-	MockedUserProps      model.UserPropsRepository
-	MockedScrobbleBuffer model.ScrobbleBufferRepository
-	MockedScrobble       model.ScrobbleRepository
-	MockedRadio          model.RadioRepository
-	MockedPlugin         model.PluginRepository
-	scrobbleBufferMu     sync.Mutex
-	repoMu               sync.Mutex
+	RealDS                 model.DataStore
+	MockedLibrary          model.LibraryRepository
+	MockedFolder           model.FolderRepository
+	MockedGenre            model.GenreRepository
+	MockedAlbum            model.AlbumRepository
+	MockedArtist           model.ArtistRepository
+	MockedMediaFile        model.MediaFileRepository
+	MockedTag              model.TagRepository
+	MockedUser             model.UserRepository
+	MockedProperty         model.PropertyRepository
+	MockedPlayer           model.PlayerRepository
+	MockedPlaylist         model.PlaylistRepository
+	MockedPlayQueue        model.PlayQueueRepository
+	MockedShare            model.ShareRepository
+	MockedTranscoding      model.TranscodingRepository
+	MockedUserProps        model.UserPropsRepository
+	MockedScrobbleBuffer   model.ScrobbleBufferRepository
+	MockedScrobble         model.ScrobbleRepository
+	MockedRadio            model.RadioRepository
+	MockedPlugin           model.PluginRepository
+	MockedUpgradeCandidate model.UpgradeCandidateRepository
+	scrobbleBufferMu       sync.Mutex
+	repoMu                 sync.Mutex
 
 	// GC tracking
 	GCCalled bool
@@ -245,6 +246,17 @@ func (db *MockDataStore) Plugin(ctx context.Context) model.PluginRepository {
 	}
 	db.MockedPlugin = CreateMockPluginRepo()
 	return db.MockedPlugin
+}
+
+func (db *MockDataStore) UpgradeCandidate(ctx context.Context) model.UpgradeCandidateRepository {
+	if db.MockedUpgradeCandidate != nil {
+		return db.MockedUpgradeCandidate
+	}
+	if db.RealDS != nil {
+		return db.RealDS.UpgradeCandidate(ctx)
+	}
+	db.MockedUpgradeCandidate = CreateMockUpgradeCandidateRepo()
+	return db.MockedUpgradeCandidate
 }
 
 func (db *MockDataStore) WithTx(block func(tx model.DataStore) error, label ...string) error {
