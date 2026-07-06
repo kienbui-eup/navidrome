@@ -210,7 +210,11 @@
         "songCount": "Số bài hát",
         "comment": "Bình luận",
         "sync": "Tự động nhập",
-        "path": "Nhập từ"
+        "path": "Nhập từ",
+        "template": "Mẫu",
+        "type": "Loại",
+        "smart": "Thông minh",
+        "auto": "Tự động"
       },
       "actions": {
         "selectPlaylist": "Chọn một danh sách phát:",
@@ -221,13 +225,40 @@
         "makePrivate": "Đặt riêng tư",
         "searchOrCreate": "Tìm danh sách phát hoặc gõ để tạo mới...",
         "pressEnterToCreate": "Nhấn Enter để tạo danh sách phát mới",
-        "removeFromSelection": "Xoá khỏi lựa chọn"
+        "removeFromSelection": "Xoá khỏi lựa chọn",
+        "createFromTemplate": "Tạo từ mẫu"
       },
       "message": {
         "duplicate_song": "Thêm bài hát trùng lặp",
         "song_exist": "Có bài hát trùng lặp đang được thêm vào danh sách phát. Bạn muốn thêm bản trùng hay bỏ qua?",
         "noPlaylistsFound": "Không tìm thấy danh sách phát",
         "noPlaylists": "Không có danh sách phát nào"
+      },
+      "templates": {
+        "heavy_rotation": {
+          "name": "Nghe nhiều gần đây",
+          "description": "Bài hát nghe nhiều lần và vẫn đang được nghe trong thời gian gần đây"
+        },
+        "on_repeat": {
+          "name": "Đang nghe lặp lại",
+          "description": "Bài hát bạn đang nghe đi nghe lại trong những ngày gần đây"
+        },
+        "rediscover": {
+          "name": "Tái khám phá",
+          "description": "Bài hát từng nghe nhiều nhưng đã lâu chưa nghe lại"
+        },
+        "recently_added": {
+          "name": "Mới thêm vào",
+          "description": "Bài hát mới được thêm vào thư viện gần đây"
+        },
+        "favorites_mix": {
+          "name": "Yêu thích trộn ngẫu nhiên",
+          "description": "Trộn ngẫu nhiên các bài hát bạn đã đánh dấu yêu thích"
+        },
+        "top_rated": {
+          "name": "Đánh giá cao",
+          "description": "Bài hát được bạn đánh giá cao"
+        }
       }
     },
     "radio": {

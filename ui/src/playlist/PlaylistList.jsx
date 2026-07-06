@@ -12,10 +12,12 @@ import {
   useUpdate,
   useNotify,
   useRecordContext,
+  useTranslate,
   BulkDeleteButton,
   usePermissions,
 } from 'react-admin'
 import Switch from '@material-ui/core/Switch'
+import Chip from '@material-ui/core/Chip'
 import { makeStyles } from '@material-ui/core/styles'
 import { useMediaQuery } from '@material-ui/core'
 import {
@@ -24,6 +26,7 @@ import {
   List,
   Writable,
   isWritable,
+  isSmartPlaylist,
   useSelectedFields,
   useResourceRefresh,
 } from '../common'
@@ -34,7 +37,17 @@ const useStyles = makeStyles((theme) => ({
   button: {
     color: theme.palette.type === 'dark' ? 'white' : undefined,
   },
+  badges: {
+    display: 'flex',
+    gap: theme.spacing(0.5),
+    flexWrap: 'wrap',
+  },
 }))
+
+// Playlists created by the auto-playlist scheduler (Phase 2) are marked by
+// convention with a "auto:"+templateID prefix on the Comment field, since no
+// DB migration was added for this feature. See core/playlists/auto.go.
+const AUTO_COMMENT_PREFIX = 'auto:'
 
 const PlaylistFilter = (props) => {
   const { permissions } = usePermissions()
@@ -120,6 +133,44 @@ const ToggleAutoImport = ({ resource, source }) => {
   ) : null
 }
 
+// Chip(s) distinguishing smart playlists (record.rules != null, see
+// model/playlist.go IsSmartPlaylist) from regular ones, and further calling
+// out auto-generated ones (Comment prefixed with "auto:", see Phase 2
+// scheduler convention in core/playlists/auto.go).
+const PlaylistBadges = () => {
+  const classes = useStyles()
+  const translate = useTranslate()
+  const record = useRecordContext()
+  if (!record) {
+    return null
+  }
+  const isSmart = isSmartPlaylist(record)
+  const isAuto =
+    typeof record.comment === 'string' &&
+    record.comment.startsWith(AUTO_COMMENT_PREFIX)
+  if (!isSmart && !isAuto) {
+    return null
+  }
+  return (
+    <span className={classes.badges}>
+      {isSmart && (
+        <Chip
+          size="small"
+          variant="outlined"
+          label={translate('resources.playlist.fields.smart')}
+        />
+      )}
+      {isAuto && (
+        <Chip
+          size="small"
+          color="primary"
+          label={translate('resources.playlist.fields.auto')}
+        />
+      )}
+    </span>
+  )
+}
+
 const PlaylistListBulkActions = (props) => {
   const classes = useStyles()
   return (
@@ -146,6 +197,7 @@ const PlaylistList = (props) => {
 
   const toggleableFields = useMemo(
     () => ({
+      badges: <PlaylistBadges label={'resources.playlist.fields.type'} />,
       ownerName: isDesktop && <TextField source="ownerName" />,
       songCount: !isXsmall && <NumberField source="songCount" />,
       duration: <DurationField source="duration" />,

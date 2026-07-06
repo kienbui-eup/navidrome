@@ -210,7 +210,11 @@
         "songCount": "Songs",
         "comment": "Comment",
         "sync": "Auto-import",
-        "path": "Import from"
+        "path": "Import from",
+        "template": "Template",
+        "type": "Type",
+        "smart": "Smart",
+        "auto": "Auto"
       },
       "actions": {
         "selectPlaylist": "Select a playlist:",
@@ -221,13 +225,40 @@
         "makePrivate": "Make Private",
         "searchOrCreate": "Search playlists or type to create new...",
         "pressEnterToCreate": "Press Enter to create new playlist",
-        "removeFromSelection": "Remove from selection"
+        "removeFromSelection": "Remove from selection",
+        "createFromTemplate": "Create from template"
       },
       "message": {
         "duplicate_song": "Add duplicated songs",
         "song_exist": "There are duplicates being added to the playlist. Would you like to add the duplicates or skip them?",
         "noPlaylistsFound": "No playlists found",
         "noPlaylists": "No playlists available"
+      },
+      "templates": {
+        "heavy_rotation": {
+          "name": "Heavy Rotation",
+          "description": "Songs played many times and still being played recently"
+        },
+        "on_repeat": {
+          "name": "On Repeat",
+          "description": "Songs you've been listening to over and over in the last few days"
+        },
+        "rediscover": {
+          "name": "Rediscover",
+          "description": "Songs you used to play a lot but haven't listened to in a while"
+        },
+        "recently_added": {
+          "name": "Recently Added",
+          "description": "Songs recently added to your library"
+        },
+        "favorites_mix": {
+          "name": "Favorites Mix",
+          "description": "A random mix of the songs you've marked as favorites"
+        },
+        "top_rated": {
+          "name": "Top Rated",
+          "description": "Songs you've rated highly"
+        }
       }
     },
     "radio": {
