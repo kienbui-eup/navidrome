@@ -339,6 +339,9 @@ func (imp *importer) persist(ctx context.Context, r io.Reader, name string) (*Im
 	if err != nil {
 		return nil, err
 	}
+	// Avoid silently overwriting an existing file (e.g. re-importing, or two
+	// different songs sharing a name): fall back to "name (1).ext", "name (2).ext"...
+	destPath, name = uniqueDest(destPath)
 	tmpPath := destPath + ".part"
 	out, err := os.Create(tmpPath)
 	if err != nil {
@@ -738,6 +741,27 @@ func safeJoin(dir, name string) (string, error) {
 		return "", fmt.Errorf("invalid destination path")
 	}
 	return p, nil
+}
+
+// uniqueDest returns a destination path that does not yet exist, appending
+// " (1)", " (2)"... before the extension when the original name is taken.
+// Returns the chosen full path and its base name.
+func uniqueDest(destPath string) (string, string) {
+	if _, err := os.Stat(destPath); os.IsNotExist(err) {
+		return destPath, filepath.Base(destPath)
+	}
+	dir := filepath.Dir(destPath)
+	base := filepath.Base(destPath)
+	ext := filepath.Ext(base)
+	stem := strings.TrimSuffix(base, ext)
+	for i := 1; i < 10000; i++ {
+		candidate := fmt.Sprintf("%s (%d)%s", stem, i, ext)
+		p := filepath.Join(dir, candidate)
+		if _, err := os.Stat(p); os.IsNotExist(err) {
+			return p, candidate
+		}
+	}
+	return destPath, base
 }
 
 // iaString unmarshals an Internet Archive metadata field that may be either a

@@ -172,6 +172,7 @@ var _ = Describe("redactValue function", func() {
 		Expect(redactValue("PasswordEncryptionKey", "1234567890")).To(Equal("****"))
 		Expect(redactValue("DevAutoCreateAdminPassword", "1234567890")).To(Equal("****"))
 		Expect(redactValue("Prometheus.Password", "1234567890")).To(Equal("****"))
+		Expect(redactValue("GoogleDriveAPIKey", "AIzaSyExampleKey123")).To(Equal("****"))
 	})
 
 	It("fully masks short sensitive values", func() {

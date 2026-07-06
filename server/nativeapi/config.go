@@ -29,6 +29,7 @@ var sensitiveFieldsPartialMask = []string{
 // Add field paths using dot notation for any fields that should never show any content.
 var sensitiveFieldsFullMask = []string{
 	"DevAutoCreateAdminPassword",
+	"GoogleDriveAPIKey",
 	"PasswordEncryptionKey",
 	"Prometheus.Password",
 }

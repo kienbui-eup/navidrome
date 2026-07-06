@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Title, useNotify } from 'react-admin'
+import { Title, useNotify, usePermissions } from 'react-admin'
 import {
   Card,
   CardContent,
@@ -39,6 +39,7 @@ const errMsg = (e) => (e && (e.body || e.message)) || 'Lỗi không xác định
 const ImportMusic = () => {
   const classes = useStyles()
   const notify = useNotify()
+  const { permissions, loaded: permsLoaded } = usePermissions()
   const [tab, setTab] = useState(0)
 
   // shared busy flag keyed by an action id so individual buttons can spin
@@ -209,6 +210,19 @@ const ImportMusic = () => {
     } finally {
       setBusy(null)
     }
+  }
+
+  if (permsLoaded && permissions !== 'admin') {
+    return (
+      <Card className={classes.root}>
+        <Title title={`${APP_NAME} - Import nhạc`} />
+        <CardContent>
+          <Typography>
+            Chỉ quản trị viên mới sử dụng được tính năng import nhạc.
+          </Typography>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

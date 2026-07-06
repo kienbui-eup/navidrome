@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -211,6 +212,33 @@ func TestDriveAPIErrorMessage(t *testing.T) {
 	long := strings.Repeat("x", 500)
 	if got := driveAPIErrorMessage([]byte(long)); len(got) != 200 {
 		t.Errorf("long body should be truncated to 200, got %d", len(got))
+	}
+}
+
+func TestUniqueDest(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "song.mp3")
+
+	// Free path is returned unchanged.
+	if got, name := uniqueDest(p); got != p || name != "song.mp3" {
+		t.Fatalf("free path: got %q / %q", got, name)
+	}
+
+	// Taken -> "song (1).mp3".
+	if err := os.WriteFile(p, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got, name := uniqueDest(p)
+	if name != "song (1).mp3" {
+		t.Errorf("first collision name = %q, want %q", name, "song (1).mp3")
+	}
+
+	// Both taken -> "song (2).mp3".
+	if err := os.WriteFile(got, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, name := uniqueDest(p); name != "song (2).mp3" {
+		t.Errorf("second collision name = %q, want %q", name, "song (2).mp3")
 	}
 }
 
