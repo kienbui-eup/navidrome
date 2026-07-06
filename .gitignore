@@ -40,3 +40,6 @@ openspec/
 .agents
 go.work*
 .worktrees/
+
+# Claude Code local state (contains agent worktrees)
+.claude/
