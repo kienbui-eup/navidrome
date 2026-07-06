@@ -138,6 +138,14 @@ func (api *Router) addPlaylistRoute(r chi.Router) {
 			createPlaylistFromM3U(api.playlists)(w, r)
 		})
 
+		// Built-in smart playlist templates (Heavy Rotation, On Repeat, etc). Not
+		// admin-only: any authenticated user can list templates and create a
+		// playlist for themselves from one. See core/playlists/templates.go.
+		r.Route("/template", func(r chi.Router) {
+			r.Get("/", listPlaylistTemplates(api.playlists))
+			r.Post("/", createPlaylistFromTemplate(api.playlists))
+		})
+
 		r.Route("/{id}", func(r chi.Router) {
 			r.Use(server.URLParamsMiddleware)
 			r.Get("/", rest.Get(constructor))

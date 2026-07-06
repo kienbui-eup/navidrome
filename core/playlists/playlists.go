@@ -49,6 +49,10 @@ type Playlists interface {
 	// REST adapters
 	NewRepository(ctx context.Context) rest.Repository
 	TracksRepository(ctx context.Context, playlistId string, refreshSmartPlaylist bool) rest.Repository
+
+	// Templates
+	ListTemplates() []Template
+	CreateFromTemplate(ctx context.Context, templateID string, name string) (*model.Playlist, error)
 }
 
 // ImageUploadService is a local interface satisfied by core.ImageUploadService.
