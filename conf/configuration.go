@@ -105,18 +105,19 @@ type configOptions struct {
 	PasswordEncryptionKey           string
 	ExtAuth                         extAuthOptions
 	Plugins                         pluginsOptions
-	HTTPHeaders                     httpHeaderOptions   `json:",omitzero"`
-	Prometheus                      prometheusOptions   `json:",omitzero"`
-	Scanner                         scannerOptions      `json:",omitzero"`
-	Jukebox                         jukeboxOptions      `json:",omitzero"`
-	Backup                          backupOptions       `json:",omitzero"`
-	PID                             pidOptions          `json:",omitzero"`
-	Inspect                         inspectOptions      `json:",omitzero"`
-	Subsonic                        subsonicOptions     `json:",omitzero"`
-	Transcoding                     transcodingOptions  `json:",omitzero"`
-	LastFM                          lastfmOptions       `json:",omitzero"`
-	Deezer                          deezerOptions       `json:",omitzero"`
-	ListenBrainz                    listenBrainzOptions `json:",omitzero"`
+	HTTPHeaders                     httpHeaderOptions    `json:",omitzero"`
+	Prometheus                      prometheusOptions    `json:",omitzero"`
+	Scanner                         scannerOptions       `json:",omitzero"`
+	AutoPlaylists                   autoPlaylistsOptions `json:",omitzero"`
+	Jukebox                         jukeboxOptions       `json:",omitzero"`
+	Backup                          backupOptions        `json:",omitzero"`
+	PID                             pidOptions           `json:",omitzero"`
+	Inspect                         inspectOptions       `json:",omitzero"`
+	Subsonic                        subsonicOptions      `json:",omitzero"`
+	Transcoding                     transcodingOptions   `json:",omitzero"`
+	LastFM                          lastfmOptions        `json:",omitzero"`
+	Deezer                          deezerOptions        `json:",omitzero"`
+	ListenBrainz                    listenBrainzOptions  `json:",omitzero"`
 	EnableScrobbleHistory           bool
 	Tags                            map[string]TagConf `json:",omitempty"`
 	Agents                          string
@@ -164,6 +165,18 @@ type scannerOptions struct {
 	GroupAlbumReleases bool   // Deprecated: Use PID.Album instead
 	FollowSymlinks     bool   // Whether to follow symlinks when scanning directories
 	PurgeMissing       string // Values: "never", "always", "full"
+}
+
+// autoPlaylistsOptions configures the periodic job that creates personalized
+// smart playlists (from the templates in core/playlists/templates.go) for every
+// user. See plans/01-library-admin-auto-playlists.md, Phase 2.
+type autoPlaylistsOptions struct {
+	Enabled bool
+	// Schedule is a cron expression (see scheduler.ParseCrontab). An empty
+	// value (or "0") means no scheduled runs, even when Enabled is true -
+	// mirroring Scanner.Schedule - instead of failing validation at startup.
+	Schedule  string
+	Templates []string
 }
 
 type transcodingOptions struct {
@@ -392,6 +405,7 @@ func Load(noConfigDump bool) {
 	err = run.Sequentially(
 		validateScanSchedule,
 		validateBackupSchedule,
+		validateAutoPlaylistsSchedule,
 		validatePlaylistsPath,
 		validatePurgeMissingOption,
 		validateMaxImageUploadSize,
@@ -658,6 +672,21 @@ func validateBackupSchedule() error {
 	return err
 }
 
+func validateAutoPlaylistsSchedule() error {
+	if !Server.AutoPlaylists.Enabled {
+		return nil
+	}
+	// An empty (or "0") schedule means "no scheduled runs", same as Scanner.Schedule,
+	// rather than being passed to ParseCrontab and failing startup.
+	if Server.AutoPlaylists.Schedule == "0" || Server.AutoPlaylists.Schedule == "" {
+		Server.AutoPlaylists.Schedule = ""
+		return nil
+	}
+	var err error
+	Server.AutoPlaylists.Schedule, err = validateSchedule(Server.AutoPlaylists.Schedule, "AutoPlaylists.Schedule")
+	return err
+}
+
 func validateSchedule(schedule, field string) (string, error) {
 	_, err := scheduler.ParseCrontab(schedule)
 	if err != nil {
@@ -824,6 +853,14 @@ func setViperDefaults() {
 	viper.SetDefault("scanner.groupalbumreleases", false)
 	viper.SetDefault("scanner.followsymlinks", true)
 	viper.SetDefault("scanner.purgemissing", consts.PurgeMissingNever)
+	viper.SetDefault("autoplaylists.enabled", false)
+	viper.SetDefault("autoplaylists.schedule", "@weekly")
+	// Template IDs must match entries in core/playlists/Templates (see
+	// core/playlists/templates.go). Kept as literals here, not imported constants,
+	// to avoid a conf -> core/playlists -> conf import cycle (core/playlists
+	// already imports conf); core/playlists/auto_test.go cross-checks these
+	// literals against the template catalog.
+	viper.SetDefault("autoplaylists.templates", []string{"heavy_rotation", "rediscover", "recently_added"})
 	viper.SetDefault("subsonic.appendsubtitle", true)
 	viper.SetDefault("subsonic.appendalbumversion", true)
 	viper.SetDefault("subsonic.artistparticipations", false)

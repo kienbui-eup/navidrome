@@ -278,6 +278,68 @@ var _ = Describe("Configuration", func() {
 		})
 	})
 
+	Describe("AutoPlaylists", func() {
+		It("defaults to disabled, with a weekly schedule and the standard templates", func() {
+			conf.Load(true)
+
+			Expect(conf.Server.AutoPlaylists.Enabled).To(BeFalse())
+			Expect(conf.Server.AutoPlaylists.Schedule).To(Equal("@weekly"))
+			Expect(conf.Server.AutoPlaylists.Templates).To(Equal([]string{"heavy_rotation", "rediscover", "recently_added"}))
+		})
+
+		It("can be enabled through the ND_AUTOPLAYLISTS_ENABLED environment variable", func() {
+			GinkgoT().Setenv("ND_AUTOPLAYLISTS_ENABLED", "true")
+			conf.InitConfig("", true)
+
+			conf.Load(true)
+
+			Expect(conf.Server.AutoPlaylists.Enabled).To(BeTrue())
+		})
+
+		It("can override the schedule through the ND_AUTOPLAYLISTS_SCHEDULE environment variable", func() {
+			GinkgoT().Setenv("ND_AUTOPLAYLISTS_SCHEDULE", "@daily")
+			GinkgoT().Setenv("ND_AUTOPLAYLISTS_ENABLED", "true")
+			conf.InitConfig("", true)
+
+			conf.Load(true)
+
+			Expect(conf.Server.AutoPlaylists.Schedule).To(Equal("@daily"))
+		})
+
+		It("rejects an invalid schedule when enabled", func() {
+			viper.Set("autoplaylists.enabled", true)
+			viper.Set("autoplaylists.schedule", "not-a-cron-schedule")
+
+			Expect(func() {
+				conf.Load(true)
+			}).To(PanicWith(ContainSubstring("invalid AutoPlaylists.Schedule")))
+		})
+
+		It("treats an empty schedule as disabled scheduling, even when enabled, instead of panicking", func() {
+			viper.Set("autoplaylists.enabled", true)
+			viper.Set("autoplaylists.schedule", "")
+
+			Expect(func() {
+				conf.Load(true)
+			}).ToNot(Panic())
+
+			Expect(conf.Server.AutoPlaylists.Enabled).To(BeTrue())
+			Expect(conf.Server.AutoPlaylists.Schedule).To(Equal(""))
+		})
+
+		It("treats a \"0\" schedule as disabled scheduling, even when enabled, instead of panicking", func() {
+			viper.Set("autoplaylists.enabled", true)
+			viper.Set("autoplaylists.schedule", "0")
+
+			Expect(func() {
+				conf.Load(true)
+			}).ToNot(Panic())
+
+			Expect(conf.Server.AutoPlaylists.Enabled).To(BeTrue())
+			Expect(conf.Server.AutoPlaylists.Schedule).To(Equal(""))
+		})
+	})
+
 	DescribeTable("should load configuration from",
 		func(format string) {
 			filename := filepath.Join("testdata", "cfg."+format)

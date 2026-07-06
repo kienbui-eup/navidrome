@@ -59,6 +59,17 @@ func (m *MockPlaylistRepo) Put(pls *model.Playlist, _ ...string) error {
 	return nil
 }
 
+func (m *MockPlaylistRepo) GetAll(_ ...model.QueryOptions) (model.Playlists, error) {
+	if m.Err {
+		return nil, errors.New("error")
+	}
+	all := make(model.Playlists, 0, len(m.Data))
+	for _, pls := range m.Data {
+		all = append(all, *pls)
+	}
+	return all, nil
+}
+
 func (m *MockPlaylistRepo) FindByPath(path string) (*model.Playlist, error) {
 	if m.Err {
 		return nil, errors.New("error")

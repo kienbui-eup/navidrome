@@ -53,6 +53,10 @@ type Playlists interface {
 	// Templates
 	ListTemplates() []Template
 	CreateFromTemplate(ctx context.Context, templateID string, name string) (*model.Playlist, error)
+
+	// Auto-playlists (Phase 2): periodic job that creates the configured template
+	// playlists for every user. See auto.go.
+	RunAutoPlaylists(ctx context.Context) error
 }
 
 // ImageUploadService is a local interface satisfied by core.ImageUploadService.

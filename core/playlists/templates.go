@@ -162,7 +162,19 @@ func (s *playlists) ListTemplates() []Template {
 // given template's criteria as Rules. If name is empty, the template's display
 // name is used. Persistence goes through the same DataStore.Playlist(ctx).Put
 // path used by the regular POST /playlist flow (see rest_adapter.go savePlaylist).
+//
+// This is the user-facing path (POST /playlist/template): the resulting playlist
+// has an empty Comment, i.e. it is NOT marked as an auto-playlist. See
+// createFromTemplate and auto.go for the periodic job's use of the same helper
+// with the "auto:"+templateID marker.
 func (s *playlists) CreateFromTemplate(ctx context.Context, templateID string, name string) (*model.Playlist, error) {
+	return s.createFromTemplate(ctx, templateID, name, "")
+}
+
+// createFromTemplate is the shared implementation behind CreateFromTemplate (Phase 1,
+// user-triggered, comment left empty) and the auto-playlist job (Phase 2, comment set to
+// the "auto:"+templateID marker so the job can detect it already ran for this user/template).
+func (s *playlists) createFromTemplate(ctx context.Context, templateID string, name string, comment string) (*model.Playlist, error) {
 	tpl, ok := FindTemplate(templateID)
 	if !ok {
 		return nil, ErrTemplateNotFound
@@ -175,6 +187,7 @@ func (s *playlists) CreateFromTemplate(ctx context.Context, templateID string, n
 	pls := &model.Playlist{
 		Name:    name,
 		OwnerID: usr.ID,
+		Comment: comment,
 		Rules:   &rules,
 	}
 	if err := s.ds.Playlist(ctx).Put(pls); err != nil {

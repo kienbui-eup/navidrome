@@ -11,6 +11,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/navidrome/navidrome/conf"
 	"github.com/navidrome/navidrome/consts"
+	"github.com/navidrome/navidrome/core"
+	"github.com/navidrome/navidrome/core/playlists"
 	"github.com/navidrome/navidrome/db"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
@@ -87,6 +89,7 @@ func runNavidrome(ctx context.Context) {
 	g.Go(schedulePeriodicBackup(ctx))
 	g.Go(startInsightsCollector(ctx))
 	g.Go(scheduleDBOptimizer(ctx))
+	g.Go(scheduleAutoPlaylists(ctx))
 	g.Go(startPluginManager(ctx))
 	g.Go(runInitialScan(ctx))
 	if conf.Server.Scanner.Enabled {
@@ -272,6 +275,42 @@ func schedulePeriodicBackup(ctx context.Context) func() error {
 		})
 
 		return err
+	}
+}
+
+// scheduleAutoPlaylists registers the periodic auto-playlist job (Phase 2 of
+// plans/01-library-admin-auto-playlists.md), if enabled. Mirrors the
+// schedulePeriodicScan/schedulePeriodicBackup wiring pattern above: only
+// registers with the scheduler when the feature is enabled, so disabling it
+// (the default) means the job is never scheduled. Also mirrors
+// schedulePeriodicScan's empty-schedule guard: Schedule == "" (see
+// validateAutoPlaylistsSchedule) means no scheduled runs even when Enabled.
+func scheduleAutoPlaylists(ctx context.Context) func() error {
+	return func() error {
+		if !conf.Server.AutoPlaylists.Enabled {
+			log.Info(ctx, "Auto-playlists are DISABLED")
+			return nil
+		}
+		schedule := conf.Server.AutoPlaylists.Schedule
+		if schedule == "" {
+			log.Info(ctx, "Auto-playlists schedule is DISABLED")
+			return nil
+		}
+
+		ds := CreateDataStore()
+		pls := playlists.NewPlaylists(ds, core.NewImageUploadService())
+		schedulerInstance := scheduler.GetInstance()
+
+		log.Info(ctx, "Scheduling auto-playlists job", "schedule", schedule, "templates", conf.Server.AutoPlaylists.Templates)
+		_, err := schedulerInstance.Add(schedule, func() {
+			if err := pls.RunAutoPlaylists(ctx); err != nil {
+				log.Error(ctx, "Error running auto-playlists job", err)
+			}
+		})
+		if err != nil {
+			log.Error(ctx, "Error scheduling auto-playlists job", err)
+		}
+		return nil
 	}
 }
 
