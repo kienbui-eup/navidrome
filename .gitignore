@@ -43,3 +43,6 @@ go.work*
 
 # Claude Code local state (contains agent worktrees)
 .claude/
+
+# Yarn install state (machine-local artifact)
+ui/.yarn/
