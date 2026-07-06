@@ -35,6 +35,8 @@ import { httpClient } from '../dataProvider'
 import { APP_NAME } from '../consts'
 import { formatBytes } from '../utils'
 import config from '../config'
+import SongSearch from './SongSearch'
+import RemoteImport from './RemoteImport'
 
 const useStyles = makeStyles((theme) => ({
   root: { marginTop: '1em' },
@@ -297,9 +299,23 @@ const ImportMusic = () => {
     }
   }
 
+  // A remote-server import job is started server-side (expanded from a
+  // song/album/artist reference); adopt it into the shared progress box.
+  const onRemoteJobStarted = (jobId, count) => {
+    setJob({
+      id: jobId,
+      status: 'running',
+      total: count,
+      completed: 0,
+      failed: 0,
+      skipped: 0,
+      errors: [],
+    })
+  }
+
   const handleTab = (e, v) => {
     setTab(v)
-    if (v === 2) loadHistory()
+    if (v === 4) loadHistory()
   }
 
   if (permsLoaded && permissions !== 'admin') {
@@ -325,9 +341,9 @@ const ImportMusic = () => {
       <CardContent>
         <Typography variant="h6">Import nhạc từ nguồn công khai</Typography>
         <Typography className={classes.hint}>
-          Tải nhạc từ URL/podcast trực tiếp, thư mục Google Drive công khai, hoặc
-          kho mở Internet Archive vào thư viện. Chỉ dùng cho nội dung bạn có
-          quyền tải.
+          Tải nhạc từ URL/podcast trực tiếp, thư mục Google Drive công khai,
+          kho mở Internet Archive, hoặc một server Navidrome khác vào thư viện.
+          Chỉ dùng cho nội dung bạn có quyền tải.
         </Typography>
 
         {libraries.length > 1 && (
@@ -382,13 +398,23 @@ const ImportMusic = () => {
             indicatorColor="primary"
             textColor="primary"
           >
+            <Tab label="Tìm bài hát" />
             <Tab label="URL / RSS" />
             <Tab label="Internet Archive" />
+            <Tab label="Server khác" />
             <Tab label="Lịch sử" />
           </Tabs>
         </Box>
 
         {tab === 0 && (
+          <SongSearch
+            libraryId={libraryId}
+            onImported={afterImport}
+            classes={classes}
+          />
+        )}
+
+        {tab === 1 && (
           <Box className={classes.section}>
             <TextField
               className={classes.field}
@@ -539,7 +565,7 @@ const ImportMusic = () => {
           </Box>
         )}
 
-        {tab === 1 && (
+        {tab === 2 && (
           <Box className={classes.section}>
             <TextField
               className={classes.field}
@@ -652,7 +678,15 @@ const ImportMusic = () => {
           </Box>
         )}
 
-        {tab === 2 && (
+        {tab === 3 && (
+          <RemoteImport
+            libraryId={libraryId}
+            onJobStarted={onRemoteJobStarted}
+            classes={classes}
+          />
+        )}
+
+        {tab === 4 && (
           <Box className={classes.section}>
             {(!history || history.length === 0) && (
               <Typography className={classes.hint}>

@@ -51,6 +51,33 @@ type Importer interface {
 	ListDrive(ctx context.Context, driveURL string) ([]DriveFile, error)
 	// ImportDriveFile downloads one file from Google Drive by its file id into libraryID.
 	ImportDriveFile(ctx context.Context, fileID, name string, libraryID int) (*ImportResult, error)
+	// SearchSongs searches Archive.org (and optionally a public Google Drive
+	// folder) at the individual-song level, ranking hi-end formats first.
+	SearchSongs(ctx context.Context, query, driveFolder string, losslessOnly bool) (*SongSearchResult, error)
+	// PreviewDrive streams a Drive file for in-browser preview (Range supported).
+	// The caller must close the response body.
+	PreviewDrive(ctx context.Context, fileID, rangeHeader string) (*http.Response, error)
+	// RemoteServers lists the saved remote Subsonic/Navidrome source servers.
+	RemoteServers(ctx context.Context) ([]RemoteServer, error)
+	// SaveRemoteServer creates (empty ID) or updates a remote source server.
+	SaveRemoteServer(ctx context.Context, s RemoteServer) (*RemoteServer, error)
+	// DeleteRemoteServer removes a saved remote source server.
+	DeleteRemoteServer(ctx context.Context, serverID string) error
+	// TestRemoteServer pings a remote server to validate address/credentials.
+	TestRemoteServer(ctx context.Context, s RemoteServer) error
+	// RemoteSearch searches songs/albums/artists on a saved remote server.
+	RemoteSearch(ctx context.Context, serverID, query string) (*RemoteSearchResult, error)
+	// RemoteArtist lists the albums of an artist on a remote server.
+	RemoteArtist(ctx context.Context, serverID, artistID string) ([]RemoteAlbum, error)
+	// RemoteAlbum lists the songs of an album on a remote server.
+	RemoteAlbum(ctx context.Context, serverID, albumID string) ([]RemoteSong, error)
+	// StartRemoteImport expands a song/album/artist reference on a remote server
+	// into a background job downloading the original files; returns the job id
+	// and the number of songs queued.
+	StartRemoteImport(ctx context.Context, serverID, kind, refID string, libraryID int) (string, int, error)
+	// RemotePreview streams a song from a remote server for in-browser preview
+	// (Range supported). The caller must close the response body.
+	RemotePreview(ctx context.Context, serverID, songID, rangeHeader string) (*http.Response, error)
 	// StartImportJob runs a batch import in the background and returns its job id.
 	StartImportJob(ctx context.Context, items []ImportJobItem, libraryID int) (string, error)
 	// GetImportJob returns a snapshot of a running/finished job.
@@ -73,12 +100,17 @@ type ImportResult struct {
 
 // ImportJobItem describes one file to import within a batch job.
 type ImportJobItem struct {
-	Type       string `json:"type"`       // "url" | "archive" | "drive"
-	URL        string `json:"url"`        // for type "url"
-	Identifier string `json:"identifier"` // for type "archive"
-	Filename   string `json:"filename"`   // for type "archive"
-	ID         string `json:"id"`         // for type "drive"
-	Name       string `json:"name"`       // display label / drive filename
+	Type       string `json:"type"`               // "url" | "archive" | "drive" | "remote"
+	URL        string `json:"url"`                // for type "url"
+	Identifier string `json:"identifier"`         // for type "archive"
+	Filename   string `json:"filename"`           // for type "archive"
+	ID         string `json:"id"`                 // for type "drive" (file id) / "remote" (song id)
+	Name       string `json:"name"`               // display label / target filename
+	ServerID   string `json:"serverId,omitempty"` // for type "remote"
+
+	// Resolved by StartRemoteImport so a running job survives the deletion of
+	// its saved server entry. Nil for items posted via the generic job endpoint.
+	remoteServer *RemoteServer
 }
 
 func (it ImportJobItem) label() string {
@@ -110,8 +142,8 @@ type ImportJob struct {
 // ImportRecord is one entry in the persistent import history/audit log.
 type ImportRecord struct {
 	Time      string `json:"time"`   // RFC3339 UTC
-	Source    string `json:"source"` // "url" | "archive" | "drive"
-	Ref       string `json:"ref"`    // url / identifier|filename / drive id
+	Source    string `json:"source"` // "url" | "archive" | "drive" | "remote"
+	Ref       string `json:"ref"`    // url / identifier|filename / drive id / server:song id
 	SavedName string `json:"savedName"`
 	Bytes     int64  `json:"bytes"`
 	SHA256    string `json:"sha256"`
@@ -178,6 +210,9 @@ type importer struct {
 	scanner  model.Scanner
 	download *http.Client
 	api      *http.Client
+	// Base URLs, overridable in tests.
+	archiveBase string
+	driveBase   string
 
 	mu            sync.Mutex
 	jobs          map[string]*ImportJob
@@ -199,10 +234,12 @@ func NewImporter(ds model.DataStore, scanner model.Scanner) Importer {
 	// flow (it sets a download_warning cookie that the confirm request must echo).
 	jar, _ := cookiejar.New(nil)
 	return &importer{
-		ds:       ds,
-		scanner:  scanner,
-		download: &http.Client{Timeout: downloadTimeout, Jar: jar},
-		api:      &http.Client{Timeout: metadataTimeout},
+		ds:          ds,
+		scanner:     scanner,
+		download:    &http.Client{Timeout: downloadTimeout, Jar: jar},
+		api:         &http.Client{Timeout: metadataTimeout},
+		archiveBase: archiveBaseURL,
+		driveBase:   "https://www.googleapis.com",
 	}
 }
 
@@ -273,7 +310,7 @@ func (imp *importer) SearchArchive(ctx context.Context, query string, rows int) 
 	q.Set("page", "1")
 	q.Set("output", "json")
 	// fl[] repeated for each field we want back
-	endpoint := archiveBaseURL + "/advancedsearch.php?" +
+	endpoint := imp.archiveBase + "/advancedsearch.php?" +
 		"fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=creator&fl%5B%5D=year&" + q.Encode()
 
 	body, err := imp.getBody(ctx, endpoint, maxFeedResponseSize)
@@ -313,7 +350,7 @@ func (imp *importer) ArchiveFiles(ctx context.Context, identifier string) ([]Arc
 	if identifier == "" || strings.ContainsAny(identifier, "/\\") {
 		return nil, fmt.Errorf("invalid identifier")
 	}
-	endpoint := archiveBaseURL + "/metadata/" + url.PathEscape(identifier)
+	endpoint := imp.archiveBase + "/metadata/" + url.PathEscape(identifier)
 	body, err := imp.getBody(ctx, endpoint, maxFeedResponseSize)
 	if err != nil {
 		return nil, err
@@ -346,12 +383,7 @@ func (imp *importer) ImportArchive(ctx context.Context, identifier, filename str
 	if !isAudioExt(filename) {
 		return nil, fmt.Errorf("unsupported file type: %q", filename)
 	}
-	// Build the download URL, escaping each path segment of the (possibly nested) filename.
-	segments := strings.Split(filename, "/")
-	for i, s := range segments {
-		segments[i] = url.PathEscape(s)
-	}
-	dlURL := archiveBaseURL + "/download/" + url.PathEscape(identifier) + "/" + strings.Join(segments, "/")
+	dlURL := imp.archiveBase + "/download/" + url.PathEscape(identifier) + "/" + escapeArchivePath(filename)
 	name := safeAudioFilename(path.Base(filename))
 	meta := importMeta{libraryID: libraryID, source: "archive", ref: identifier + "/" + filename}
 	return imp.downloadTo(ctx, dlURL, name, false, meta)
@@ -415,6 +447,8 @@ func (imp *importer) runJob(ctx context.Context, jobID string, items []ImportJob
 			res, err = imp.ImportArchive(ctx, it.Identifier, it.Filename, libraryID)
 		case "drive":
 			res, err = imp.ImportDriveFile(ctx, it.ID, it.Name, libraryID)
+		case "remote":
+			res, err = imp.importRemoteItem(ctx, it, libraryID)
 		default:
 			err = fmt.Errorf("unknown item type %q", it.Type)
 		}
@@ -587,7 +621,7 @@ func (imp *importer) History(ctx context.Context) []ImportRecord {
 // importMeta carries the target library and provenance for history/audit.
 type importMeta struct {
 	libraryID int
-	source    string // "url" | "archive" | "drive"
+	source    string // "url" | "archive" | "drive" | "remote"
 	ref       string
 }
 
@@ -766,7 +800,7 @@ func (imp *importer) listDriveFolderAPI(ctx context.Context, folderID, apiKey st
 		if pageToken != "" {
 			q.Set("pageToken", pageToken)
 		}
-		body, err := imp.driveAPIGet(ctx, "https://www.googleapis.com/drive/v3/files?"+q.Encode())
+		body, err := imp.driveAPIGet(ctx, imp.driveBase+"/drive/v3/files?"+q.Encode())
 		if err != nil {
 			return nil, err
 		}
@@ -834,7 +868,7 @@ func (imp *importer) ImportDriveFile(ctx context.Context, fileID, name string, l
 		q.Set("alt", "media")
 		q.Set("supportsAllDrives", "true")
 		q.Set("key", key)
-		dlURL := "https://www.googleapis.com/drive/v3/files/" + url.PathEscape(fileID) + "?" + q.Encode()
+		dlURL := imp.driveBase + "/drive/v3/files/" + url.PathEscape(fileID) + "?" + q.Encode()
 		resp, err = imp.driveGet(ctx, dlURL)
 		if err != nil {
 			return nil, err
