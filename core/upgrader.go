@@ -97,6 +97,14 @@ type Upgrader interface {
 	// any still-approved ones) for processing, and prunes backup folders
 	// older than Upgrade.BackupRetentionDays.
 	Recover(ctx context.Context) error
+	// SweepStaging removes leftover files from the upgrade staging area that
+	// nothing references any more (orphaned partial downloads, or staged
+	// files left behind by a candidate that was force-approved/rejected/reset
+	// after downloading). Exported so callers outside this package — e.g. the
+	// admin-delete flow, after removing a track that had a needs_review
+	// candidate — can trigger a sweep immediately instead of waiting for the
+	// next startup/queue-drain sweep.
+	SweepStaging(ctx context.Context)
 }
 
 // upgradeScanState is the mutex-guarded progress of the current/last scan,
@@ -207,6 +215,10 @@ func (u *upgrader) CancelScan() {
 	if cancel != nil {
 		cancel()
 	}
+}
+
+func (u *upgrader) SweepStaging(ctx context.Context) {
+	u.sweepStaging(ctx)
 }
 
 // runScan performs steps 1-4 of the design doc's "Luồng xử lý": select

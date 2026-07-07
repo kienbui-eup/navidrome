@@ -43,6 +43,8 @@ type fakeUpgrader struct {
 	batchAccepted []string
 	batchErr      error
 	lastBatchIDs  []string
+
+	sweepStagingCalls int
 }
 
 func (f *fakeUpgrader) StartScan(_ context.Context, libraryID int, mediaFileIDs []string) error {
@@ -75,6 +77,8 @@ func (f *fakeUpgrader) ApproveBatch(_ context.Context, ids []string) ([]string, 
 }
 
 func (f *fakeUpgrader) Recover(context.Context) error { return nil }
+
+func (f *fakeUpgrader) SweepStaging(context.Context) { f.sweepStagingCalls++ }
 
 var _ core.Upgrader = (*fakeUpgrader)(nil)
 
