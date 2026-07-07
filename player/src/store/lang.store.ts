@@ -11,9 +11,9 @@ export const useLangStore = createWithEqualityFn<ILangContext>()(
     persist(
       devtools(
         immer((set) => ({
-          langCode: '',
-          langNativeName: '',
-          flag: '',
+          langCode: 'vi',
+          langNativeName: 'Tiếng Việt',
+          flag: 'VN',
           setLang: (lang: string) => {
             if (!lang) return
 

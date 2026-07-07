@@ -1,0 +1,793 @@
+{
+  "home": {
+    "recentlyPlayed": "Nghe gần đây",
+    "mostPlayed": "Nghe nhiều nhất",
+    "recentlyAdded": "Mới thêm gần đây",
+    "explore": "Khám phá"
+  },
+  "sidebar": {
+    "home": "Trang chủ",
+    "search": "Tìm kiếm…",
+    "miniSearch": "Tìm kiếm",
+    "library": "Thư viện",
+    "artists": "Nghệ sĩ",
+    "songs": "Bài hát",
+    "albums": "Album",
+    "favorites": "Yêu thích",
+    "playlists": "Danh sách phát",
+    "radios": "Radio",
+    "podcasts": "Podcast",
+    "genres": "Thể loại",
+    "emptyPlaylist": "Chưa có danh sách phát nào được tạo"
+  },
+  "menu": {
+    "language": "Ngôn ngữ",
+    "server": "Máy chủ",
+    "about": "Giới thiệu",
+    "serverLogout": "Đăng xuất"
+  },
+  "generic": {
+    "seeMore": "Xem thêm",
+    "showDetails": "Hiện chi tiết",
+    "hideDetails": "Ẩn chi tiết",
+    "viewAll": "Xem tất cả",
+    "loading": "Đang tải…",
+    "viewMode": {
+      "label": "Chế độ xem",
+      "modes": {
+        "list": "Danh sách",
+        "poster": "Ảnh bìa"
+      }
+    },
+    "beta": "Beta"
+  },
+  "theme": {
+    "label": "Giao diện",
+    "light": "Sáng",
+    "dark": "Tối",
+    "system": "Hệ thống",
+    "black": "Đen Trắng",
+    "one-dark": "One Dark",
+    "night-owl-light": "Night Owl Light",
+    "marmalade-beaver": "Marmalade Beaver",
+    "noctis-lilac": "Noctis Lilac",
+    "material-theme": "Material Theme",
+    "monokai-pro": "Monokai Pro",
+    "github-dark": "Github Dark",
+    "shades-of-purple": "Shades Of Purple",
+    "bearded-solarized": "Bearded Solarized",
+    "catppuccin-mocha": "Catppuccin Mocha",
+    "nuclear-dark": "Nuclear Dark",
+    "achiever": "Achiever",
+    "dracula": "Dracula",
+    "discord": "Discord",
+    "tinacious-design": "Tinacious Design",
+    "vue-dark": "Vue Dark",
+    "vim-dark-soft": "Vim Dark Soft"
+  },
+  "playlist": {
+    "headline": "Danh sách phát",
+    "songCount_one": "{{count}} bài hát",
+    "songCount_other": "{{count}} bài hát",
+    "duration": "khoảng {{duration}}",
+    "refresh": "Làm mới danh sách phát",
+    "buttons": {
+      "play": "Phát {{name}}",
+      "pause": "Tạm dừng {{name}}",
+      "shuffle": "Phát {{name}} ở chế độ ngẫu nhiên",
+      "options": "Thêm tùy chọn cho {{name}}"
+    },
+    "noSongList": "Danh sách phát này chưa có bài hát nào!",
+    "form": {
+      "labels": {
+        "name": "Tên",
+        "comment": "Ghi chú",
+        "commentDescription": "Viết mô tả ngắn cho danh sách phát này",
+        "isPublic": "Công khai",
+        "isPublicDescription": "Chọn tùy chọn này để công khai danh sách phát. Điều này sẽ cho phép người dùng khác xem và truy cập danh sách phát của bạn."
+      },
+      "create": {
+        "title": "Tạo danh sách phát",
+        "button": "Tạo",
+        "toast": {
+          "success": "Tạo danh sách phát thành công!",
+          "error": "Tạo danh sách phát thất bại!"
+        }
+      },
+      "edit": {
+        "title": "Sửa danh sách phát",
+        "button": "Cập nhật",
+        "toast": {
+          "success": "Cập nhật danh sách phát thành công!",
+          "error": "Cập nhật danh sách phát thất bại!"
+        }
+      },
+      "delete": {
+        "title": "Bạn có chắc muốn xóa danh sách phát này không?",
+        "description": "Hành động này không thể hoàn tác.",
+        "toast": {
+          "success": "Xóa danh sách phát thành công!",
+          "error": "Xóa danh sách phát thất bại!"
+        }
+      },
+      "validations": {
+        "nameLength": "Tên danh sách phát phải có ít nhất 2 ký tự."
+      },
+      "removeSong": {
+        "title_one": "Bạn có chắc muốn xóa bài hát đã chọn không?",
+        "title_other": "Bạn có chắc muốn xóa các bài hát đã chọn không?",
+        "description": "Hành động này không thể hoàn tác.",
+        "toast": {
+          "success_one": "Xóa bài hát thành công!",
+          "success_other": "Xóa các bài hát thành công!",
+          "error_one": "Xóa bài hát thất bại!",
+          "error_other": "Xóa các bài hát thất bại!"
+        }
+      }
+    }
+  },
+  "songs": {
+    "list": {
+      "search": {
+        "placeholder": "Tìm bài hát…"
+      },
+      "byArtist": "Bài hát của {{artist}}",
+      "filter": {
+        "clear": "Xóa bộ lọc"
+      }
+    }
+  },
+  "album": {
+    "headline": "Album",
+    "buttons": {
+      "play": "Phát {{name}}",
+      "pause": "Tạm dừng {{name}}",
+      "shuffle": "Phát {{name}} ở chế độ ngẫu nhiên",
+      "like": "Thích {{name}}",
+      "dislike": "Bỏ thích {{name}}"
+    },
+    "info": {
+      "about": "Giới thiệu về {{name}}",
+      "lastfm": "Mở trong Last.fm",
+      "musicbrainz": "Mở trong MusicBrainz"
+    },
+    "more": {
+      "listTitle": "Thêm từ nghệ sĩ này",
+      "discography": "Toàn bộ album của nghệ sĩ",
+      "genreTitle": "Thêm từ {{genre}}"
+    },
+    "list": {
+      "header": {
+        "albumsByArtist": "Album của {{artist}}"
+      },
+      "empty": {
+        "title": "Rất tiếc, không có album nào ở đây!",
+        "info": "Có vẻ như không có album nào khớp với bộ lọc hiện tại.",
+        "action": "Thử điều chỉnh lại bộ lọc xem sao?"
+      },
+      "genre": {
+        "label": "Chọn một thể loại…",
+        "search": "Tìm thể loại…",
+        "loading": "Đang tải thể loại…",
+        "notFound": "Không tìm thấy thể loại nào."
+      },
+      "filter": {
+        "artist": "Nghệ sĩ",
+        "genre": "Thể loại",
+        "favorites": "Yêu thích",
+        "mostPlayed": "Nghe nhiều nhất",
+        "name": "Tên",
+        "random": "Ngẫu nhiên",
+        "recentlyAdded": "Mới thêm gần đây",
+        "recentlyPlayed": "Nghe gần đây",
+        "releaseYear": "Năm phát hành",
+        "discography": "Toàn bộ album",
+        "search": "Tìm kiếm"
+      },
+      "search": {
+        "placeholder": "Tìm album…"
+      }
+    },
+    "table": {
+      "discNumber": "Đĩa {{number}}"
+    }
+  },
+  "genre": {
+    "headline": "Thể loại"
+  },
+  "genres": {
+    "albumCount_one": "{{count}} album",
+    "albumCount_other": "{{count}} album",
+    "buttons": {
+      "shuffleTracks": "Phát ngẫu nhiên các bài hát",
+      "shuffleAlbums": "Phát ngẫu nhiên các album"
+    }
+  },
+  "favorites": {
+    "noSongList": "Bạn chưa thêm bài hát nào vào yêu thích!"
+  },
+  "artist": {
+    "headline": "Nghệ sĩ",
+    "buttons": {
+      "play": "Phát radio {{artist}}",
+      "shuffle": "Phát radio {{artist}} ở chế độ ngẫu nhiên",
+      "options": "Thêm tùy chọn cho {{artist}}"
+    },
+    "info": {
+      "albumsCount_one": "{{count}} album",
+      "albumsCount_other": "{{count}} album"
+    },
+    "topSongs": "Phổ biến",
+    "recentAlbums": "Album gần đây",
+    "relatedArtists": "Nghệ sĩ liên quan"
+  },
+  "podcasts": {
+    "form": {
+      "all": "Duyệt",
+      "latestEpisodes": "Tập mới nhất",
+      "addButton": "Thêm Podcast",
+      "search": "Tìm podcast…",
+      "dialog": {
+        "title": "Tạo Podcast",
+        "feedUrl": "URL Feed",
+        "message": "Bạn có thể thêm nhiều URL, mỗi URL một dòng.",
+        "saveButton": "Lưu",
+        "validations": {
+          "url": "Vui lòng nhập URL hợp lệ.",
+          "urlLength": "URL phải có ít nhất 10 ký tự",
+          "protocol": "URL phải bắt đầu bằng http:// hoặc https://",
+          "atLeastOneUrl": "Vui lòng nhập ít nhất một URL."
+        }
+      },
+      "toasts": {
+        "success": "Tạo podcast thành công! Bạn sẽ có thể nghe trong vài phút nữa!",
+        "error": "Tạo podcast thất bại!"
+      }
+    },
+    "emptyPage": {
+      "message": "Chưa có podcast nào",
+      "description": "Có vẻ như bạn chưa thêm podcast nào. Hãy thêm một podcast ở trên!"
+    },
+    "latestEpisodes": {
+      "emptyPage": {
+        "message": "Không có tập nào",
+        "description": "Hãy thử thêm podcast khác.",
+        "goToPodcasts": "Đến trang Podcast"
+      }
+    },
+    "emptyResults": {
+      "title": "Không tìm thấy kết quả nào.",
+      "info": "Chúng tôi không tìm thấy podcast nào khớp với từ khóa tìm kiếm của bạn.",
+      "action": "Vui lòng kiểm tra chính tả hoặc thử từ khóa khác."
+    },
+    "filters": {
+      "episodes": {
+        "search": "Tìm tập…",
+        "orderBy": {
+          "publishDate": "Ngày phát hành",
+          "title": "Tiêu đề",
+          "duration": "Thời lượng"
+        }
+      },
+      "podcasts": {
+        "orderBy": {
+          "title": "Tiêu đề",
+          "episodeCount": "Số lượng tập"
+        }
+      }
+    },
+    "header": {
+      "episodeCount_one": "{{count}} tập",
+      "episodeCount_other": "{{count}} tập",
+      "feed": "Feed",
+      "website": "Trang web chính thức",
+      "unfollow": {
+        "tooltip": "Bỏ theo dõi {{title}}",
+        "dialog": {
+          "title": "Bạn có chắc muốn bỏ theo dõi podcast này không?",
+          "description": "Để nghe lại podcast này sau này, bạn sẽ cần tạo lại nó."
+        },
+        "toasts": {
+          "success": "Bạn đã bỏ theo dõi podcast thành công!",
+          "error": "Đã xảy ra lỗi khi bỏ theo dõi podcast. Vui lòng thử lại."
+        }
+      }
+    },
+    "list": {
+      "episodes": "Các tập",
+      "notFoundMessage": "Podcast này chưa có tập nào!",
+      "progress": {
+        "remainingTime": "Còn lại {{time}}",
+        "completed": "Đã hoàn thành"
+      }
+    }
+  },
+  "table": {
+    "columns": {
+      "title": "Tiêu đề",
+      "albumArtist": "Nghệ sĩ album",
+      "artist": "Nghệ sĩ",
+      "contributors": "Người đóng góp",
+      "album": "Album",
+      "year": "Năm",
+      "duration": "Thời lượng",
+      "plays": "Lượt phát",
+      "lastPlayed": "Nghe lần cuối",
+      "bpm": "BPM",
+      "bitrate": "Bitrate",
+      "quality": "Chất lượng",
+      "name": "Tên",
+      "albumCount": "Số lượng album",
+      "songCount": "Số lượng bài hát",
+      "comment": "Ghi chú",
+      "public": "Công khai",
+      "track": "Track",
+      "genres": "Thể loại",
+      "size": "Kích thước",
+      "codec": "Codec",
+      "path": "Đường dẫn",
+      "favorite": "Yêu thích",
+      "recordLabel": "Hãng đĩa",
+      "discNumber": "Số đĩa",
+      "trackGain": "Gain track",
+      "trackPeak": "Đỉnh track",
+      "albumGain": "Gain album",
+      "albumPeak": "Đỉnh album",
+      "channelCount": "Số kênh",
+      "samplingRate": "Tần số lấy mẫu",
+      "bitDepth": "Độ sâu bit"
+    },
+    "buttons": {
+      "play": "Phát {{title}} của {{artist}}",
+      "pause": "Tạm dừng {{title}} của {{artist}}"
+    },
+    "lastPlayed": "{{date}} trước",
+    "pagination": {
+      "rowsPerPage": "Số dòng mỗi trang",
+      "currentPage": "Trang {{currentPage}} / {{totalPages}}",
+      "screenReader": {
+        "firstPage": "Đến trang đầu",
+        "previousPage": "Đến trang trước",
+        "nextPage": "Đến trang sau",
+        "lastPage": "Đến trang cuối"
+      }
+    },
+    "sort": {
+      "asc": "Tăng dần",
+      "desc": "Giảm dần",
+      "reset": "Đặt lại"
+    },
+    "menu": {
+      "selectedCount_one": "Đã chọn {{count}}",
+      "selectedCount_other": "Đã chọn {{count}}"
+    }
+  },
+  "fullscreen": {
+    "noLyrics": "Không tìm thấy lời bài hát",
+    "loadingLyrics": "Đang tìm lời bài hát…",
+    "queue": "Hàng chờ",
+    "playing": "Đang phát",
+    "lyrics": "Lời bài hát",
+    "switchButton": "Chuyển sang Trình phát lớn"
+  },
+  "logout": {
+    "dialog": {
+      "title": "Sẵn sàng tạm biệt chưa?",
+      "description": "Xác nhận đăng xuất.",
+      "cancel": "Hủy",
+      "confirm": "Tiếp tục"
+    }
+  },
+  "login": {
+    "form": {
+      "server": "Máy chủ",
+      "description": "Kết nối đến máy chủ Subsonic của bạn.",
+      "url": "URL",
+      "urlDescription": "Đây là URL máy chủ của bạn",
+      "username": "Tên đăng nhập",
+      "usernamePlaceholder": "Tên đăng nhập của bạn",
+      "password": "Mật khẩu",
+      "connect": "Kết nối",
+      "connecting": "Đang kết nối…",
+      "validations": {
+        "url": "Vui lòng nhập URL hợp lệ.",
+        "protocol": "URL phải bắt đầu bằng http:// hoặc https://",
+        "username": "Vui lòng nhập tên đăng nhập",
+        "usernameLength": "Tên đăng nhập phải có ít nhất 2 ký tự.",
+        "password": "Vui lòng nhập mật khẩu",
+        "passwordLength": "Mật khẩu phải có ít nhất 2 ký tự."
+      }
+    }
+  },
+  "toast": {
+    "server": {
+      "success": "Lưu máy chủ thành công!",
+      "error": "Giao tiếp với máy chủ thất bại!"
+    }
+  },
+  "command": {
+    "inputPlaceholder": "Tìm album, nghệ sĩ hoặc bài hát",
+    "noResults": "Không tìm thấy kết quả nào.",
+    "commands": {
+      "heading": "Lệnh",
+      "pages": "Đến trang",
+      "theme": "Đổi giao diện"
+    },
+    "pages": "Trang"
+  },
+  "player": {
+    "noSongPlaying": "Không có bài hát nào đang phát",
+    "noRadioPlaying": "Không có radio nào đang phát",
+    "tooltips": {
+      "shuffle": {
+        "enable": "Bật phát ngẫu nhiên",
+        "disable": "Tắt phát ngẫu nhiên"
+      },
+      "rewind": "Tua lại {{amount}} giây",
+      "previous": "Trước",
+      "play": "Phát",
+      "pause": "Tạm dừng",
+      "forward": "Tua tới {{amount}} giây",
+      "next": "Tiếp theo",
+      "repeat": {
+        "enable": "Bật lặp lại",
+        "enableOne": "Bật lặp lại 1 bài",
+        "disable": "Tắt lặp lại"
+      },
+      "like": "Thích {{song}} của {{artist}}",
+      "dislike": "Bỏ thích {{song}} của {{artist}}",
+      "miniPlayer": {
+        "open": "Mở Trình phát mini",
+        "close": "Đóng Trình phát mini"
+      },
+      "volume": {
+        "mute": "Tắt tiếng",
+        "unmute": "Bật tiếng"
+      }
+    }
+  },
+  "options": {
+    "play": "Phát",
+    "playNext": "Phát tiếp theo",
+    "addLast": "Thêm vào cuối",
+    "download": "Tải xuống",
+    "playlist": {
+      "add": "Thêm vào danh sách phát",
+      "edit": "Sửa danh sách phát",
+      "delete": "Xóa danh sách phát",
+      "search": "Tìm danh sách phát",
+      "create": "Danh sách phát mới",
+      "notFound": "Không tìm thấy danh sách phát nào",
+      "removeSong": "Xóa khỏi danh sách phát"
+    },
+    "info": "Xem thông tin",
+    "markAsPlayed": "Đánh dấu đã nghe",
+    "goto": {
+      "episode": "Đến tập",
+      "podcast": "Đến podcast"
+    }
+  },
+  "radios": {
+    "label": "Radio",
+    "addRadio": "Thêm Radio",
+    "table": {
+      "name": "Tên",
+      "homepage": "URL Trang chủ",
+      "stream": "URL Stream",
+      "actions": {
+        "edit": "Sửa radio",
+        "delete": "Xóa radio"
+      },
+      "playTooltip": "Phát radio {{name}}",
+      "pauseTooltip": "Tạm dừng radio {{name}}"
+    },
+    "empty": {
+      "title": "Bạn chưa có radio nào!",
+      "info": "Nhấn để thêm đài radio đầu tiên của bạn."
+    },
+    "error": "Không thể phát Radio, hãy kiểm tra URL Stream!",
+    "form": {
+      "create": {
+        "title": "Thêm Radio",
+        "button": "Lưu",
+        "toast": {
+          "success": "Tạo radio thành công!",
+          "error": "Tạo radio thất bại!"
+        }
+      },
+      "edit": {
+        "title": "Sửa Radio",
+        "button": "Cập nhật",
+        "toast": {
+          "success": "Cập nhật radio thành công!",
+          "error": "Cập nhật radio thất bại!"
+        }
+      },
+      "delete": {
+        "title": "Bạn có chắc muốn xóa đài radio này không?",
+        "description": "Hành động này không thể hoàn tác.",
+        "toast": {
+          "success": "Xóa radio thành công!",
+          "error": "Xóa radio thất bại!"
+        }
+      },
+      "validations": {
+        "name": "Tên radio phải có ít nhất 3 ký tự.",
+        "url": "Vui lòng nhập URL hợp lệ.",
+        "homepageUrlLength": "URL Trang chủ phải có ít nhất 10 ký tự",
+        "streamUrlLength": "URL Stream phải có ít nhất 10 ký tự"
+      }
+    }
+  },
+  "time": {
+    "days_one": "{{days}} ngày",
+    "days_other": "{{days}} ngày",
+    "hour": "{{hour}} giờ",
+    "minutes": "{{minutes}} phút",
+    "seconds": "{{seconds}} giây"
+  },
+  "server": {
+    "songCount_one": "{{count}} bài hát",
+    "songCount_other": "{{count}} bài hát",
+    "folderCount_one": "{{count}} thư mục",
+    "folderCount_other": "{{count}} thư mục",
+    "lastScan": "Quét lần cuối: {{date}}",
+    "status": "Trạng thái",
+    "management": "Quản lý máy chủ",
+    "incompatible": {
+      "title": "Máy chủ không tương thích",
+      "description": "Máy chủ này sử dụng phiên bản cũ hơn của giao thức Subsonic chưa được hỗ trợ đầy đủ. Vui lòng thận trọng vì bạn có thể gặp sự cố.",
+      "skip": "Vẫn tiếp tục"
+    },
+    "buttons": {
+      "refresh": "Làm mới trạng thái",
+      "startScan": "Quét nhanh"
+    }
+  },
+  "downloads": {
+    "started": "Đã bắt đầu tải xuống.",
+    "failed": "Đã xảy ra lỗi khi tải xuống tệp của bạn.",
+    "completed": "Tệp của bạn đã được tải xuống."
+  },
+  "queue": {
+    "title": "Hàng chờ",
+    "clear": "Xóa hàng chờ",
+    "close": "Đóng hàng chờ",
+    "open": "Mở hàng chờ"
+  },
+  "shortcuts": {
+    "modal": {
+      "title": "Phím tắt",
+      "description": {
+        "first": "Nhấn",
+        "last": "để bật/tắt hộp thoại này."
+      }
+    },
+    "playback": {
+      "label": "Phát nhạc",
+      "play": "Phát / Tạm dừng",
+      "shuffle": "Phát ngẫu nhiên",
+      "repeat": "Lặp lại",
+      "previous": "Về bài trước",
+      "next": "Đến bài sau",
+      "raiseVolume": "Tăng âm lượng",
+      "lowerVolume": "Giảm âm lượng"
+    },
+    "navigation": {
+      "label": "Điều hướng"
+    },
+    "sidebar": {
+      "toggle": "Bật/tắt thanh bên"
+    }
+  },
+  "songInfo": {
+    "title": "Chi tiết bài hát",
+    "error": "Không thể lấy thông tin bài hát. Vui lòng thử lại sau."
+  },
+  "warnings": {
+    "reload": "Đang có bài hát phát!\nBạn có chắc muốn tải lại trang không?",
+    "songError": "Không thể phát bài hát, hãy kiểm tra Máy chủ!"
+  },
+  "update": {
+    "dialog": {
+      "title": "Có phiên bản mới!",
+      "remindLater": "Nhắc lại sau",
+      "install": "Cài đặt và khởi động lại",
+      "macOS": "Tải xuống trên GitHub"
+    },
+    "toasts": {
+      "started": "Quá trình cập nhật đã bắt đầu.",
+      "success": "Đã cài đặt bản cập nhật! Ứng dụng sẽ khởi động lại ngay.",
+      "error": "Cài đặt bản cập nhật thất bại. Vui lòng thử tải trực tiếp từ GitHub."
+    }
+  },
+  "about": {
+    "client": "Ứng dụng khách",
+    "server": "Máy chủ",
+    "version": "Phiên bản",
+    "type": "Loại",
+    "apiVersion": "Phiên bản API",
+    "toasts": {
+      "copy": "Đã sao chép liên kết vào bộ nhớ tạm!"
+    }
+  },
+  "mobile": {
+    "unsupported_message": "{{app_name}} không tương thích với điện thoại di động.",
+    "access_recommendation": "Vui lòng truy cập từ máy tính hoặc máy tính bảng."
+  },
+  "settings": {
+    "label": "Cài đặt",
+    "options": {
+      "appearance": "Giao diện",
+      "language": "Ngôn ngữ & Khu vực",
+      "audio": "Trình phát & Âm thanh",
+      "content": "Nội dung",
+      "accounts": "Tài khoản",
+      "desktop": "Ứng dụng Desktop",
+      "privacy": "Quyền riêng tư & Bảo mật"
+    },
+    "appearance": {
+      "general": {
+        "group": "Chung",
+        "description": "Tùy chỉnh giao diện và hành vi hiển thị của ứng dụng.",
+        "fullscreen": {
+          "label": "Bật toàn màn hình tự động",
+          "info": "Nếu bật, khi mở trình phát lớn, ứng dụng sẽ tự động chuyển sang chế độ toàn màn hình."
+        }
+      },
+      "colors": {
+        "group": "Màu động",
+        "description": "Chọn xem ứng dụng có nên dùng màu chủ đạo từ ảnh bìa album đang phát làm nền hay không.",
+        "queue": {
+          "label": "Hàng chờ và Lời bài hát",
+          "intensity": "Mức độ đậm màu"
+        },
+        "bigPlayer": {
+          "label": "Trình phát lớn",
+          "blurSize": "Độ mờ hình ảnh"
+        }
+      }
+    },
+    "audio": {
+      "replayGain": {
+        "group": "ReplayGain",
+        "description": "Tự động chuẩn hóa mức âm lượng phát để có trải nghiệm nghe nhất quán.",
+        "enabled": "Đã bật",
+        "error": {
+          "message": "Đã xảy ra lỗi khi phát bài hát bằng Replay Gain.",
+          "button": "Thử lại"
+        },
+        "mode": {
+          "label": "Chế độ",
+          "track": "Gain track",
+          "album": "Gain album"
+        },
+        "preAmp": "PreAmp (dB)",
+        "defaultGain": {
+          "label": "Gain mặc định (dB)",
+          "info": "Mức gain này được áp dụng cho các bài hát không có metadata ReplayGain, giúp đảm bảo âm lượng nhất quán. Khoảng gain khuyến nghị là từ -10 dB đến -1 dB."
+        }
+      },
+      "lyrics": {
+        "group": "Lời bài hát",
+        "description": "Tùy chỉnh cài đặt lời bài hát.",
+        "preferSynced": {
+          "label": "Ưu tiên lời bài hát đồng bộ",
+          "info": "Khi bật, lời bài hát đồng bộ sẽ được ưu tiên hơn lời bài hát không đồng bộ."
+        }
+      }
+    },
+    "privacy": {
+      "services": {
+        "group": "Dịch vụ bên ngoài",
+        "description": "Quản lý các dịch vụ bên ngoài mà Trợ lý nhạc có thể truy cập.",
+        "lrclib": {
+          "info": "LRCLIB được dùng để tìm lời bài hát.",
+          "label": "LRCLIB",
+          "customUrl": {
+            "toggle": "Dùng URL tùy chỉnh",
+            "info": "Dùng URL tùy chỉnh cho LRCLIB thay vì URL mặc định.",
+            "label": "URL",
+            "example": "Ví dụ: https://my-lrclib.com"
+          }
+        },
+        "animatedCover": {
+          "enabled": {
+            "label": "Bật ảnh bìa động",
+            "info": "Khi bật, ảnh bìa động sẽ được tải từ dịch vụ bên ngoài khi có sẵn."
+          },
+          "customUrl": {
+            "toggle": "Dùng URL tùy chỉnh",
+            "info": "Dùng URL tùy chỉnh cho API ảnh bìa động thay vì URL mặc định.",
+            "label": "URL",
+            "example": "Mặc định: https://artwork.m8tec.top"
+          },
+          "screens": {
+            "album": {
+              "label": "Trang album",
+              "info": "Bật ảnh bìa động ở phần đầu trang album."
+            },
+            "fullscreen": {
+              "label": "Trình phát lớn",
+              "info": "Bật ảnh bìa động cho bài hát đang phát trong Trình phát lớn."
+            },
+            "playerBar": {
+              "label": "Thanh phát nhạc phía dưới",
+              "info": "Bật ảnh bìa động cho bài hát đang phát trên thanh phát nhạc."
+            },
+            "drawer": {
+              "label": "Hàng chờ và Lời bài hát",
+              "info": "Bật ảnh bìa động cho bài hát đang phát trong ngăn Hàng chờ và Lời bài hát."
+            }
+          }
+        }
+      }
+    },
+    "content": {
+      "sidebar": {
+        "group": "Thanh bên",
+        "description": "Hiện hoặc ẩn các mục trong thanh bên."
+      },
+      "podcast": {
+        "group": "Podcast",
+        "description": "Bật tích hợp với dịch vụ Podcast của Trợ lý nhạc.",
+        "enabled": {
+          "label": "Bật tích hợp"
+        },
+        "service": {
+          "url": "URL Dịch vụ Podcast"
+        },
+        "credentials": {
+          "label": "Dùng người dùng đã đăng nhập và URL máy chủ",
+          "error": "Cần có Tên đăng nhập và URL máy chủ.",
+          "user": "Tên đăng nhập",
+          "url": "URL máy chủ"
+        }
+      },
+      "images": {
+        "group": "Hình ảnh",
+        "description": "Tùy chỉnh cài đặt hình ảnh.",
+        "cacheLayer": {
+          "info": "Khi bật, hình ảnh sẽ được lưu bộ nhớ đệm cục bộ để cải thiện hiệu năng.",
+          "label": "Bật bộ nhớ đệm hình ảnh"
+        }
+      }
+    },
+    "accounts": {
+      "discord": {
+        "group": "Discord Rich Presence",
+        "description": "Chia sẻ bài hát đang phát với bạn bè trên Discord.",
+        "enabled": {
+          "label": "Bật tích hợp"
+        }
+      }
+    },
+    "desktop": {
+      "general": {
+        "group": "Chung",
+        "description": "Tùy chỉnh tùy chọn cho ứng dụng desktop.",
+        "tray": {
+          "label": "Thu nhỏ xuống khay hệ thống",
+          "info": "Khi bật, ứng dụng sẽ thu nhỏ xuống khay hệ thống thay vì đóng lại khi bạn nhấn nút đóng."
+        }
+      }
+    }
+  },
+  "dayjs": {
+    "relativeTime": {
+      "future": "trong %s",
+      "past": "%s trước",
+      "s": "vài giây",
+      "m": "1 phút",
+      "mm": "%d phút",
+      "h": "1 giờ",
+      "hh": "%d giờ",
+      "d": "1 ngày",
+      "dd": "%d ngày",
+      "M": "1 tháng",
+      "MM": "%d tháng",
+      "y": "1 năm",
+      "yy": "%d năm"
+    }
+  }
+}

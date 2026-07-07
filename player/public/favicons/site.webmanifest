@@ -1,6 +1,6 @@
 {
-  "name": "Aonsoku",
-  "short_name": "Aonsoku",
+  "name": "Trợ lý nhạc",
+  "short_name": "Trợ lý nhạc",
   "description": "A modern desktop client for Navidrome/Subsonic servers.",
   "theme_color": "#060E23",
   "categories": ["music", "entertainment"],

@@ -15,6 +15,7 @@ import ru from './locales/ru.json'
 import sv from './locales/sv.json'
 import tr from './locales/tr.json'
 import uk from './locales/uk.json'
+import vi from './locales/vi.json'
 import yueHant from './locales/yue-Hant.json'
 import zhHans from './locales/zh-Hans.json'
 
@@ -38,6 +39,7 @@ export const resources = {
   uk: { translation: uk },
   'yue-Hant': { translation: yueHant },
   'zh-Hans': { translation: zhHans },
+  vi: { translation: vi },
 }
 
 export const languages = [
@@ -154,5 +156,11 @@ export const languages = [
     langCode: 'zh-Hans',
     flag: 'CN',
     dayjsLocale: 'zh-cn',
+  },
+  {
+    nativeName: 'Tiếng Việt',
+    langCode: 'vi',
+    flag: 'VN',
+    dayjsLocale: 'vi',
   },
 ]
