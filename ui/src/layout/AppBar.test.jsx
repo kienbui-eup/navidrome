@@ -28,6 +28,9 @@ vi.mock('./PersonalMenu', () => ({
 vi.mock('./ImportMenu', () => ({
   default: () => <div />,
 }))
+vi.mock('./UpgradeMenu', () => ({
+  default: () => <div />,
+}))
 vi.mock('./UserMenu', () => ({
   default: ({ children }) => <div>{children}</div>,
 }))

@@ -94,7 +94,7 @@ var _ = Describe("Song Endpoints", func() {
 		mfRepo.SetData(testSongs)
 
 		// Create the native API router and wrap it with the JWTVerifier middleware
-		nativeRouter := New(ds, nil, nil, nil, tests.NewMockLibraryService(), tests.NewMockUserService(), nil, nil, nil, nil)
+		nativeRouter := New(ds, nil, nil, nil, tests.NewMockLibraryService(), tests.NewMockUserService(), nil, nil, nil, nil, nil)
 		router = server.JWTVerifier(nativeRouter)
 		w = httptest.NewRecorder()
 	})
@@ -247,12 +247,14 @@ var _ = Describe("Song Endpoints", func() {
 		})
 
 		Context("DELETE /song/{id}", func() {
-			It("should not be available (songs are not persistable)", func() {
+			It("should be admin-only (songs are not persistable by regular users)", func() {
 				req := createAuthenticatedRequest("DELETE", "/song/song-1", nil)
 				router.ServeHTTP(w, req)
 
-				// Should return 405 Method Not Allowed or 404 Not Found
-				Expect(w.Code).To(Equal(http.StatusMethodNotAllowed))
+				// DELETE /song/{id} exists (admin permanent delete, see
+				// deletion.go/deletion_test.go) but is registered inside the
+				// admin-only group, so a regular user gets 403.
+				Expect(w.Code).To(Equal(http.StatusForbidden))
 			})
 		})
 	})

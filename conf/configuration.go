@@ -17,11 +17,11 @@ import (
 	"github.com/go-viper/encoding/ini"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/kr/pretty"
+	"github.com/spf13/viper"
 	"github.com/vi2play/vi2play/consts"
 	"github.com/vi2play/vi2play/log"
 	"github.com/vi2play/vi2play/scheduler"
 	"github.com/vi2play/vi2play/utils/run"
-	"github.com/spf13/viper"
 )
 
 type configOptions struct {
@@ -111,6 +111,7 @@ type configOptions struct {
 	AutoPlaylists                   autoPlaylistsOptions `json:",omitzero"`
 	Jukebox                         jukeboxOptions       `json:",omitzero"`
 	Backup                          backupOptions        `json:",omitzero"`
+	Upgrade                         upgradeOptions       `json:",omitzero"`
 	PID                             pidOptions           `json:",omitzero"`
 	Inspect                         inspectOptions       `json:",omitzero"`
 	Subsonic                        subsonicOptions      `json:",omitzero"`
@@ -260,6 +261,25 @@ type pidOptions struct {
 	Album string
 }
 
+// upgradeOptions configures the Quality Upgrader feature. See
+// docs/superpowers/specs/2026-07-06-quality-upgrader-design.md, "Cấu hình".
+//
+// Deviation from the design doc's config table: DriveFolders and RSSFeeds are
+// not listed there, but are required to actually use the "drive"/"rss"
+// sources (ListDrive/ParseFeed need a folder URL / feed URL to query). An
+// empty list silently skips that source even when it's included in Sources.
+type upgradeOptions struct {
+	Enabled              bool
+	Schedule             string
+	Sources              string
+	MinMatchScore        int
+	MinBitRate           int
+	MaxCandidatesPerScan int
+	BackupRetentionDays  int
+	DriveFolders         []string
+	RSSFeeds             []string
+}
+
 type inspectOptions struct {
 	Enabled        bool
 	MaxRequests    int
@@ -406,6 +426,7 @@ func Load(noConfigDump bool) {
 		validateScanSchedule,
 		validateBackupSchedule,
 		validateAutoPlaylistsSchedule,
+		validateUpgradeSchedule,
 		validatePlaylistsPath,
 		validatePurgeMissingOption,
 		validateMaxImageUploadSize,
@@ -687,6 +708,15 @@ func validateAutoPlaylistsSchedule() error {
 	return err
 }
 
+func validateUpgradeSchedule() error {
+	if Server.Upgrade.Schedule == "" {
+		return nil
+	}
+	var err error
+	Server.Upgrade.Schedule, err = validateSchedule(Server.Upgrade.Schedule, "Upgrade.Schedule")
+	return err
+}
+
 func validateSchedule(schedule, field string) (string, error) {
 	_, err := scheduler.ParseCrontab(schedule)
 	if err != nil {
@@ -888,6 +918,15 @@ func setViperDefaults() {
 	viper.SetDefault("backup.path", "")
 	viper.SetDefault("backup.schedule", "")
 	viper.SetDefault("backup.count", 0)
+	viper.SetDefault("upgrade.enabled", false)
+	viper.SetDefault("upgrade.schedule", "")
+	viper.SetDefault("upgrade.sources", "archive")
+	viper.SetDefault("upgrade.minmatchscore", 70)
+	viper.SetDefault("upgrade.minbitrate", 0)
+	viper.SetDefault("upgrade.maxcandidatesperscan", 200)
+	viper.SetDefault("upgrade.backupretentiondays", 30)
+	viper.SetDefault("upgrade.drivefolders", []string{})
+	viper.SetDefault("upgrade.rssfeeds", []string{})
 	viper.SetDefault("pid.track", consts.DefaultTrackPID)
 	viper.SetDefault("pid.album", consts.DefaultAlbumPID)
 	viper.SetDefault("inspect.enabled", true)

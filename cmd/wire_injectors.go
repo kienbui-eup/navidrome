@@ -121,6 +121,12 @@ func CreateScanWatcher(ctx context.Context) scanner.Watcher {
 	))
 }
 
+func CreateUpgrader(ctx context.Context) core.Upgrader {
+	panic(wire.Build(
+		allProviders,
+	))
+}
+
 func GetPlaybackServer() playback.PlaybackServer {
 	panic(wire.Build(
 		allProviders,

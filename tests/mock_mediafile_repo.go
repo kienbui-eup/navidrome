@@ -235,6 +235,20 @@ func (m *MockMediaFileRepo) DeleteAllMissing() (int64, error) {
 	return count, nil
 }
 
+// MarkMissing sets the Missing flag on the given media files (matched by ID,
+// same as the real repo). IDs no longer in Data are silently ignored.
+func (m *MockMediaFileRepo) MarkMissing(missing bool, mfs ...*model.MediaFile) error {
+	if m.Err {
+		return errors.New("error")
+	}
+	for _, mf := range mfs {
+		if d, ok := m.Data[mf.ID]; ok {
+			d.Missing = missing
+		}
+	}
+	return nil
+}
+
 // ResourceRepository methods
 func (m *MockMediaFileRepo) Count(...rest.QueryOptions) (int64, error) {
 	return m.CountAll()

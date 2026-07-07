@@ -1,0 +1,10 @@
+<resources>
+    <!-- Base app theme; the Compose UI applies the real (dark) color scheme.
+         Platform dark theme (no com.google.android.material dependency) so the
+         splash/system bars look right before Compose takes over. -->
+    <style name="Theme.TroLyNhac" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/nhac_background</item>
+        <item name="android:statusBarColor">@color/nhac_background</item>
+        <item name="android:navigationBarColor">@color/nhac_background</item>
+    </style>
+</resources>

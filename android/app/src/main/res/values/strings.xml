@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">vi2play</string>
+    <string name="connect_server">Kết nối máy chủ</string>
+    <string name="subtitle">Trình phát bit-perfect cho Navidrome</string>
+</resources>

@@ -2,8 +2,12 @@ package core
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,11 +18,34 @@ import (
 	"github.com/vi2play/vi2play/utils/slice"
 )
 
+// ErrUpgradeInProgress is returned by DeleteMediaFiles/DeleteAlbum when one or
+// more of the target media files has an upgrade candidate in status
+// "approved" or "downloading". Deleting the original file while the upgrader
+// worker may be about to download/verify/replace it would race with that
+// pipeline, so the whole batch is rejected before any file is touched (see
+// docs/superpowers/specs/2026-07-07-admin-delete-design.md, "Chặn xoá khi
+// đang upgrade"). Use errors.Is to check for it; the wrapped message lists
+// the blocked track ids/titles.
+var ErrUpgradeInProgress = errors.New("cannot delete: an upgrade is in progress for one or more tracks")
+
 type Maintenance interface {
 	// DeleteMissingFiles deletes specific missing files by their IDs
 	DeleteMissingFiles(ctx context.Context, ids []string) error
 	// DeleteAllMissingFiles deletes all files marked as missing
 	DeleteAllMissingFiles(ctx context.Context) error
+	// DeleteMediaFiles permanently deletes the given media files: removes the
+	// audio file from disk (idempotent if already absent) and the DB record.
+	// IDs that don't exist in the DB are skipped silently. If any file fails
+	// to be removed from disk (e.g. a permission error), its DB row is kept
+	// and the error is included in the returned (joined) error, but the other
+	// files in the batch are still deleted. Returns ErrUpgradeInProgress
+	// (deleting nothing) if any target id has an "approved" or "downloading"
+	// upgrade candidate.
+	DeleteMediaFiles(ctx context.Context, ids []string) error
+	// DeleteAlbum permanently deletes every media file belonging to albumID,
+	// using the same semantics as DeleteMediaFiles. A no-op (no error) if the
+	// album has no tracks.
+	DeleteAlbum(ctx context.Context, albumID string) error
 }
 
 type maintenanceService struct {
@@ -38,6 +65,162 @@ func (s *maintenanceService) DeleteMissingFiles(ctx context.Context, ids []strin
 
 func (s *maintenanceService) DeleteAllMissingFiles(ctx context.Context) error {
 	return s.deleteMissing(ctx, nil)
+}
+
+func (s *maintenanceService) DeleteMediaFiles(ctx context.Context, ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	mfs, err := s.fetchMediaFilesByID(ctx, ids)
+	if err != nil {
+		return err
+	}
+	return s.deleteWithConflictCheck(ctx, mfs)
+}
+
+func (s *maintenanceService) DeleteAlbum(ctx context.Context, albumID string) error {
+	if albumID == "" {
+		return nil
+	}
+	mfs, err := s.ds.MediaFile(ctx).GetAll(model.QueryOptions{
+		Filters: squirrel.Eq{"album_id": albumID},
+	})
+	if err != nil {
+		return err
+	}
+	// The SQL filter above is best-effort (mocks in tests ignore Filters and
+	// return everything), so re-check in-process, same defensive pattern used
+	// by upgrader_apply.go's sweepStaging.
+	filtered := make(model.MediaFiles, 0, len(mfs))
+	for _, mf := range mfs {
+		if mf.AlbumID == albumID {
+			filtered = append(filtered, mf)
+		}
+	}
+	return s.deleteWithConflictCheck(ctx, filtered)
+}
+
+// fetchMediaFilesByID resolves ids to their MediaFile rows, silently skipping
+// any id that no longer exists in the DB (idempotent: deleting an
+// already-gone track is a success, not an error).
+func (s *maintenanceService) fetchMediaFilesByID(ctx context.Context, ids []string) (model.MediaFiles, error) {
+	mfs := make(model.MediaFiles, 0, len(ids))
+	for _, id := range ids {
+		mf, err := s.ds.MediaFile(ctx).Get(id)
+		if err != nil {
+			if errors.Is(err, model.ErrNotFound) {
+				continue
+			}
+			return nil, err
+		}
+		mfs = append(mfs, *mf)
+	}
+	return mfs, nil
+}
+
+// deleteWithConflictCheck is the shared entry point for DeleteMediaFiles and
+// DeleteAlbum: check for in-progress upgrades across the whole set of mfs
+// before touching any file (so a conflicting batch fails clean, with nothing
+// removed), then delegate to deleteFiles.
+func (s *maintenanceService) deleteWithConflictCheck(ctx context.Context, mfs model.MediaFiles) error {
+	if len(mfs) == 0 {
+		return nil
+	}
+	ids := make([]string, len(mfs))
+	for i, mf := range mfs {
+		ids[i] = mf.ID
+	}
+	if err := s.checkUpgradeConflicts(ctx, ids); err != nil {
+		return err
+	}
+	return s.deleteFiles(ctx, mfs)
+}
+
+// checkUpgradeConflicts returns ErrUpgradeInProgress (wrapped, listing the
+// blocked track titles/ids) if any of ids has an upgrade candidate currently
+// "approved" or "downloading" — i.e. the upgrader worker may be about to
+// download/verify/replace that file.
+func (s *maintenanceService) checkUpgradeConflicts(ctx context.Context, ids []string) error {
+	idSet := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		idSet[id] = true
+	}
+	candidates, err := s.ds.UpgradeCandidate(ctx).GetAll(model.QueryOptions{
+		Filters: squirrel.And{
+			squirrel.Eq{"media_file_id": ids},
+			squirrel.Eq{"status": []string{model.UpgradeCandidateStatusApproved, model.UpgradeCandidateStatusDownloading}},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("checking upgrade candidates: %w", err)
+	}
+	var blocked []string
+	for _, c := range candidates {
+		// The SQL filter above is best-effort (mocks ignore it), so re-check
+		// in-process — same defensive pattern as sweepStaging.
+		if !idSet[c.MediaFileID] {
+			continue
+		}
+		if c.Status != model.UpgradeCandidateStatusApproved && c.Status != model.UpgradeCandidateStatusDownloading {
+			continue
+		}
+		blocked = append(blocked, fmt.Sprintf("%s (%s)", c.Title, c.MediaFileID))
+	}
+	if len(blocked) == 0 {
+		return nil
+	}
+	return fmt.Errorf("%w: %s", ErrUpgradeInProgress, strings.Join(blocked, ", "))
+}
+
+// deleteFiles removes the audio file for each mf from disk, then reuses the
+// existing missing-files pipeline (MarkMissing → deleteMissing) to drop the
+// DB rows for the ones that were successfully removed (or already absent).
+// Files that fail to be removed (e.g. a permission error) keep their DB row;
+// the error is reported but doesn't stop the rest of the batch from being
+// deleted.
+func (s *maintenanceService) deleteFiles(ctx context.Context, mfs model.MediaFiles) error {
+	if len(mfs) == 0 {
+		return nil
+	}
+	var okIDs []string
+	var okMfs []*model.MediaFile
+	var errs []error
+	for i := range mfs {
+		mf := &mfs[i]
+		err := os.Remove(mf.AbsolutePath())
+		if err != nil && !os.IsNotExist(err) {
+			log.Error(ctx, "Error deleting media file from disk", "id", mf.ID, "path", mf.AbsolutePath(), err)
+			// The aggregated error reaches the HTTP response body; unwrap the
+			// PathError so the absolute library path is not exposed to clients.
+			var pathErr *fs.PathError
+			if errors.As(err, &pathErr) {
+				err = pathErr.Err
+			}
+			errs = append(errs, fmt.Errorf("%s (%s): %w", mf.Title, mf.ID, err))
+			continue
+		}
+		okIDs = append(okIDs, mf.ID)
+		okMfs = append(okMfs, mf)
+	}
+
+	if len(okIDs) > 0 {
+		// Mark-missing-before-delete: getAffectedAlbumIDs and
+		// MediaFileRepository.DeleteMissing both filter on missing=true, so
+		// marking first lets deleteMissing's pipeline (tx delete → GC →
+		// stats refresh) be reused as-is, with no new persistence method.
+		if err := s.ds.MediaFile(ctx).MarkMissing(true, okMfs...); err != nil {
+			log.Error(ctx, "Error marking media files missing before delete", "ids", okIDs, err)
+			return fmt.Errorf("marking media files missing: %w", err)
+		}
+		if err := s.deleteMissing(ctx, okIDs); err != nil {
+			return err
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("deleted %d/%d files, %d failed: %w", len(okIDs), len(mfs), len(errs), errors.Join(errs...))
+	}
+	return nil
 }
 
 // deleteMissing handles the deletion of missing files and triggers necessary cleanup operations

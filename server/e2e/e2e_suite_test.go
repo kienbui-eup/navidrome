@@ -339,6 +339,10 @@ func (n noopFFmpeg) ConvertAnimatedImage(context.Context, io.Reader, int, int) (
 	return nil, errors.New("noop ffmpeg: convert animated image not supported")
 }
 
+func (n noopFFmpeg) MeasureLRA(context.Context, string) (float64, error) {
+	return 0, errors.New("noop ffmpeg: LRA measurement not supported")
+}
+
 func (n noopFFmpeg) CmdPath() (string, error) { return "", nil }
 func (n noopFFmpeg) IsAvailable() bool        { return false }
 func (n noopFFmpeg) IsProbeAvailable() bool   { return true }

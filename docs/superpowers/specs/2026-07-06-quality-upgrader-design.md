@@ -134,7 +134,9 @@ reject không được tạo lại ở lần quét sau (tra unique index trướ
 | `Upgrade.MinMatchScore` | `70` | Ngưỡng match score |
 | `Upgrade.MinBitRate` | `0` | Chỉ quét track lossy có bitrate dưới ngưỡng; `0` = quét mọi track lossy |
 | `Upgrade.MaxCandidatesPerScan` | `200` | Chặn quét quá lớn |
-| `Upgrade.BackupRetentionDays` | `30` | Thời gian giữ file cũ |
+| `Upgrade.BackupRetentionDays` | `30` | Thời gian giữ file cũ; `<=0` = tắt prune |
+| `Upgrade.DriveFolders` | `[]` | Folder Google Drive để tìm; rỗng = bỏ qua nguồn drive |
+| `Upgrade.RSSFeeds` | `[]` | Feed RSS để tìm; rỗng = bỏ qua nguồn rss |
 
 Cron dùng package `scheduler` có sẵn, đăng ký khi `Upgrade.Enabled=true` và
 `Upgrade.Schedule` không rỗng.
@@ -190,3 +192,26 @@ Trang admin mới `ui/src/upgrade/UpgradeQuality.jsx`, route `/upgrade`, chỉ h
 3. Kích hoạt: thủ công + cron định kỳ.
 4. Tiêu chí: 2 giai đoạn — format/bitrate trước tải; DR + metadata sau tải.
 5. Kiến trúc: module Upgrader riêng, tái dùng pipeline Importer.
+
+## Điều chỉnh khi triển khai (đã chốt trong quá trình thực thi)
+
+- Thêm `Upgrade.DriveFolders` / `Upgrade.RSSFeeds` — Drive/RSS cần biết quét ở đâu;
+  spec gốc thiếu.
+- Similarity = Dice coefficient trên token set đã chuẩn hóa (không thêm dependency
+  Levenshtein). Cả 3 nguồn đều ước tính chất lượng best-effort (extension class + regex
+  parse bitrate/bit depth từ text); xác minh thực ở giai đoạn 2.
+- Staging download tại `<DataFolder>/upgrade-staging` (ngoài library, scanner không
+  thấy); tái dùng SSRF guard/size cap của Importer; checksum dedup không áp cho staging
+  để force re-download hoạt động, audit vẫn ghi checksum lúc thay.
+- `verifyInfo` JSON: `{actualBitRate, actualSampleRate, actualBitDepth, lraOld, lraNew,
+  missingTags[]}` + optional `lraSkipped`, `stagedPath`. LRA đo lỗi hoặc thiếu ffmpeg →
+  bỏ qua gate kèm warning, không fail candidate.
+- Recovery khi khởi động re-enqueue cả `approved` lẫn `downloading`. Force flag không
+  persist qua restart — resume như approve thường, nếu vẫn thiếu tag thì quay lại
+  `needs_review`.
+- Upgrader là singleton (`singleton.GetInstance`) — router, cron, recovery chung một
+  instance/queue.
+- API thêm `POST /scan/cancel`. Force-approve chỉ có ở endpoint đơn lẻ (batch không
+  hỗ trợ force). Danh sách candidates sort `updatedAt` giảm dần, phân trang
+  `_start/_end`, media file gốc bị xóa → trả field current* rỗng thay vì lỗi.
+- Audit thay thế ghi vào import history với status `upgraded`.

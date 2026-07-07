@@ -680,7 +680,8 @@
     "albumList": "Albums",
     "playlists": "Playlists",
     "sharedPlaylists": "Shared Playlists",
-    "about": "About"
+    "about": "About",
+    "upgradeQuality": "Quality Upgrader"
   },
   "player": {
     "playListsText": "Play Queue",
@@ -763,6 +764,83 @@
       "current_song": "Go to Current Song",
       "vol_up": "Volume Up",
       "vol_down": "Volume Down"
+    }
+  },
+  "upgrade": {
+    "pageTitle": "Quality Upgrader",
+    "heading": "Find higher-quality versions of your tracks",
+    "hint": "Scan the library for lossy tracks and look for higher-quality versions among the sources already configured for import (Internet Archive, Google Drive, RSS). Nothing is replaced automatically — every candidate must be approved by an admin.",
+    "adminOnly": "Only administrators can use the quality upgrader.",
+    "librarySelect": {
+      "label": "Scan scope",
+      "all": "All libraries"
+    },
+    "scan": {
+      "button": "Scan now",
+      "running": "Scanning",
+      "done": "Scan complete",
+      "progress": "%{scanned}/%{total} tracks scanned - %{found} candidates found",
+      "alreadyRunning": "A scan is already running"
+    },
+    "tabs": {
+      "pending": "Pending review",
+      "history": "History"
+    },
+    "table": {
+      "currentTrack": "Current track",
+      "candidate": "Candidate",
+      "source": "Source",
+      "matchScore": "Match score",
+      "status": "Status",
+      "actions": "Actions",
+      "reviewedBy": "Reviewed by",
+      "updatedAt": "Updated at"
+    },
+    "status": {
+      "pending": "Pending",
+      "needs_review": "Needs review",
+      "approved": "Approved",
+      "downloading": "Downloading",
+      "rejected": "Rejected",
+      "replaced": "Replaced",
+      "failed": "Failed"
+    },
+    "source": {
+      "archive": "Internet Archive",
+      "drive": "Google Drive",
+      "rss": "RSS"
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "forceApprove": "Force approve",
+      "approveSelected": "Approve selected (%{count})",
+      "selectAll": "Select all",
+      "loadMore": "Load more"
+    },
+    "verify": {
+      "title": "Verification result",
+      "lra": "Loudness range (LRA)",
+      "lraOld": "old",
+      "lraNew": "new",
+      "missingTags": "Missing tags vs. current file",
+      "noVerifyInfo": "No verification data yet"
+    },
+    "empty": {
+      "pending": "No candidates pending review.",
+      "history": "No history yet."
+    },
+    "notify": {
+      "unknownError": "Unknown error",
+      "approved": "Candidate approved",
+      "approveFailed": "Could not approve: %{error}",
+      "rejected": "Candidate rejected",
+      "rejectFailed": "Could not reject: %{error}",
+      "batchApproved": "Approved %{count} candidates",
+      "batchApproveFailed": "Could not approve selected candidates: %{error}",
+      "scanStarted": "Scan started",
+      "scanDone": "Scan complete: %{found} candidates found",
+      "startFailed": "Could not start scan: %{error}"
     }
   }
 }

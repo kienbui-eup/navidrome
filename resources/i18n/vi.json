@@ -680,7 +680,8 @@
     "albumList": "Album",
     "playlists": "Danh sách phát",
     "sharedPlaylists": "Danh sách phát được chia sẻ",
-    "about": "Giới thiệu"
+    "about": "Giới thiệu",
+    "upgradeQuality": "Nâng cấp chất lượng"
   },
   "player": {
     "playListsText": "Hàng chờ phát",
@@ -763,6 +764,83 @@
       "current_song": "Đến bài hát hiện tại",
       "vol_up": "Tăng âm lượng",
       "vol_down": "Giảm âm lượng"
+    }
+  },
+  "upgrade": {
+    "pageTitle": "Nâng cấp chất lượng",
+    "heading": "Tìm bản nhạc chất lượng cao hơn cho thư viện",
+    "hint": "Quét thư viện để tìm các track định dạng nén (lossy) và tìm phiên bản chất lượng cao hơn từ các nguồn đã cấu hình để import (Internet Archive, Google Drive, RSS). Không có gì bị thay thế tự động — mọi ứng viên đều cần admin duyệt trước.",
+    "adminOnly": "Chỉ quản trị viên mới sử dụng được tính năng nâng cấp chất lượng.",
+    "librarySelect": {
+      "label": "Phạm vi quét",
+      "all": "Tất cả thư viện"
+    },
+    "scan": {
+      "button": "Quét ngay",
+      "running": "Đang quét",
+      "done": "Quét xong",
+      "progress": "Đã quét %{scanned}/%{total} track - tìm thấy %{found} ứng viên",
+      "alreadyRunning": "Đang có một lượt quét khác chạy"
+    },
+    "tabs": {
+      "pending": "Chờ duyệt",
+      "history": "Lịch sử"
+    },
+    "table": {
+      "currentTrack": "Track hiện tại",
+      "candidate": "Ứng viên",
+      "source": "Nguồn",
+      "matchScore": "Độ khớp",
+      "status": "Trạng thái",
+      "actions": "Hành động",
+      "reviewedBy": "Người duyệt",
+      "updatedAt": "Cập nhật lúc"
+    },
+    "status": {
+      "pending": "Chờ duyệt",
+      "needs_review": "Cần xem lại",
+      "approved": "Đã duyệt",
+      "downloading": "Đang tải",
+      "rejected": "Đã từ chối",
+      "replaced": "Đã thay thế",
+      "failed": "Lỗi"
+    },
+    "source": {
+      "archive": "Internet Archive",
+      "drive": "Google Drive",
+      "rss": "RSS"
+    },
+    "actions": {
+      "approve": "Duyệt",
+      "reject": "Từ chối",
+      "forceApprove": "Ép duyệt",
+      "approveSelected": "Duyệt %{count} mục đã chọn",
+      "selectAll": "Chọn tất cả",
+      "loadMore": "Tải thêm"
+    },
+    "verify": {
+      "title": "Kết quả xác minh",
+      "lra": "Dynamic range (LRA)",
+      "lraOld": "cũ",
+      "lraNew": "mới",
+      "missingTags": "Thiếu tag so với file hiện tại",
+      "noVerifyInfo": "Chưa có dữ liệu xác minh"
+    },
+    "empty": {
+      "pending": "Không có ứng viên nào đang chờ duyệt.",
+      "history": "Chưa có lịch sử."
+    },
+    "notify": {
+      "unknownError": "Lỗi không xác định",
+      "approved": "Đã duyệt ứng viên",
+      "approveFailed": "Không duyệt được: %{error}",
+      "rejected": "Đã từ chối ứng viên",
+      "rejectFailed": "Không từ chối được: %{error}",
+      "batchApproved": "Đã duyệt %{count} ứng viên",
+      "batchApproveFailed": "Không duyệt được các mục đã chọn: %{error}",
+      "scanStarted": "Đã bắt đầu quét",
+      "scanDone": "Quét xong: tìm thấy %{found} ứng viên",
+      "startFailed": "Không bắt đầu quét được: %{error}"
     }
   }
 }

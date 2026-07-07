@@ -340,8 +340,9 @@ var _ = Describe("Transcode Endpoints", Ordered, func() {
 				Expect(resp.TranscodeDecision.CanTranscode).To(BeTrue())
 				Expect(resp.TranscodeDecision.TranscodeStream).ToNot(BeNil())
 				Expect(resp.TranscodeDecision.TranscodeStream.Codec).To(Equal("flac"))
-				// DSD sample rate normalized: 2822400 / 8 = 352800
-				Expect(resp.TranscodeDecision.TranscodeStream.AudioSamplerate).To(Equal(int32(352800)))
+				// DSD normalized (2822400/8 = 352800), then clamped to the FLAC
+				// codec cap (192kHz) staying in the 44.1kHz family: 176400
+				Expect(resp.TranscodeDecision.TranscodeStream.AudioSamplerate).To(Equal(int32(176400)))
 				// DSD 1-bit → 24-bit PCM
 				Expect(resp.TranscodeDecision.TranscodeStream.AudioBitdepth).To(Equal(int32(24)))
 			})

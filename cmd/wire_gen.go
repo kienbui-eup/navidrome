@@ -82,8 +82,9 @@ func CreateNativeAPIRouter(ctx context.Context) *nativeapi.Router {
 	library := core.NewLibrary(dataStore, modelScanner, watcher, broker, manager)
 	user := core.NewUser(dataStore, manager)
 	importer := core.NewImporter(dataStore, modelScanner)
+	upgrader := core.GetUpgrader(dataStore, importer, fFmpeg)
 	maintenance := core.NewMaintenance(dataStore)
-	router := nativeapi.New(dataStore, share, playlistsPlaylists, insights, library, user, importer, maintenance, manager, imageUploadService)
+	router := nativeapi.New(dataStore, share, playlistsPlaylists, insights, library, user, importer, upgrader, maintenance, manager, imageUploadService)
 	return router
 }
 
@@ -202,6 +203,27 @@ func CreateScanWatcher(ctx context.Context) scanner.Watcher {
 	modelScanner := scanner.New(ctx, dataStore, cacheWarmer, broker, playlistsPlaylists, metricsMetrics)
 	watcher := scanner.GetWatcher(dataStore, modelScanner)
 	return watcher
+}
+
+func CreateUpgrader(ctx context.Context) core.Upgrader {
+	sqlDB := db.Db()
+	dataStore := persistence.New(sqlDB)
+	fileCache := artwork.GetImageCache()
+	fFmpeg := ffmpeg.New()
+	broker := events.GetBroker()
+	metricsMetrics := metrics.GetPrometheusInstance(dataStore)
+	manager := plugins.GetManager(dataStore, broker, metricsMetrics)
+	agentsAgents := agents.GetAgents(dataStore, manager)
+	matcherMatcher := matcher.New(dataStore)
+	provider := external.NewProvider(dataStore, agentsAgents, matcherMatcher)
+	artworkArtwork := artwork.NewArtwork(dataStore, fileCache, fFmpeg, provider)
+	cacheWarmer := artwork.NewCacheWarmer(artworkArtwork, fileCache)
+	imageUploadService := core.NewImageUploadService()
+	playlistsPlaylists := playlists.NewPlaylists(dataStore, imageUploadService)
+	modelScanner := scanner.New(ctx, dataStore, cacheWarmer, broker, playlistsPlaylists, metricsMetrics)
+	importer := core.NewImporter(dataStore, modelScanner)
+	upgrader := core.GetUpgrader(dataStore, importer, fFmpeg)
+	return upgrader
 }
 
 func GetPlaybackServer() playback.PlaybackServer {
