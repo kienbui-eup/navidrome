@@ -158,7 +158,7 @@ var _ = Describe("Playlist Template Routes (full router)", func() {
 		}
 		Expect(userRepo.Put(&testUser)).To(Succeed())
 
-		nativeRouter := New(ds, nil, svc, nil, tests.NewMockLibraryService(), tests.NewMockUserService(), nil, nil, nil, nil)
+		nativeRouter := New(ds, nil, svc, nil, tests.NewMockLibraryService(), tests.NewMockUserService(), nil, nil, nil, nil, nil)
 		router = server.JWTVerifier(nativeRouter)
 	})
 

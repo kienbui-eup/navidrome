@@ -33,7 +33,7 @@ var _ = Describe("Plugin API", func() {
 		ds = &tests.MockDataStore{}
 		mockManager = &tests.MockPluginManager{}
 		auth.Init(ds)
-		nativeRouter := New(ds, nil, nil, nil, tests.NewMockLibraryService(), tests.NewMockUserService(), nil, nil, mockManager, nil)
+		nativeRouter := New(ds, nil, nil, nil, tests.NewMockLibraryService(), tests.NewMockUserService(), nil, nil, nil, mockManager, nil)
 		router = server.JWTVerifier(nativeRouter)
 
 		// Create test users

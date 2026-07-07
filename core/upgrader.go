@@ -13,6 +13,7 @@ import (
 	"github.com/navidrome/navidrome/core/ffmpeg"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
+	"github.com/navidrome/navidrome/utils/singleton"
 )
 
 // Upgrade candidate sources, per the "Matching" table in
@@ -123,12 +124,29 @@ type upgrader struct {
 	auditFn    func(ctx context.Context, c *model.UpgradeCandidate, savedName string, size int64, sum string)
 }
 
-// NewUpgrader creates an Upgrader backed by ds and imp. imp's
+// GetUpgrader returns the Upgrader singleton. The in-memory scan state and
+// processing queue live on the instance, so the HTTP router, the cron job and
+// the startup recovery hook must all share this one instance (same pattern as
+// scrobbler.GetPlayTracker / scanner.GetWatcher).
+func GetUpgrader(ds model.DataStore, imp Importer, ffm ffmpeg.FFmpeg) Upgrader {
+	return singleton.GetInstance(func() *upgrader {
+		return newUpgrader(ds, imp, ffm)
+	})
+}
+
+// NewUpgrader creates a new Upgrader instance. For normal usage the Upgrader
+// has to be a singleton, returned by GetUpgrader above. This constructor is
+// exported for testing.
+func NewUpgrader(ds model.DataStore, imp Importer, ffm ffmpeg.FFmpeg) Upgrader {
+	return newUpgrader(ds, imp, ffm)
+}
+
+// newUpgrader builds an upgrader backed by ds and imp. imp's
 // SearchArchive/ArchiveFiles/ListDrive/ParseFeed methods are reused to find
 // candidates, its download pipeline (same SSRF guard and size caps) to fetch
 // approved ones into the staging area, and ffm to verify them (ffprobe +
 // ebur128) before replacement.
-func NewUpgrader(ds model.DataStore, imp Importer, ffm ffmpeg.FFmpeg) Upgrader {
+func newUpgrader(ds model.DataStore, imp Importer, ffm ffmpeg.FFmpeg) *upgrader {
 	u := &upgrader{ds: ds, imp: imp, ffm: ffm}
 	u.downloadFn = u.downloadCandidate
 	u.probeFn = func(ctx context.Context, path string) (*ffmpeg.AudioProbeResult, error) {

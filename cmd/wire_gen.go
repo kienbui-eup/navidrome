@@ -82,8 +82,9 @@ func CreateNativeAPIRouter(ctx context.Context) *nativeapi.Router {
 	library := core.NewLibrary(dataStore, modelScanner, watcher, broker, manager)
 	user := core.NewUser(dataStore, manager)
 	importer := core.NewImporter(dataStore, modelScanner)
+	upgrader := core.GetUpgrader(dataStore, importer, fFmpeg)
 	maintenance := core.NewMaintenance(dataStore)
-	router := nativeapi.New(dataStore, share, playlistsPlaylists, insights, library, user, importer, maintenance, manager, imageUploadService)
+	router := nativeapi.New(dataStore, share, playlistsPlaylists, insights, library, user, importer, upgrader, maintenance, manager, imageUploadService)
 	return router
 }
 
@@ -221,7 +222,7 @@ func CreateUpgrader(ctx context.Context) core.Upgrader {
 	playlistsPlaylists := playlists.NewPlaylists(dataStore, imageUploadService)
 	modelScanner := scanner.New(ctx, dataStore, cacheWarmer, broker, playlistsPlaylists, metricsMetrics)
 	importer := core.NewImporter(dataStore, modelScanner)
-	upgrader := core.NewUpgrader(dataStore, importer, fFmpeg)
+	upgrader := core.GetUpgrader(dataStore, importer, fFmpeg)
 	return upgrader
 }
 
