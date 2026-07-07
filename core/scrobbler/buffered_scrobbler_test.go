@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/tests"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/tests"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/metadata"
-	"github.com/navidrome/navidrome/utils"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/metadata"
+	"github.com/vi2play/vi2play/utils"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -130,7 +130,7 @@ var _ = Describe("Metadata", func() {
 				Expect(md.Strings(model.TagGenre)).To(Equal([]string{"Rock", "Pop", "Punk"}))
 			})
 
-			// Regression test for https://github.com/navidrome/navidrome/issues/5065
+			// Regression test for https://github.com/vi2play/vi2play/issues/5065
 			//
 			// MP3s with both an ID3v2 TMOO frame and a TXXX:MOOD frame are surfaced by
 			// TagLib's PropertyMap as a single "mood" key with multiple values. The split

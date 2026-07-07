@@ -95,7 +95,7 @@ export function detectBrowserProfile() {
     : []
 
   return {
-    name: 'NavidromeUI',
+    name: 'vi2playUI',
     platform: navigator.userAgent,
     directPlayProfiles,
     transcodingProfiles,

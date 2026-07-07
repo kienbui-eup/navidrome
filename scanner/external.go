@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
 )
 
 const (

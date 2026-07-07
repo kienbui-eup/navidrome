@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/utils/ioutils"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/request"
+	"github.com/vi2play/vi2play/utils/ioutils"
 	"golang.org/x/text/unicode/norm"
 )
 

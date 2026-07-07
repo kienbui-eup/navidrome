@@ -4,7 +4,7 @@ import (
 	"context"
 	"io/fs"
 
-	"github.com/navidrome/navidrome/model/metadata"
+	"github.com/vi2play/vi2play/model/metadata"
 )
 
 type Storage interface {

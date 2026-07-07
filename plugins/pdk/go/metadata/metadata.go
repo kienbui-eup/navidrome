@@ -8,7 +8,7 @@
 package metadata
 
 import (
-	"github.com/navidrome/navidrome/plugins/pdk/go/pdk"
+	"github.com/vi2play/vi2play/plugins/pdk/go/pdk"
 )
 
 // AlbumImagesResponse is the response for GetAlbumImages.

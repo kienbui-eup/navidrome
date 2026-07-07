@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
 )
 
 // Lyrics can fetch lyrics for a media file.

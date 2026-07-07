@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/deluan/rest"
-	"github.com/navidrome/navidrome/core"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/tests"
+	"github.com/vi2play/vi2play/core"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/tests"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

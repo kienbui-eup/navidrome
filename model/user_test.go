@@ -1,7 +1,7 @@
 package model_test
 
 import (
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/model"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

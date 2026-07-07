@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/log"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/log"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -22,7 +22,7 @@ func TestFFmpeg(t *testing.T) {
 	//nolint:dogsled
 	_, file, _, _ := runtime.Caller(0)
 	appPath, _ := filepath.Abs(filepath.Join(filepath.Dir(file), "..", ".."))
-	confPath := filepath.Join(appPath, "tests", "navidrome-test.toml")
+	confPath := filepath.Join(appPath, "tests", "vi2play-test.toml")
 	_ = os.Chdir(appPath)
 	conf.LoadFromFile(confPath)
 	log.SetLevel(log.LevelFatal)
@@ -217,6 +217,15 @@ var _ = Describe("ffmpeg", func() {
 			}))
 		})
 
+		It("injects audio filters for DSD source codec", func() {
+			args := buildDynamicArgs(TranscodeOptions{
+				Format:      "flac",
+				FilePath:    "/music/file.dsf",
+				SourceCodec: "dsd",
+			})
+			Expect(args).To(ContainElements("-af", "lowpass=24000,volume=6dB"))
+		})
+
 		It("omits -sample_fmt when bit depth is 0", func() {
 			args := buildDynamicArgs(TranscodeOptions{
 				Format:   "flac",
@@ -336,6 +345,15 @@ var _ = Describe("ffmpeg", func() {
 				"-b:a", "192k", "-v", "0", "-f", "mp3",
 				"-",
 			}))
+		})
+
+		It("injects audio filters for DSD source codec into custom template", func() {
+			args := buildTemplateArgs(TranscodeOptions{
+				Command:     "ffmpeg -i %s -b:a %bk -v 0 -f mp3 -",
+				FilePath:    "/music/file.dsf",
+				SourceCodec: "dsd",
+			})
+			Expect(args).To(ContainElements("-af", "lowpass=24000,volume=6dB"))
 		})
 	})
 

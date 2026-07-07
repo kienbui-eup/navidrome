@@ -5,9 +5,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/navidrome/navidrome/plugins/pdk/go/host"
-	"github.com/navidrome/navidrome/plugins/pdk/go/pdk"
-	"github.com/navidrome/navidrome/plugins/pdk/go/taskworker"
+	"github.com/vi2play/vi2play/plugins/pdk/go/host"
+	"github.com/vi2play/vi2play/plugins/pdk/go/pdk"
+	"github.com/vi2play/vi2play/plugins/pdk/go/taskworker"
 )
 
 func init() {

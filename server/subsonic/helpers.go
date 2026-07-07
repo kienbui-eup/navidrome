@@ -12,16 +12,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core/publicurl"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/server/subsonic/responses"
-	"github.com/navidrome/navidrome/utils/gg"
-	"github.com/navidrome/navidrome/utils/number"
-	"github.com/navidrome/navidrome/utils/req"
-	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core/publicurl"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/request"
+	"github.com/vi2play/vi2play/server/subsonic/responses"
+	"github.com/vi2play/vi2play/utils/gg"
+	"github.com/vi2play/vi2play/utils/number"
+	"github.com/vi2play/vi2play/utils/req"
+	"github.com/vi2play/vi2play/utils/slice"
 )
 
 func newResponse() *responses.Subsonic {

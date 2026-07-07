@@ -8,14 +8,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/navidrome/navidrome/core"
-	"github.com/navidrome/navidrome/core/playlists"
-	"github.com/navidrome/navidrome/db"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/persistence"
-	"github.com/navidrome/navidrome/scanner"
-	"github.com/navidrome/navidrome/utils/pl"
+	"github.com/vi2play/vi2play/core"
+	"github.com/vi2play/vi2play/core/playlists"
+	"github.com/vi2play/vi2play/db"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/persistence"
+	"github.com/vi2play/vi2play/scanner"
+	"github.com/vi2play/vi2play/utils/pl"
 	"github.com/spf13/cobra"
 )
 

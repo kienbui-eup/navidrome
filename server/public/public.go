@@ -5,15 +5,15 @@ import (
 	"path"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core"
-	"github.com/navidrome/navidrome/core/artwork"
-	"github.com/navidrome/navidrome/core/publicurl"
-	"github.com/navidrome/navidrome/core/stream"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/server"
-	"github.com/navidrome/navidrome/ui"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core"
+	"github.com/vi2play/vi2play/core/artwork"
+	"github.com/vi2play/vi2play/core/publicurl"
+	"github.com/vi2play/vi2play/core/stream"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/server"
+	"github.com/vi2play/vi2play/ui"
 )
 
 type Router struct {

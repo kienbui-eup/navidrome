@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/criteria"
-	"github.com/navidrome/navidrome/model/request"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/criteria"
+	"github.com/vi2play/vi2play/model/request"
 )
 
 // Built-in smart playlist template IDs. See plans/01-library-admin-auto-playlists.md,

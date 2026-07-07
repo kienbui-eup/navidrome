@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/djherbis/times"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/metadata"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/metadata"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

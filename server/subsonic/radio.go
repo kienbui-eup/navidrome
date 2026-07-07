@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/server/subsonic/responses"
-	"github.com/navidrome/navidrome/utils/req"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/request"
+	"github.com/vi2play/vi2play/server/subsonic/responses"
+	"github.com/vi2play/vi2play/utils/req"
 )
 
 func (api *Router) CreateInternetRadio(r *http.Request) (*responses.Subsonic, error) {

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/navidrome/navidrome/plugins/pdk/go/pdk"
-	"github.com/navidrome/navidrome/plugins/pdk/go/sonicsimilarity"
+	"github.com/vi2play/vi2play/plugins/pdk/go/pdk"
+	"github.com/vi2play/vi2play/plugins/pdk/go/sonicsimilarity"
 )
 
 func init() {

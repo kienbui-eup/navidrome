@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/navidrome/navidrome/tests"
-	. "github.com/navidrome/navidrome/utils/chrono"
+	"github.com/vi2play/vi2play/tests"
+	. "github.com/vi2play/vi2play/utils/chrono"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

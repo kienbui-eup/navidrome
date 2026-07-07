@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
 )
 
 type Queue struct {

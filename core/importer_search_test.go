@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/navidrome/navidrome/conf"
+	"github.com/vi2play/vi2play/conf"
 )
 
 func TestQualityForFile(t *testing.T) {

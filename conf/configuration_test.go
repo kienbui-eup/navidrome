@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/navidrome/navidrome/conf"
+	"github.com/vi2play/vi2play/conf"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/viper"
@@ -134,8 +134,8 @@ var _ = Describe("Configuration", func() {
 			conf.ResetConf()
 		})
 
-		It("remaps ND_-prefixed keys to canonical keys", func() {
-			filename := filepath.Join("testdata", "cfg_nd_keys.toml")
+		It("remaps VI_-prefixed keys to canonical keys", func() {
+			filename := filepath.Join("testdata", "cfg_vi_keys.toml")
 			conf.InitConfig(filename, false)
 			conf.Load(true)
 
@@ -144,18 +144,18 @@ var _ = Describe("Configuration", func() {
 			Expect(conf.Server.Scanner.Schedule).To(Equal("@every 1h"))
 		})
 
-		It("exits with fatal error when both ND_ and canonical key exist", func() {
-			filename := filepath.Join("testdata", "cfg_nd_conflict.toml")
+		It("exits with fatal error when both VI_ and canonical key exist", func() {
+			filename := filepath.Join("testdata", "cfg_vi_conflict.toml")
 			conf.InitConfig(filename, false)
 
 			Expect(func() { conf.Load(true) }).To(PanicWith(And(
-				ContainSubstring("ND_ADDRESS"),
+				ContainSubstring("VI_ADDRESS"),
 				ContainSubstring("Address"),
 				ContainSubstring("only needed for environment variables"),
 			)))
 		})
 
-		It("does nothing when no ND_ keys are present", func() {
+		It("does nothing when no VI_ keys are present", func() {
 			filename := filepath.Join("testdata", "cfg.toml")
 			conf.InitConfig(filename, false)
 			conf.Load(true)
@@ -287,8 +287,8 @@ var _ = Describe("Configuration", func() {
 			Expect(conf.Server.AutoPlaylists.Templates).To(Equal([]string{"heavy_rotation", "rediscover", "recently_added"}))
 		})
 
-		It("can be enabled through the ND_AUTOPLAYLISTS_ENABLED environment variable", func() {
-			GinkgoT().Setenv("ND_AUTOPLAYLISTS_ENABLED", "true")
+		It("can be enabled through the VI_AUTOPLAYLISTS_ENABLED environment variable", func() {
+			GinkgoT().Setenv("VI_AUTOPLAYLISTS_ENABLED", "true")
 			conf.InitConfig("", true)
 
 			conf.Load(true)
@@ -296,9 +296,9 @@ var _ = Describe("Configuration", func() {
 			Expect(conf.Server.AutoPlaylists.Enabled).To(BeTrue())
 		})
 
-		It("can override the schedule through the ND_AUTOPLAYLISTS_SCHEDULE environment variable", func() {
-			GinkgoT().Setenv("ND_AUTOPLAYLISTS_SCHEDULE", "@daily")
-			GinkgoT().Setenv("ND_AUTOPLAYLISTS_ENABLED", "true")
+		It("can override the schedule through the VI_AUTOPLAYLISTS_SCHEDULE environment variable", func() {
+			GinkgoT().Setenv("VI_AUTOPLAYLISTS_SCHEDULE", "@daily")
+			GinkgoT().Setenv("VI_AUTOPLAYLISTS_ENABLED", "true")
 			conf.InitConfig("", true)
 
 			conf.Load(true)

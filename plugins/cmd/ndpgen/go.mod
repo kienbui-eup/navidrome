@@ -1,4 +1,4 @@
-module github.com/navidrome/navidrome/plugins/cmd/ndpgen
+module github.com/vi2play/vi2play/plugins/cmd/ndpgen
 
 go 1.25
 

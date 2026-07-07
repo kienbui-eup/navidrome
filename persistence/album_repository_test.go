@@ -7,11 +7,11 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/deluan/rest"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/id"
-	"github.com/navidrome/navidrome/model/request"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/id"
+	"github.com/vi2play/vi2play/model/request"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

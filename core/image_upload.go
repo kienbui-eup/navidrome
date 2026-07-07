@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/utils"
 )
 
 type ImageUploadService interface {

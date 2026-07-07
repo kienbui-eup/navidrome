@@ -13,12 +13,12 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/deluan/rest"
-	"github.com/navidrome/navidrome/core/storage"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/server/events"
-	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/vi2play/vi2play/core/storage"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/request"
+	"github.com/vi2play/vi2play/server/events"
+	"github.com/vi2play/vi2play/utils/slice"
 )
 
 // Watcher interface for managing file system watchers

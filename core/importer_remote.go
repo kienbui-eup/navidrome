@@ -13,8 +13,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model/id"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model/id"
 )
 
 // Import from another Navidrome/Subsonic server. The admin saves a list of

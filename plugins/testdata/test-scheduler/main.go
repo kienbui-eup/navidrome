@@ -3,8 +3,8 @@
 package main
 
 import (
-	"github.com/navidrome/navidrome/plugins/pdk/go/host"
-	"github.com/navidrome/navidrome/plugins/pdk/go/scheduler"
+	"github.com/vi2play/vi2play/plugins/pdk/go/host"
+	"github.com/vi2play/vi2play/plugins/pdk/go/scheduler"
 )
 
 func init() {

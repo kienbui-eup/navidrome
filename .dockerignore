@@ -7,8 +7,8 @@ docker-compose*.yml
 data
 *.db
 testDB
-navidrome
-navidrome.toml
+vi2play
+vi2play.toml
 tmp
 !tmp/taglib
 dist

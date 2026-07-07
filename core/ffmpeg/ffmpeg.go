@@ -16,21 +16,22 @@ import (
 	"sync"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/log"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/log"
 )
 
 // TranscodeOptions contains all parameters for a transcoding operation.
 type TranscodeOptions struct {
-	Command    string // DB command template (used to detect custom vs default)
-	Format     string // Target format (mp3, opus, aac, flac)
-	FilePath   string
-	BitRate    int // kbps, 0 = codec default
-	SampleRate int // 0 = no constraint
-	Channels   int // 0 = no constraint
-	BitDepth   int // 0 = no constraint; valid values: 16, 24, 32
-	Offset     int // seconds
+	Command     string // DB command template (used to detect custom vs default)
+	Format      string // Target format (mp3, opus, aac, flac)
+	FilePath    string
+	BitRate     int // kbps, 0 = codec default
+	SampleRate  int // 0 = no constraint
+	Channels    int // 0 = no constraint
+	BitDepth    int // 0 = no constraint; valid values: 16, 24, 32
+	Offset      int // seconds
+	SourceCodec string
 }
 
 // AudioProbeResult contains authoritative audio stream properties from ffprobe.
@@ -453,6 +454,9 @@ func injectDynamicAudioFlags(args []string, opts TranscodeOptions) []string {
 	}
 	if opts.BitDepth >= 16 && isLosslessOutputFormat(opts.Format) {
 		args = injectBeforeOutput(args, "-sample_fmt", bitDepthToSampleFmt(opts.BitDepth))
+	}
+	if strings.EqualFold(opts.SourceCodec, "dsd") {
+		args = injectBeforeOutput(args, "-af", "lowpass=24000,volume=6dB")
 	}
 	return args
 }

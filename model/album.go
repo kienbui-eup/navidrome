@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
+	"github.com/vi2play/vi2play/conf"
 
 	"github.com/gohugoio/hashstructure"
 )

@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"testing/fstest"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/conf/configtest"
-	"github.com/navidrome/navidrome/core/storage"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/tests"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/conf/configtest"
+	"github.com/vi2play/vi2play/core/storage"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/tests"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"golang.org/x/sync/errgroup"
@@ -32,14 +32,14 @@ var _ = Describe("walk_dir_tree", func() {
 				ctx = GinkgoT().Context()
 				fsys = &mockMusicFS{
 					FS: fstest.MapFS{
-						"root/a/.ndignore":       {Data: []byte("ignored/*")},
+						"root/a/.viignore":       {Data: []byte("ignored/*")},
 						"root/a/f1.mp3":          {},
 						"root/a/f2.mp3":          {},
 						"root/a/ignored/bad.mp3": {},
 						"root/b/cover.jpg":       {},
 						"root/c/f3":              {},
 						"root/d":                 {},
-						"root/d/.ndignore":       {},
+						"root/d/.viignore":       {},
 						"root/d/f1.mp3":          {},
 						"root/d/f2.mp3":          {},
 						"root/d/f3.mp3":          {},

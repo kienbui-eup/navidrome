@@ -1,4 +1,4 @@
-module github.com/navidrome/navidrome/plugins/pdk/go
+module github.com/vi2play/vi2play/plugins/pdk/go
 
 go 1.25
 

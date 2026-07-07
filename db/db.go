@@ -8,11 +8,11 @@ import (
 	"runtime"
 
 	"github.com/mattn/go-sqlite3"
-	"github.com/navidrome/navidrome/conf"
-	_ "github.com/navidrome/navidrome/db/migrations"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/utils/hasher"
-	"github.com/navidrome/navidrome/utils/singleton"
+	"github.com/vi2play/vi2play/conf"
+	_ "github.com/vi2play/vi2play/db/migrations"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/utils/hasher"
+	"github.com/vi2play/vi2play/utils/singleton"
 	"github.com/pressly/goose/v3"
 )
 

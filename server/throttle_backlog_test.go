@@ -12,8 +12,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/conf/configtest"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/conf/configtest"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

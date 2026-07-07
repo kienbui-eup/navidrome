@@ -2,7 +2,7 @@
 .idea
 .vscode
 .envrc
-/navidrome
+/vi2play
 /iTunes*.xml
 /tmp
 /bin
@@ -11,8 +11,8 @@ vendor/*/
 wiki
 TODO.md
 var
-navidrome.toml
-!release/linux/navidrome.toml
+vi2play.toml
+!release/linux/vi2play.toml
 master.zip
 testDB
 cache/*
@@ -26,7 +26,7 @@ music.old
 docker-compose.yml
 !contrib/docker-compose.yml
 binaries
-navidrome-*
+vi2play-*
 /ndpgen
 AGENTS.md
 .github/prompts

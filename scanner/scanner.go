@@ -9,15 +9,15 @@ import (
 	"time"
 
 	ppl "github.com/google/go-pipeline/pkg/pipeline"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core/artwork"
-	"github.com/navidrome/navidrome/core/playlists"
-	"github.com/navidrome/navidrome/db"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils/run"
-	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core/artwork"
+	"github.com/vi2play/vi2play/core/playlists"
+	"github.com/vi2play/vi2play/db"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/utils/run"
+	"github.com/vi2play/vi2play/utils/slice"
 )
 
 type scannerImpl struct {

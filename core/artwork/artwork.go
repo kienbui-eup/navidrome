@@ -7,13 +7,13 @@ import (
 	"io"
 	"time"
 
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core/external"
-	"github.com/navidrome/navidrome/core/ffmpeg"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/resources"
-	"github.com/navidrome/navidrome/utils/cache"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core/external"
+	"github.com/vi2play/vi2play/core/ffmpeg"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/resources"
+	"github.com/vi2play/vi2play/utils/cache"
 	_ "golang.org/x/image/webp"
 )
 

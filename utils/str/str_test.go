@@ -1,7 +1,7 @@
 package str_test
 
 import (
-	"github.com/navidrome/navidrome/utils/str"
+	"github.com/vi2play/vi2play/utils/str"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

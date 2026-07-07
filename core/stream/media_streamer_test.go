@@ -6,13 +6,13 @@ import (
 	"io"
 	"os"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/conf/configtest"
-	"github.com/navidrome/navidrome/core/stream"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/tests"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/conf/configtest"
+	"github.com/vi2play/vi2play/core/stream"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/request"
+	"github.com/vi2play/vi2play/tests"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -51,6 +51,16 @@ var _ = Describe("MediaStreamer", func() {
 			s, err := streamer.NewStream(ctx, mf, stream.Request{Format: "raw"})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(s.Seekable()).To(BeTrue())
+		})
+		It("automatically compresses raw WAV streams to flac", func() {
+			wavMF := &model.MediaFile{ID: "456", Path: "tests/fixtures/test.wav", Suffix: "wav", BitRate: 1411, Duration: 10.0}
+			ds.MediaFile(ctx).(*tests.MockMediaFileRepo).SetData(model.MediaFiles{
+				*wavMF,
+			})
+			s, err := streamer.NewStream(ctx, wavMF, stream.Request{Format: "raw"})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(s.Seekable()).To(BeFalse())
+			Expect(s.ContentType()).To(ContainSubstring("flac"))
 		})
 		It("returns a seekable stream if no format is specified (direct play)", func() {
 			s, err := streamer.NewStream(ctx, mf, stream.Request{})

@@ -44,7 +44,7 @@ describe('decisionService', () => {
   let mockFetchFn
 
   const fakeProfile = {
-    name: 'NavidromeUI',
+    name: 'vi2playUI',
     platform: 'test',
     directPlayProfiles: [],
     transcodingProfiles: [],

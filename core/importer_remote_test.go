@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/tests"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/tests"
 )
 
 func newRemoteTestImporter(t *testing.T) (*importer, context.Context) {

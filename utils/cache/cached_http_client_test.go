@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"time"
 
-	"github.com/navidrome/navidrome/consts"
+	"github.com/vi2play/vi2play/consts"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

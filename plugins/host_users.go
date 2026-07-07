@@ -3,9 +3,9 @@ package plugins
 import (
 	"context"
 
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/plugins/host"
-	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/plugins/host"
+	"github.com/vi2play/vi2play/utils/slice"
 )
 
 type usersServiceImpl struct {

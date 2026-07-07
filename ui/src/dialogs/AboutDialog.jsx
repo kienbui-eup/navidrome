@@ -70,13 +70,13 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 const links = {
-  homepage: 'navidrome.org',
-  reddit: 'reddit.com/r/Navidrome',
-  twitter: 'twitter.com/navidrome',
+  homepage: 'vi2play.org',
+  reddit: 'reddit.com/r/vi2play',
+  twitter: 'twitter.com/vi2play',
   discord: 'discord.gg/xh7j7yF',
-  source: 'github.com/navidrome/navidrome',
-  bugReports: 'github.com/navidrome/navidrome/issues/new/choose',
-  featureRequests: 'github.com/navidrome/navidrome/discussions/new',
+  source: 'github.com/vi2play/vi2play',
+  bugReports: 'github.com/vi2play/vi2play/issues/new/choose',
+  featureRequests: 'github.com/vi2play/vi2play/discussions/new',
 }
 
 const LinkToVersion = ({ version }) => {
@@ -88,10 +88,10 @@ const LinkToVersion = ({ version }) => {
   const commitID = parts[1].replace(/[()]/g, '')
   const isSnapshot = version.includes('SNAPSHOT')
   const url = isSnapshot
-    ? `https://github.com/navidrome/navidrome/compare/v${
+    ? `https://github.com/vi2play/vi2play/compare/v${
         parts[0].split('-')[0]
       }...${commitID}`
-    : `https://github.com/navidrome/navidrome/releases/tag/v${parts[0]}`
+    : `https://github.com/vi2play/vi2play/releases/tag/v${parts[0]}`
   return (
     <>
       <Link href={url} target="_blank" rel="noopener noreferrer">
@@ -248,7 +248,7 @@ const ConfigTabContent = ({ configData }) => {
 
   const handleDownloadToml = () => {
     const tomlContent = configToToml(configData, translate)
-    const tomlFile = new File([tomlContent], 'navidrome.toml', {
+    const tomlFile = new File([tomlContent], 'vi2play.toml', {
       type: 'text/plain',
     })
 
@@ -472,7 +472,7 @@ const AboutDialog = ({ open, onClose }) => {
       className={classes.expandableDialog}
     >
       <DialogTitle id="about-dialog-title" onClose={onClose}>
-        Navidrome Music Server
+        vi2play (Vip Player)
       </DialogTitle>
       <DialogContent dividers>
         <TabContent

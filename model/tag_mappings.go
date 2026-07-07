@@ -8,11 +8,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model/criteria"
-	"github.com/navidrome/navidrome/resources"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model/criteria"
+	"github.com/vi2play/vi2play/resources"
 	"gopkg.in/yaml.v3"
 )
 

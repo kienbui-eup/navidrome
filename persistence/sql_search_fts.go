@@ -9,8 +9,8 @@ import (
 
 	. "github.com/Masterminds/squirrel"
 	"github.com/deluan/sanitize"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
 )
 
 // containsCJK returns true if the string contains any CJK (Chinese/Japanese/Korean) characters.

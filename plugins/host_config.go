@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/plugins/host"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/plugins/host"
 )
 
 // configServiceImpl implements the host.ConfigService interface.

@@ -1,7 +1,7 @@
 package e2e
 
 import (
-	"github.com/navidrome/navidrome/server/subsonic/responses"
+	"github.com/vi2play/vi2play/server/subsonic/responses"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
 )
 
 func (p *playTracker) enqueueNowPlaying(ctx context.Context, playerId string, userId string, track *model.MediaFile, position int) {

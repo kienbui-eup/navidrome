@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/model"
 )
 
 const LocalAgentName = "local"

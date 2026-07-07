@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/criteria"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/criteria"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

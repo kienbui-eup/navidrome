@@ -6,9 +6,9 @@ import (
 
 	. "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils/str"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/utils/str"
 )
 
 func formatFullText(text ...string) string {

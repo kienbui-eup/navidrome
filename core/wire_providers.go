@@ -2,16 +2,16 @@ package core
 
 import (
 	"github.com/google/wire"
-	"github.com/navidrome/navidrome/core/agents"
-	"github.com/navidrome/navidrome/core/external"
-	"github.com/navidrome/navidrome/core/ffmpeg"
-	"github.com/navidrome/navidrome/core/lyrics"
-	"github.com/navidrome/navidrome/core/matcher"
-	"github.com/navidrome/navidrome/core/metrics"
-	"github.com/navidrome/navidrome/core/playback"
-	"github.com/navidrome/navidrome/core/playlists"
-	"github.com/navidrome/navidrome/core/scrobbler"
-	"github.com/navidrome/navidrome/core/stream"
+	"github.com/vi2play/vi2play/core/agents"
+	"github.com/vi2play/vi2play/core/external"
+	"github.com/vi2play/vi2play/core/ffmpeg"
+	"github.com/vi2play/vi2play/core/lyrics"
+	"github.com/vi2play/vi2play/core/matcher"
+	"github.com/vi2play/vi2play/core/metrics"
+	"github.com/vi2play/vi2play/core/playback"
+	"github.com/vi2play/vi2play/core/playlists"
+	"github.com/vi2play/vi2play/core/scrobbler"
+	"github.com/vi2play/vi2play/core/stream"
 )
 
 var Set = wire.NewSet(

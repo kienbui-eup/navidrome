@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/model/criteria"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/model/criteria"
 )
 
 type Playlist struct {

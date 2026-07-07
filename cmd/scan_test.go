@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/model"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -14,7 +14,7 @@ var _ = Describe("readTargetsFromFile", func() {
 
 	BeforeEach(func() {
 		var err error
-		tempDir, err = os.MkdirTemp("", "navidrome-test-")
+		tempDir, err = os.MkdirTemp("", "vi2play-test-")
 		Expect(err).ToNot(HaveOccurred())
 	})
 

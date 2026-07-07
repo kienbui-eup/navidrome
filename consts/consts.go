@@ -5,13 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/navidrome/navidrome/model/id"
+	"github.com/vi2play/vi2play/model/id"
 )
 
 const (
-	AppName = "navidrome"
+	AppName = "vi2play"
 
-	DefaultDbPath                 = "navidrome.db?cache=shared&_busy_timeout=15000&_journal_mode=WAL&_foreign_keys=on&synchronous=normal"
+	DefaultDbPath                 = "vi2play.db?cache=shared&_busy_timeout=15000&_journal_mode=WAL&_foreign_keys=on&synchronous=normal"
 	InitialSetupFlagKey           = "InitialSetup"
 	FullScanAfterMigrationFlagKey = "FullScanAfterMigration"
 	// PlaylistsImportPendingFlagKey marks that playlist import was deferred because
@@ -21,10 +21,10 @@ const (
 	LastScanTypeKey               = "LastScanType"
 	LastScanStartTimeKey          = "LastScanStartTime"
 
-	UIAuthorizationHeader  = "X-ND-Authorization"
-	UIClientUniqueIDHeader = "X-ND-Client-Unique-Id"
+	UIAuthorizationHeader  = "X-VI-Authorization"
+	UIClientUniqueIDHeader = "X-VI-Client-Unique-Id"
 	JWTSecretKey           = "JWTSecret"
-	JWTIssuer              = "ND"
+	JWTIssuer              = "VI"
 	DefaultSessionTimeout  = 48 * time.Hour
 	CookieExpiry           = 365 * 24 * 3600 // One year
 
@@ -67,7 +67,7 @@ const (
 	UpdatePlayerFrequency     = time.Minute
 
 	I18nFolder     = "i18n"
-	ScanIgnoreFile = ".ndignore"
+	ScanIgnoreFile = ".viignore"
 	ArtworkFolder  = "artwork"
 
 	PlaceholderArtistArt            = "artist-placeholder.webp"
@@ -179,7 +179,7 @@ var (
 	}
 )
 
-var HTTPUserAgent = "Navidrome" + "/" + Version
+var HTTPUserAgent = "vi2play" + "/" + Version
 
 var (
 	VariousArtists = "Various Artists"
@@ -198,7 +198,10 @@ var (
 	ServerStart = time.Now()
 
 	InContainer = func() bool {
-		// Check if the /.nddockerenv file exists
+		// Check if the /.vidockerenv or /.nddockerenv file exists
+		if _, err := os.Stat("/.vidockerenv"); err == nil {
+			return true
+		}
 		if _, err := os.Stat("/.nddockerenv"); err == nil {
 			return true
 		}

@@ -11,9 +11,9 @@ import (
 	"testing/fstest"
 	"unicode/utf8"
 
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils/run"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/utils/run"
 	"github.com/pressly/goose/v3"
 )
 

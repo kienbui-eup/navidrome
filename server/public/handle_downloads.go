@@ -3,7 +3,7 @@ package public
 import (
 	"net/http"
 
-	"github.com/navidrome/navidrome/utils/req"
+	"github.com/vi2play/vi2play/utils/req"
 )
 
 func (pub *Router) handleDownloads(w http.ResponseWriter, r *http.Request) {

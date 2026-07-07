@@ -6,8 +6,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/model"
 )
 
 type mediafileArtworkReader struct {

@@ -7,10 +7,10 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/conf/configtest"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/tests"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/conf/configtest"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/tests"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -274,7 +274,7 @@ var _ = Describe("Watcher", func() {
 		})
 	})
 
-	Describe(".ndignore handling", func() {
+	Describe(".viignore handling", func() {
 		var ctx context.Context
 		var cancel context.CancelFunc
 		var w *watcher
@@ -321,21 +321,21 @@ var _ = Describe("Watcher", func() {
 			}()
 		}
 
-		Context("when a folder matching .ndignore is deleted", func() {
+		Context("when a folder matching .viignore is deleted", func() {
 			BeforeEach(func() {
-				// Create filesystem with .ndignore containing _TEMP pattern
+				// Create filesystem with .viignore containing _TEMP pattern
 				// The deleted folder (_TEMP) will NOT exist in the filesystem
 				mockFS = &mockMusicFS{
 					FS: fstest.MapFS{
 						"rock":                       &fstest.MapFile{Mode: fs.ModeDir},
-						"rock/.ndignore":             &fstest.MapFile{Data: []byte("_TEMP\n")},
+						"rock/.viignore":             &fstest.MapFile{Data: []byte("_TEMP\n")},
 						"rock/valid_album":           &fstest.MapFile{Mode: fs.ModeDir},
 						"rock/valid_album/track.mp3": &fstest.MapFile{Data: []byte("audio")},
 					},
 				}
 			})
 
-			It("should NOT send scan notification when deleted folder matches .ndignore", func() {
+			It("should NOT send scan notification when deleted folder matches .viignore", func() {
 				startEventProcessing()
 
 				// Simulate deletion event for rock/_TEMP
@@ -351,7 +351,7 @@ var _ = Describe("Watcher", func() {
 			It("should send scan notification for valid folder deletion", func() {
 				startEventProcessing()
 
-				// Simulate deletion event for rock/other_folder (not in .ndignore and doesn't exist)
+				// Simulate deletion event for rock/other_folder (not in .viignore and doesn't exist)
 				// Since it doesn't exist in mockFS, resolveFolderPath will walk up to "rock"
 				sendEvent("rock/other_folder")
 
@@ -368,7 +368,7 @@ var _ = Describe("Watcher", func() {
 				mockFS = &mockMusicFS{
 					FS: fstest.MapFS{
 						"music":             &fstest.MapFile{Mode: fs.ModeDir},
-						"music/.ndignore":   &fstest.MapFile{Data: []byte("**/temp\n**/cache\n")},
+						"music/.viignore":   &fstest.MapFile{Data: []byte("**/temp\n**/cache\n")},
 						"music/rock":        &fstest.MapFile{Mode: fs.ModeDir},
 						"music/rock/artist": &fstest.MapFile{Mode: fs.ModeDir},
 					},
@@ -409,7 +409,7 @@ var _ = Describe("Watcher", func() {
 				mockFS = &mockMusicFS{
 					FS: fstest.MapFS{
 						"rock":           &fstest.MapFile{Mode: fs.ModeDir},
-						"rock/.ndignore": &fstest.MapFile{Data: []byte("_TEMP\n")},
+						"rock/.viignore": &fstest.MapFile{Data: []byte("_TEMP\n")},
 					},
 				}
 			})

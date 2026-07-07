@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/gohugoio/hashstructure"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/utils"
-	"github.com/navidrome/navidrome/utils/gg"
-	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/utils"
+	"github.com/vi2play/vi2play/utils/gg"
+	"github.com/vi2play/vi2play/utils/slice"
 )
 
 type MediaFile struct {

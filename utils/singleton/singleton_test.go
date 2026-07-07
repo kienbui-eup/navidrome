@@ -5,8 +5,8 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/navidrome/navidrome/model/id"
-	"github.com/navidrome/navidrome/utils/singleton"
+	"github.com/vi2play/vi2play/model/id"
+	"github.com/vi2play/vi2play/utils/singleton"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

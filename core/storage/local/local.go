@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/djherbis/times"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core/storage"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model/metadata"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core/storage"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model/metadata"
 )
 
 // localStorage implements a Storage that reads the files from the local filesystem and uses registered extractors

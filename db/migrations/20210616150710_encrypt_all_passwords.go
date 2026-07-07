@@ -5,9 +5,9 @@ import (
 	"crypto/sha256"
 	"database/sql"
 
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/utils"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/utils"
 	"github.com/pressly/goose/v3"
 )
 

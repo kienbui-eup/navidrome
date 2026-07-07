@@ -3,9 +3,9 @@ package plugins
 import (
 	"context"
 
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/plugins/capabilities"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/plugins/capabilities"
 )
 
 const CapabilityLyrics Capability = "Lyrics"

@@ -8,12 +8,12 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/conf/configtest"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core/storage"
-	"github.com/navidrome/navidrome/model/metadata"
-	"github.com/navidrome/navidrome/tests"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/conf/configtest"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core/storage"
+	"github.com/vi2play/vi2play/model/metadata"
+	"github.com/vi2play/vi2play/tests"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

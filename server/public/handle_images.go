@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/navidrome/navidrome/core/artwork"
-	"github.com/navidrome/navidrome/core/auth"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils/req"
+	"github.com/vi2play/vi2play/core/artwork"
+	"github.com/vi2play/vi2play/core/auth"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/utils/req"
 )
 
 func (pub *Router) handleImages(w http.ResponseWriter, r *http.Request) {

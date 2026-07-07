@@ -7,8 +7,8 @@ import (
 
 	. "github.com/Masterminds/squirrel"
 	"github.com/deluan/rest"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/id"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/id"
 	"github.com/pocketbase/dbx"
 )
 

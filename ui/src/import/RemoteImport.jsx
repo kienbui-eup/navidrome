@@ -50,7 +50,7 @@ const previewSrc = (serverId, songId) => {
 
 const emptyForm = { id: '', name: '', url: '', username: '', password: '' }
 
-// Import from another Navidrome/Subsonic server: manage saved source servers,
+// Import from another vi2play/Subsonic server: manage saved source servers,
 // search songs/albums/artists there and queue original-file downloads.
 const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
   const notify = useNotify()
@@ -388,7 +388,7 @@ const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
 
       {servers.length === 0 && (
         <Typography className={classes.hint}>
-          Chưa có server nguồn nào. Thêm một server Navidrome/Subsonic khác
+          Chưa có server nguồn nào. Thêm một server vi2play/Subsonic khác
           (địa chỉ + tài khoản) để tìm và tải nhạc từ đó.
         </Typography>
       )}

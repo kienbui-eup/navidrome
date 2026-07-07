@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/core/playback"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/server/subsonic/responses"
-	"github.com/navidrome/navidrome/utils/req"
-	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/core/playback"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/server/subsonic/responses"
+	"github.com/vi2play/vi2play/utils/req"
+	"github.com/vi2play/vi2play/utils/slice"
 )
 
 const (

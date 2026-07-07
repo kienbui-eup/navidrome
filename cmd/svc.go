@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/kardianos/service"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/log"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/log"
 	"github.com/spf13/cobra"
 )
 
@@ -38,8 +38,8 @@ func init() {
 var svcCmd = &cobra.Command{
 	Use:     "service",
 	Aliases: []string{"svc"},
-	Short:   "Manage Navidrome as a service",
-	Long:    fmt.Sprintf("Manage Navidrome as a service, using the OS service manager (%s)", service.Platform()),
+	Short:   "Manage vi2play as a service",
+	Long:    fmt.Sprintf("Manage vi2play as a service, using the OS service manager (%s)", service.Platform()),
 	Run:     runServiceCmd,
 }
 
@@ -53,7 +53,7 @@ func (p *svcControl) Start(service.Service) error {
 	p.done = make(chan struct{})
 	p.ctx, p.cancel = context.WithCancel(context.Background())
 	go func() {
-		runNavidrome(p.ctx)
+		runVi2play(p.ctx)
 		close(p.done)
 	}()
 	return nil
@@ -86,9 +86,9 @@ var svcInstance = sync.OnceValue(func() service.Service {
 	}
 	svcConfig := &service.Config{
 		UserName:    installUser,
-		Name:        "navidrome",
-		DisplayName: "Navidrome",
-		Description: "Your Personal Streaming Service",
+		Name:        "vi2play",
+		DisplayName: "vi2play",
+		Description: "vi2play (Vip Player) - A music server and streamer tailored for audiophiles",
 		Dependencies: []string{
 			"After=remote-fs.target network.target",
 		},
@@ -148,12 +148,12 @@ func buildInstallCmd() *cobra.Command {
 		if err != nil {
 			log.Fatal(err)
 		}
-		println("Service installed. Use 'navidrome svc start' to start it.")
+		println("Service installed. Use 'vi2play svc start' to start it.")
 	}
 
 	cmd := &cobra.Command{
 		Use:   "install",
-		Short: "Install Navidrome service.",
+		Short: "Install vi2play service.",
 		Run:   runInstallCmd,
 	}
 	cmd.Flags().StringVarP(&installUser, "user", "u", "", "user to run service")
@@ -165,7 +165,7 @@ func buildInstallCmd() *cobra.Command {
 func buildUninstallCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "uninstall",
-		Short: "Uninstall Navidrome service. Does not delete the music or data folders",
+		Short: "Uninstall vi2play service. Does not delete the music or data folders",
 		Run: func(cmd *cobra.Command, args []string) {
 			err := svcInstance().Uninstall()
 			if err != nil {
@@ -179,13 +179,13 @@ func buildUninstallCmd() *cobra.Command {
 func buildStartCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "start",
-		Short: "Start Navidrome service",
+		Short: "Start vi2play service",
 		Run: func(cmd *cobra.Command, args []string) {
 			err := svcInstance().Start()
 			if err != nil {
 				log.Fatal(err)
 			}
-			println("Service started. Use 'navidrome svc status' to check its status.")
+			println("Service started. Use 'vi2play svc status' to check its status.")
 		},
 	}
 }
@@ -193,13 +193,13 @@ func buildStartCmd() *cobra.Command {
 func buildStopCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "stop",
-		Short: "Stop Navidrome service",
+		Short: "Stop vi2play service",
 		Run: func(cmd *cobra.Command, args []string) {
 			err := svcInstance().Stop()
 			if err != nil {
 				log.Fatal(err)
 			}
-			println("Service stopped. Use 'navidrome svc status' to check its status.")
+			println("Service stopped. Use 'vi2play svc status' to check its status.")
 		},
 	}
 }
@@ -207,13 +207,13 @@ func buildStopCmd() *cobra.Command {
 func buildStatusCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
-		Short: "Show Navidrome service status",
+		Short: "Show vi2play service status",
 		Run: func(cmd *cobra.Command, args []string) {
 			status, err := svcInstance().Status()
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("Navidrome is %s.\n", svcStatusLabels[status])
+			fmt.Printf("vi2play is %s.\n", svcStatusLabels[status])
 		},
 	}
 }
@@ -221,7 +221,7 @@ func buildStatusCmd() *cobra.Command {
 func buildExecuteCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "execute",
-		Short: "Run navidrome as a service in the foreground (it is very unlikely you want to run this, you are better off running just navidrome)",
+		Short: "Run vi2play as a service in the foreground (it is very unlikely you want to run this, you are better off running just vi2play)",
 		Run: func(cmd *cobra.Command, args []string) {
 			err := svcInstance().Run()
 			if err != nil {
@@ -248,7 +248,7 @@ ExecStart={{.Path|cmdEscape}}{{range .Arguments}} {{.|cmd}}{{end}}
 TimeoutStopSec=20
 RestartSec=120
 EnvironmentFile=-/etc/sysconfig/{{.Name}}
-Environment="ND_SYSTEMD_PRIORITY_LOGGING=1"
+Environment="VI_SYSTEMD_PRIORITY_LOGGING=1"
 
 DevicePolicy=closed
 NoNewPrivileges=yes

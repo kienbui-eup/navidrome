@@ -4,8 +4,8 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/navidrome/navidrome/core/storage"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/core/storage"
+	"github.com/vi2play/vi2play/model"
 )
 
 // libraryView bundles the MusicFS for a library with its absolute root path,

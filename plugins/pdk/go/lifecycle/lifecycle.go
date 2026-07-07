@@ -8,7 +8,7 @@
 package lifecycle
 
 import (
-	"github.com/navidrome/navidrome/plugins/pdk/go/pdk"
+	"github.com/vi2play/vi2play/plugins/pdk/go/pdk"
 )
 
 // Lifecycle is the marker interface for lifecycle plugins.

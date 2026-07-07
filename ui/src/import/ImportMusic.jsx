@@ -342,7 +342,7 @@ const ImportMusic = () => {
         <Typography variant="h6">Import nhạc từ nguồn công khai</Typography>
         <Typography className={classes.hint}>
           Tải nhạc từ URL/podcast trực tiếp, thư mục Google Drive công khai,
-          kho mở Internet Archive, hoặc một server Navidrome khác vào thư viện.
+          kho mở Internet Archive, hoặc một server vi2play khác vào thư viện.
           Chỉ dùng cho nội dung bạn có quyền tải.
         </Typography>
 

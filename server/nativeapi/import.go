@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/navidrome/navidrome/core"
-	"github.com/navidrome/navidrome/log"
+	"github.com/vi2play/vi2play/core"
+	"github.com/vi2play/vi2play/log"
 )
 
 // addImportRoute registers the (admin-only) music import endpoints. These import

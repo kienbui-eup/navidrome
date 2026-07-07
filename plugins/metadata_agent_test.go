@@ -3,7 +3,7 @@
 package plugins
 
 import (
-	"github.com/navidrome/navidrome/core/agents"
+	"github.com/vi2play/vi2play/core/agents"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

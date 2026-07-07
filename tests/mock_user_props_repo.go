@@ -1,6 +1,6 @@
 package tests
 
-import "github.com/navidrome/navidrome/model"
+import "github.com/vi2play/vi2play/model"
 
 type MockedUserPropsRepo struct {
 	model.UserPropsRepository

@@ -8,7 +8,7 @@
 package taskworker
 
 import (
-	"github.com/navidrome/navidrome/plugins/pdk/go/pdk"
+	"github.com/vi2play/vi2play/plugins/pdk/go/pdk"
 )
 
 // TaskExecuteRequest is the request provided when a task is ready to execute.

@@ -3,9 +3,9 @@ package plugins
 import (
 	"context"
 
-	"github.com/navidrome/navidrome/core/sonic"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/plugins/capabilities"
+	"github.com/vi2play/vi2play/core/sonic"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/plugins/capabilities"
 )
 
 const CapabilitySonicSimilarity Capability = "SonicSimilarity"

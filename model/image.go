@@ -3,8 +3,8 @@ package model
 import (
 	"path/filepath"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
 )
 
 // UploadedImagePath returns the absolute filesystem path for a manually uploaded

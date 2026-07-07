@@ -15,7 +15,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/navidrome/navidrome/conf"
+	"github.com/vi2play/vi2play/conf"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"

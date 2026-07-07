@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/navidrome/navidrome/model/id"
+	"github.com/vi2play/vi2play/model/id"
 )
 
 var cleanFileNameRe = regexp.MustCompile(`[^a-z0-9_-]`)

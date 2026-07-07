@@ -4,10 +4,10 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/metadata"
-	"github.com/navidrome/navidrome/tests"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/metadata"
+	"github.com/vi2play/vi2play/tests"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
@@ -685,7 +685,7 @@ var _ = Describe("Participants", func() {
 			})
 		})
 
-		// Sibling fix to https://github.com/navidrome/navidrome/issues/5065: when
+		// Sibling fix to https://github.com/vi2play/vi2play/issues/5065: when
 		// multiple frames map to the same role tag (e.g. TIPL producer entries),
 		// the configured split separator must still apply to each value.
 		When("the tag has multiple values", func() {

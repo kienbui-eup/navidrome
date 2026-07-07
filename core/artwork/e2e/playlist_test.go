@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing/fstest"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/model"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

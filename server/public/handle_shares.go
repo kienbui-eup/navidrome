@@ -6,16 +6,16 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core/auth"
-	"github.com/navidrome/navidrome/core/publicurl"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/server"
-	"github.com/navidrome/navidrome/ui"
-	. "github.com/navidrome/navidrome/utils/gg"
-	"github.com/navidrome/navidrome/utils/req"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core/auth"
+	"github.com/vi2play/vi2play/core/publicurl"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/server"
+	"github.com/vi2play/vi2play/ui"
+	. "github.com/vi2play/vi2play/utils/gg"
+	"github.com/vi2play/vi2play/utils/req"
 )
 
 func (pub *Router) handleShares(w http.ResponseWriter, r *http.Request) {

@@ -22,7 +22,7 @@ var _ = Describe("TagConf", func() {
 			Expect(conf.SplitTagValue([]string{"Love, Emotional, Ballad"})).To(Equal([]string{"Love", "Emotional", "Ballad"}))
 		})
 
-		// Regression test for https://github.com/navidrome/navidrome/issues/5065
+		// Regression test for https://github.com/vi2play/vi2play/issues/5065
 		//
 		// When multiple ID3v2 frames map to the same logical tag (e.g. TMOO + TXXX:MOOD),
 		// TagLib's PropertyMap merges them into a slice with several entries. Previously

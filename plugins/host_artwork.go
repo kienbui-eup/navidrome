@@ -3,9 +3,9 @@ package plugins
 import (
 	"context"
 
-	"github.com/navidrome/navidrome/core/publicurl"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/plugins/host"
+	"github.com/vi2play/vi2play/core/publicurl"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/plugins/host"
 )
 
 type artworkServiceImpl struct{}

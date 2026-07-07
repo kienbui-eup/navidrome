@@ -1,4 +1,4 @@
-module github.com/navidrome/navidrome
+module github.com/vi2play/vi2play
 
 go 1.26
 

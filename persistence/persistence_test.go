@@ -3,8 +3,8 @@ package persistence
 import (
 	"context"
 
-	"github.com/navidrome/navidrome/db"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/db"
+	"github.com/vi2play/vi2play/model"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

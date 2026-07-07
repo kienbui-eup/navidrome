@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/navidrome/navidrome/core/auth"
+	"github.com/vi2play/vi2play/core/auth"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

@@ -14,13 +14,13 @@ import (
 
 	. "github.com/Masterminds/squirrel"
 	"github.com/deluan/rest"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	id2 "github.com/navidrome/navidrome/model/id"
-	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/utils/hasher"
-	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	id2 "github.com/vi2play/vi2play/model/id"
+	"github.com/vi2play/vi2play/model/request"
+	"github.com/vi2play/vi2play/utils/hasher"
+	"github.com/vi2play/vi2play/utils/slice"
 	"github.com/pocketbase/dbx"
 )
 

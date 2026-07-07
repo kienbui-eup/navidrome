@@ -3,10 +3,10 @@ package core
 import (
 	"path/filepath"
 
-	"github.com/navidrome/navidrome/core/storage"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/metadata"
+	"github.com/vi2play/vi2play/core/storage"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/metadata"
 )
 
 type InspectOutput struct {

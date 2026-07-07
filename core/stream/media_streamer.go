@@ -12,14 +12,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core/ffmpeg"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/utils/cache"
-	"github.com/navidrome/navidrome/utils/req"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core/ffmpeg"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/request"
+	"github.com/vi2play/vi2play/utils/cache"
+	"github.com/vi2play/vi2play/utils/req"
 )
 
 type MediaStreamer interface {
@@ -78,6 +78,11 @@ func (ms *mediaStreamer) NewStream(ctx context.Context, mf *model.MediaFile, req
 	bitRate = req.BitRate
 	if format == "" || format == "raw" {
 		format = "raw"
+		bitRate = 0
+	}
+	if format == "raw" && mf.Suffix == "wav" {
+		log.Debug(ctx, "Auto-compressing raw WAV stream to FLAC to save bandwidth", "id", mf.ID)
+		format = "flac"
 		bitRate = 0
 	}
 	s := &Stream{ctx: ctx, mf: mf, format: format, bitRate: bitRate}
@@ -258,14 +263,15 @@ func NewTranscodingCache() TranscodingCache {
 			}
 
 			out, err := job.ms.transcoder.Transcode(transcodingCtx, ffmpeg.TranscodeOptions{
-				Command:    command,
-				Format:     job.format,
-				FilePath:   job.filePath,
-				BitRate:    job.bitRate,
-				SampleRate: job.sampleRate,
-				BitDepth:   job.bitDepth,
-				Channels:   job.channels,
-				Offset:     job.offset,
+				Command:     command,
+				Format:      job.format,
+				FilePath:    job.filePath,
+				BitRate:     job.bitRate,
+				SampleRate:  job.sampleRate,
+				BitDepth:    job.bitDepth,
+				Channels:    job.channels,
+				Offset:      job.offset,
+				SourceCodec: job.mf.AudioCodec(),
 			})
 			if err != nil {
 				release()

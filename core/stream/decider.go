@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core/ffmpeg"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/utils/gg"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core/ffmpeg"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/request"
+	"github.com/vi2play/vi2play/utils/gg"
 )
 
 const fallbackBitrate = 256 // kbps
@@ -290,7 +290,13 @@ func (s *deciderService) computeTranscodedStream(ctx context.Context, src *Detai
 		ts.SampleRate = fixedRate
 	}
 	if maxRate := codecMaxSampleRate(ts.Codec); maxRate > 0 && ts.SampleRate > maxRate {
-		ts.SampleRate = maxRate
+		if ts.SampleRate%44100 == 0 && maxRate >= 176400 {
+			ts.SampleRate = 176400
+		} else if ts.SampleRate%44100 == 0 && maxRate >= 88200 {
+			ts.SampleRate = 88200
+		} else {
+			ts.SampleRate = maxRate
+		}
 	}
 	if maxCh := codecMaxChannels(ts.Codec); maxCh > 0 && ts.Channels > maxCh {
 		ts.Channels = maxCh

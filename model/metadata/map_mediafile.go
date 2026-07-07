@@ -7,10 +7,10 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils/str"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/utils/str"
 )
 
 func (md Metadata) ToMediaFile(libID int, folderID string) model.MediaFile {

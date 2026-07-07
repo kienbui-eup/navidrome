@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/navidrome/navidrome/core/auth"
+	"github.com/vi2play/vi2play/core/auth"
 )
 
 const (

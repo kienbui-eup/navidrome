@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/model"
 )
 
 type Scrobble struct {

@@ -56,15 +56,15 @@ export default defineConfig({
 // PWA manifest
 function manifest() {
   return {
-    name: 'Trợ lý nhạc',
-    short_name: 'Trợ lý nhạc',
+    name: 'vi2play (Vip Player)',
+    short_name: 'vi2play',
     description:
-      'Trợ lý nhạc, an open source web-based music collection server and streamer',
+      'vi2play (Vip Player), an open source web-based music collection server and streamer',
     categories: ['music', 'entertainment'],
     display: 'standalone',
     start_url: './',
-    background_color: 'white',
-    theme_color: 'blue',
+    background_color: '#101010',
+    theme_color: '#d4a017',
     icons: [
       {
         src: './android-chrome-192x192.png',

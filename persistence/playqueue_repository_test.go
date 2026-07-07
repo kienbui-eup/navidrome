@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/navidrome/navidrome/conf/configtest"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/id"
-	"github.com/navidrome/navidrome/model/request"
+	"github.com/vi2play/vi2play/conf/configtest"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/id"
+	"github.com/vi2play/vi2play/model/request"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

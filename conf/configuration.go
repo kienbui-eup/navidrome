@@ -17,10 +17,10 @@ import (
 	"github.com/go-viper/encoding/ini"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/kr/pretty"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/scheduler"
-	"github.com/navidrome/navidrome/utils/run"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/scheduler"
+	"github.com/vi2play/vi2play/utils/run"
 	"github.com/spf13/viper"
 )
 
@@ -389,7 +389,7 @@ func Load(noConfigDump bool) {
 			logFatal(fmt.Sprintf("Error opening log file %s: %s", Server.LogFile, err.Error()))
 		}
 		log.SetOutput(out)
-	} else if os.Getenv("ND_SYSTEMD_PRIORITY_LOGGING") != "" && os.Getenv("JOURNAL_STREAM") != "" {
+	} else if os.Getenv("VI_SYSTEMD_PRIORITY_LOGGING") != "" && os.Getenv("JOURNAL_STREAM") != "" {
 		// When running under systemd, prepend syslog priority prefixes so
 		// journald assigns the correct severity to each log line.
 		// Note that we have an additional environment variable, as JOURNAL_STREAM
@@ -432,10 +432,10 @@ func Load(noConfigDump bool) {
 	// Log configuration source
 	if Server.ConfigFile != "" {
 		log.Info("Loaded configuration", "file", Server.ConfigFile)
-	} else if hasNDEnvVars() {
+	} else if hasVIEnvVars() {
 		log.Info("No configuration file found. Loaded configuration only from environment variables")
 	} else {
-		log.Warn("No configuration file found. Using default values. To specify a config file, use the --configfile flag or set the ND_CONFIGFILE environment variable.")
+		log.Warn("No configuration file found. Using default values. To specify a config file, use the --configfile flag or set the VI_CONFIGFILE environment variable.")
 	}
 
 	// Print current configuration if log level is Debug
@@ -490,8 +490,8 @@ func Load(noConfigDump bool) {
 }
 
 func logDeprecatedOptions(oldName, newName string) {
-	envVar := "ND_" + strings.ToUpper(strings.ReplaceAll(oldName, ".", "_"))
-	newEnvVar := "ND_" + strings.ToUpper(strings.ReplaceAll(newName, ".", "_"))
+	envVar := "VI_" + strings.ToUpper(strings.ReplaceAll(oldName, ".", "_"))
+	newEnvVar := "VI_" + strings.ToUpper(strings.ReplaceAll(newName, ".", "_"))
 	logWarning := func(oldName, newName string) {
 		if newName != "" {
 			log.Warn(fmt.Sprintf("Option '%s' is deprecated and will be ignored in a future release. Please use the new '%s'", oldName, newName))
@@ -511,7 +511,7 @@ func logDeprecatedOptions(oldName, newName string) {
 // not available anymore
 func logRemovedOptions(options ...string) {
 	for _, option := range options {
-		envVar := "ND_" + strings.ToUpper(strings.ReplaceAll(option, ".", "_"))
+		envVar := "VI_" + strings.ToUpper(strings.ReplaceAll(option, ".", "_"))
 		logWarning := func(option string) {
 			log.Warn(fmt.Sprintf("Option '%s' is not available anymore and will be ignored. Please remove it from your config", option))
 		}
@@ -524,31 +524,31 @@ func logRemovedOptions(options ...string) {
 	}
 }
 
-// remapEnvVarKeysFromConfig detects ND_-prefixed keys in the config file (users mistakenly
+// remapEnvVarKeysFromConfig detects VI_-prefixed keys in the config file (users mistakenly
 // using environment variable names) and remaps them to canonical Viper keys with a warning.
 func remapEnvVarKeysFromConfig() {
 	for _, key := range viper.AllKeys() {
-		if !strings.HasPrefix(key, "nd_") || !viper.InConfig(key) {
+		if !strings.HasPrefix(key, "vi_") || !viper.InConfig(key) {
 			continue
 		}
-		stripped := strings.TrimPrefix(key, "nd_")
+		stripped := strings.TrimPrefix(key, "vi_")
 		canonicalKey := strings.ReplaceAll(stripped, "_", ".")
-		displayNDKey := "ND_" + strings.ToUpper(stripped)
+		displayVIKey := "VI_" + strings.ToUpper(stripped)
 		displayCanonical := toPascalCase(canonicalKey)
 
 		if viper.InConfig(canonicalKey) {
 			logFatal(fmt.Sprintf(
-				"Config file contains both '%s' and '%s'. Remove the ND_-prefixed version. "+
-					"The 'ND_' prefix is only needed for environment variables, not config file keys.",
-				displayNDKey, displayCanonical,
+				"Config file contains both '%s' and '%s'. Remove the VI_-prefixed version. "+
+					"The 'VI_' prefix is only needed for environment variables, not config file keys.",
+				displayVIKey, displayCanonical,
 			))
 			return
 		}
 
 		viper.Set(canonicalKey, viper.Get(key))
 		_, _ = fmt.Fprintf(os.Stderr, "WARNING: Config key '%s' uses environment variable naming. Use '%s' instead. "+
-			"The 'ND_' prefix is only needed for environment variables.\n",
-			displayNDKey, displayCanonical,
+			"The 'VI_' prefix is only needed for environment variables.\n",
+			displayVIKey, displayCanonical,
 		)
 	}
 }
@@ -747,10 +747,10 @@ func AddHook(hook func()) {
 	hooks = append(hooks, hook)
 }
 
-// hasNDEnvVars checks if any ND_ prefixed environment variables are set (excluding ND_CONFIGFILE)
-func hasNDEnvVars() bool {
+// hasVIEnvVars checks if any VI_ prefixed environment variables are set (excluding VI_CONFIGFILE)
+func hasVIEnvVars() bool {
 	for _, env := range os.Environ() {
-		if strings.HasPrefix(env, "ND_") && !strings.HasPrefix(env, "ND_CONFIGFILE=") {
+		if strings.HasPrefix(env, "VI_") && !strings.HasPrefix(env, "VI_CONFIGFILE=") {
 			return true
 		}
 	}
@@ -950,14 +950,14 @@ func InitConfig(cfgFile string, loadEnvVars bool) {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Search config in local directory with name "navidrome" (without extension).
+		// Search config in local directory with name "vi2play" (without extension).
 		viper.AddConfigPath(".")
-		viper.SetConfigName("navidrome")
+		viper.SetConfigName("vi2play")
 	}
 
 	_ = viper.BindEnv("port")
 	if loadEnvVars {
-		viper.SetEnvPrefix("ND")
+		viper.SetEnvPrefix("VI")
 		replacer := strings.NewReplacer(".", "_")
 		viper.SetEnvKeyReplacer(replacer)
 		viper.AutomaticEnv()
@@ -965,7 +965,7 @@ func InitConfig(cfgFile string, loadEnvVars bool) {
 
 	err := viper.ReadInConfig()
 	if viper.ConfigFileUsed() != "" && err != nil {
-		logFatal("Navidrome could not open config file:", err)
+		logFatal("vi2play could not open config file:", err)
 	}
 }
 
@@ -975,7 +975,7 @@ func getConfigFile(cfgFile string) string {
 	if cfgFile != "" {
 		return cfgFile
 	}
-	cfgFile = os.Getenv("ND_CONFIGFILE")
+	cfgFile = os.Getenv("VI_CONFIGFILE")
 	if cfgFile != "" {
 		if _, err := os.Stat(cfgFile); err == nil { //nolint:gosec
 			return cfgFile

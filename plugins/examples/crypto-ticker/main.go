@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/navidrome/navidrome/plugins/pdk/go/host"
-	"github.com/navidrome/navidrome/plugins/pdk/go/lifecycle"
-	"github.com/navidrome/navidrome/plugins/pdk/go/pdk"
-	"github.com/navidrome/navidrome/plugins/pdk/go/scheduler"
-	"github.com/navidrome/navidrome/plugins/pdk/go/websocket"
+	"github.com/vi2play/vi2play/plugins/pdk/go/host"
+	"github.com/vi2play/vi2play/plugins/pdk/go/lifecycle"
+	"github.com/vi2play/vi2play/plugins/pdk/go/pdk"
+	"github.com/vi2play/vi2play/plugins/pdk/go/scheduler"
+	"github.com/vi2play/vi2play/plugins/pdk/go/websocket"
 )
 
 const (

@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/navidrome/navidrome/plugins/pdk/go/pdk"
+	"github.com/vi2play/vi2play/plugins/pdk/go/pdk"
 )
 
 // User represents the User data structure.

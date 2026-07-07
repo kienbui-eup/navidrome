@@ -1,7 +1,7 @@
 {
   "status": "ok",
   "version": "1.16.1",
-  "type": "navidrome",
+  "type": "vi2play",
   "serverVersion": "v0.55.0",
   "openSubsonic": true,
   "nowPlaying": {}

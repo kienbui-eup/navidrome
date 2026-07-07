@@ -6,12 +6,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/navidrome/navidrome/core/auth"
-	streampkg "github.com/navidrome/navidrome/core/stream"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	. "github.com/navidrome/navidrome/utils/gg"
-	"github.com/navidrome/navidrome/utils/req"
+	"github.com/vi2play/vi2play/core/auth"
+	streampkg "github.com/vi2play/vi2play/core/stream"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	. "github.com/vi2play/vi2play/utils/gg"
+	"github.com/vi2play/vi2play/utils/req"
 )
 
 func (pub *Router) handleStream(w http.ResponseWriter, r *http.Request) {

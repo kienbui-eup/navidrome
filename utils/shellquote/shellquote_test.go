@@ -3,7 +3,7 @@ package shellquote_test
 import (
 	"testing"
 
-	"github.com/navidrome/navidrome/utils/shellquote"
+	"github.com/vi2play/vi2play/utils/shellquote"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

@@ -6,10 +6,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/navidrome/navidrome/core"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils/req"
+	"github.com/vi2play/vi2play/core"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/utils/req"
 )
 
 func doInspect(ctx context.Context, ds model.DataStore, id string) (*core.InspectOutput, error) {

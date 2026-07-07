@@ -9,26 +9,26 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core"
-	"github.com/navidrome/navidrome/core/playlists"
-	"github.com/navidrome/navidrome/db"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/resources"
-	"github.com/navidrome/navidrome/scanner"
-	"github.com/navidrome/navidrome/scheduler"
-	"github.com/navidrome/navidrome/server/backgrounds"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core"
+	"github.com/vi2play/vi2play/core/playlists"
+	"github.com/vi2play/vi2play/db"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/resources"
+	"github.com/vi2play/vi2play/scanner"
+	"github.com/vi2play/vi2play/scheduler"
+	"github.com/vi2play/vi2play/server/backgrounds"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
 	// Import adapters to register them
-	_ "github.com/navidrome/navidrome/adapters/deezer"
-	_ "github.com/navidrome/navidrome/adapters/gotaglib"
-	_ "github.com/navidrome/navidrome/adapters/lastfm"
-	_ "github.com/navidrome/navidrome/adapters/listenbrainz"
+	_ "github.com/vi2play/vi2play/adapters/deezer"
+	_ "github.com/vi2play/vi2play/adapters/gotaglib"
+	_ "github.com/vi2play/vi2play/adapters/lastfm"
+	_ "github.com/vi2play/vi2play/adapters/listenbrainz"
 )
 
 var (
@@ -36,15 +36,15 @@ var (
 	noBanner bool
 
 	rootCmd = &cobra.Command{
-		Use:   "navidrome",
-		Short: "Navidrome is a self-hosted music server and streamer",
-		Long: `Navidrome is a self-hosted music server and streamer.
-Complete documentation is available at https://www.navidrome.org/docs`,
+		Use:   "vi2play",
+		Short: "vi2play (Vip Player) is a music server and streamer tailored for audiophiles",
+		Long: `vi2play (Vip Player) is a modern music server and streamer tailored for audiophiles enjoying high-quality music.
+Complete documentation is available at https://github.com/vi2play/vi2play`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			preRun()
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			runNavidrome(cmd.Context())
+			runVi2play(cmd.Context())
 		},
 		PostRun: func(cmd *cobra.Command, args []string) {
 			postRun()
@@ -53,7 +53,7 @@ Complete documentation is available at https://www.navidrome.org/docs`,
 	}
 )
 
-// Execute runs the root cobra command, which will start the Navidrome server by calling the runNavidrome function.
+// Execute runs the root cobra command, which will start the vi2play server by calling the runVi2play function.
 func Execute() {
 	ctx, cancel := mainContext(context.Background())
 	defer cancel()
@@ -72,13 +72,13 @@ func preRun() {
 }
 
 func postRun() {
-	log.Info("Navidrome stopped, bye.")
+	log.Info("vi2play stopped, bye.")
 }
 
-// runNavidrome is the main entry point for the Navidrome server. It starts all the services and blocks.
+// runVi2play is the main entry point for the vi2play server. It starts all the services and blocks.
 // If any of the services returns an error, it will log it and exit. If the process receives a signal to exit,
 // it will cancel the context and exit gracefully.
-func runNavidrome(ctx context.Context) {
+func runVi2play(ctx context.Context) {
 	defer db.Init(ctx)()
 
 	g, ctx := errgroup.WithContext(ctx)
@@ -100,7 +100,7 @@ func runNavidrome(ctx context.Context) {
 	}
 
 	if err := g.Wait(); err != nil {
-		log.Error("Fatal error in Navidrome. Aborting", err)
+		log.Error("Fatal error in vi2play. Aborting", err)
 	}
 }
 
@@ -391,7 +391,7 @@ func init() {
 		conf.InitConfig(cfgFile, true)
 	})
 
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "configfile", "c", "", `config file (default "./navidrome.toml")`)
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "configfile", "c", "", `config file (default "./vi2play.toml")`)
 	rootCmd.PersistentFlags().BoolVarP(&noBanner, "nobanner", "n", false, `don't show banner`)
 	rootCmd.PersistentFlags().String("musicfolder", viper.GetString("musicfolder"), "folder where your music is stored")
 	rootCmd.PersistentFlags().String("datafolder", viper.GetString("datafolder"), "folder to store application data (DB), needs write access")
@@ -406,13 +406,13 @@ func init() {
 	_ = viper.BindPFlag("logfile", rootCmd.PersistentFlags().Lookup("logfile"))
 
 	rootCmd.Flags().StringP("address", "a", viper.GetString("address"), "IP address to bind to")
-	rootCmd.Flags().IntP("port", "p", viper.GetInt("port"), "HTTP port Navidrome will listen to")
-	rootCmd.Flags().String("baseurl", viper.GetString("baseurl"), "base URL to configure Navidrome behind a proxy (ex: /music or http://my.server.com)")
+	rootCmd.Flags().IntP("port", "p", viper.GetInt("port"), "HTTP port vi2play will listen to")
+	rootCmd.Flags().String("baseurl", viper.GetString("baseurl"), "base URL to configure vi2play behind a proxy (ex: /music or http://my.server.com)")
 	rootCmd.Flags().String("tlscert", viper.GetString("tlscert"), "optional path to a TLS cert file (enables HTTPS listening)")
 	rootCmd.Flags().String("unixsocketperm", viper.GetString("unixsocketperm"), "optional file permission for the unix socket")
 	rootCmd.Flags().String("tlskey", viper.GetString("tlskey"), "optional path to a TLS key file (enables HTTPS listening)")
 
-	rootCmd.Flags().Duration("sessiontimeout", viper.GetDuration("sessiontimeout"), "how long Navidrome will wait before closing web ui idle sessions")
+	rootCmd.Flags().Duration("sessiontimeout", viper.GetDuration("sessiontimeout"), "how long vi2play will wait before closing web ui idle sessions")
 	rootCmd.Flags().Duration("scaninterval", viper.GetDuration("scaninterval"), "how frequently to scan for changes in your music library")
 	rootCmd.Flags().String("uiloginbackgroundurl", viper.GetString("uiloginbackgroundurl"), "URL to a backaground image used in the Login page")
 	rootCmd.Flags().Bool("enabletranscodingconfig", viper.GetBool("enabletranscodingconfig"), "enables transcoding configuration in the UI")

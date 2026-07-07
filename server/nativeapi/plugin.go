@@ -8,10 +8,10 @@ import (
 
 	"github.com/deluan/rest"
 	"github.com/go-chi/chi/v5"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/server"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/server"
 )
 
 func (api *Router) addPluginRoute(r chi.Router) {

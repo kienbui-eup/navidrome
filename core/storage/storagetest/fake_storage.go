@@ -12,10 +12,10 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/navidrome/navidrome/core/storage"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model/metadata"
-	"github.com/navidrome/navidrome/utils/random"
+	"github.com/vi2play/vi2play/core/storage"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model/metadata"
+	"github.com/vi2play/vi2play/utils/random"
 )
 
 // FakeStorage is a fake storage that provides a FakeFS.

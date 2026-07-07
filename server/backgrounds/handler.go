@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/utils/cache"
-	"github.com/navidrome/navidrome/utils/random"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/utils/cache"
+	"github.com/vi2play/vi2play/utils/random"
 	"gopkg.in/yaml.v3"
 )
 

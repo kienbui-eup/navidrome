@@ -18,14 +18,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core/auth"
-	"github.com/navidrome/navidrome/core/metrics"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/server/events"
-	"github.com/navidrome/navidrome/ui"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core/auth"
+	"github.com/vi2play/vi2play/core/metrics"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/server/events"
+	"github.com/vi2play/vi2play/ui"
 )
 
 type Server struct {
@@ -120,7 +120,7 @@ func (s *Server) Run(ctx context.Context, addr string, port int, tlsCert string,
 		log.Error(ctx, "Could not start server. Aborting", err)
 		return fmt.Errorf("starting server: %w", err)
 	case <-time.After(50 * time.Millisecond):
-		log.Info(ctx, "----> Navidrome server is ready!", "address", addr, "startupTime", startupTime, "tlsEnabled", tlsEnabled)
+		log.Info(ctx, "----> vi2play server is ready!", "address", addr, "startupTime", startupTime, "tlsEnabled", tlsEnabled)
 	}
 
 	// Wait for a signal to terminate

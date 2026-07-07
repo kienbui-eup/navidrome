@@ -14,16 +14,16 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	ppl "github.com/google/go-pipeline/pkg/pipeline"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/core/artwork"
-	"github.com/navidrome/navidrome/core/storage"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/metadata"
-	"github.com/navidrome/navidrome/utils"
-	"github.com/navidrome/navidrome/utils/pl"
-	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/core/artwork"
+	"github.com/vi2play/vi2play/core/storage"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/metadata"
+	"github.com/vi2play/vi2play/utils"
+	"github.com/vi2play/vi2play/utils/pl"
+	"github.com/vi2play/vi2play/utils/slice"
 )
 
 func createPhaseFolders(ctx context.Context, state *scanState, ds model.DataStore, cw artwork.CacheWarmer) *phaseFolders {

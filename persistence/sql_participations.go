@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	. "github.com/Masterminds/squirrel"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/utils/slice"
 )
 
 type participant struct {

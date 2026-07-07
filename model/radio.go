@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/navidrome/navidrome/consts"
+	"github.com/vi2play/vi2play/consts"
 )
 
 type Radio struct {

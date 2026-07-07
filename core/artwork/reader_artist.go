@@ -14,12 +14,12 @@ import (
 	"time"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/core"
-	"github.com/navidrome/navidrome/core/external"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils/str"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/core"
+	"github.com/vi2play/vi2play/core/external"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/utils/str"
 )
 
 const (

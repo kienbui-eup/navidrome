@@ -3,7 +3,7 @@ package scrobbler
 import (
 	"context"
 
-	"github.com/navidrome/navidrome/log"
+	"github.com/vi2play/vi2play/log"
 )
 
 func (p *playTracker) enqueuePlaybackReport(ctx context.Context, info PlaybackSession) {

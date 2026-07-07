@@ -9,8 +9,8 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	ppl "github.com/google/go-pipeline/pkg/pipeline"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
 )
 
 // phaseRefreshAlbums is responsible for refreshing albums that have been

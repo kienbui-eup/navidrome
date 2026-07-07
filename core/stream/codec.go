@@ -72,6 +72,8 @@ func codecMaxSampleRate(codec string) int {
 		return 48000
 	case "aac":
 		return 96000
+	case "flac", "wav":
+		return 192000
 	}
 	return 0
 }

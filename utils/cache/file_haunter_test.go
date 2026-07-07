@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/djherbis/fscache"
-	"github.com/navidrome/navidrome/utils/cache"
+	"github.com/vi2play/vi2play/utils/cache"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

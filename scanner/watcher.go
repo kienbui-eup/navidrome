@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/core/storage"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils/singleton"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/core/storage"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/utils/singleton"
 )
 
 type Watcher interface {
@@ -256,11 +256,11 @@ func (w *watcher) processLibraryEvents(ctx context.Context, lib *model.Library, 
 			}
 			log.Trace(ctx, "Detected change", "libraryID", lib.ID, "path", path, "absoluteLibPath", absLibPath)
 
-			// Check if the original path (before resolution) matches .ndignore patterns
-			// This is crucial for deleted folders - if a deleted folder matches .ndignore,
+			// Check if the original path (before resolution) matches .viignore patterns
+			// This is crucial for deleted folders - if a deleted folder matches .viignore,
 			// we should ignore it BEFORE resolveFolderPath walks up to the parent
 			if w.shouldIgnoreFolderPath(ctx, fsys, path) {
-				log.Debug(ctx, "Ignoring change matching .ndignore pattern", "libraryID", lib.ID, "path", path)
+				log.Debug(ctx, "Ignoring change matching .viignore pattern", "libraryID", lib.ID, "path", path)
 				continue
 			}
 
@@ -268,7 +268,7 @@ func (w *watcher) processLibraryEvents(ctx context.Context, lib *model.Library, 
 			folderPath := resolveFolderPath(fsys, path)
 			// Double-check after resolution in case the resolved path is different and also matches patterns
 			if folderPath != path && w.shouldIgnoreFolderPath(ctx, fsys, folderPath) {
-				log.Trace(ctx, "Ignoring change in folder matching .ndignore pattern", "libraryID", lib.ID, "folderPath", folderPath)
+				log.Trace(ctx, "Ignoring change in folder matching .viignore pattern", "libraryID", lib.ID, "folderPath", folderPath)
 				continue
 			}
 
@@ -308,7 +308,7 @@ func resolveFolderPath(fsys fs.FS, path string) string {
 	}
 }
 
-// shouldIgnoreFolderPath checks if the given folderPath should be ignored based on .ndignore patterns
+// shouldIgnoreFolderPath checks if the given folderPath should be ignored based on .viignore patterns
 // in the library. It pushes all parent folders onto the IgnoreChecker stack before checking.
 func (w *watcher) shouldIgnoreFolderPath(ctx context.Context, fsys storage.MusicFS, folderPath string) bool {
 	checker := newIgnoreChecker(fsys)

@@ -5,8 +5,8 @@ package main
 import (
 	"strings"
 
-	"github.com/navidrome/navidrome/plugins/pdk/go/host"
-	"github.com/navidrome/navidrome/plugins/pdk/go/pdk"
+	"github.com/vi2play/vi2play/plugins/pdk/go/host"
+	"github.com/vi2play/vi2play/plugins/pdk/go/pdk"
 )
 
 // TestInput is the input for nd_test_artwork callback.

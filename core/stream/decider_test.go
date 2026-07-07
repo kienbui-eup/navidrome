@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/conf/configtest"
-	"github.com/navidrome/navidrome/core/auth"
-	"github.com/navidrome/navidrome/core/ffmpeg"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/tests"
-	"github.com/navidrome/navidrome/utils/gg"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/conf/configtest"
+	"github.com/vi2play/vi2play/core/auth"
+	"github.com/vi2play/vi2play/core/ffmpeg"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/request"
+	"github.com/vi2play/vi2play/tests"
+	"github.com/vi2play/vi2play/utils/gg"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -700,7 +700,7 @@ var _ = Describe("Decider", func() {
 				Expect(decision.TargetBitDepth).To(Equal(24))
 			})
 
-			It("converts DSD sample rate for FLAC target without codec limit", func() {
+			It("converts DSD sample rate for FLAC target with 192kHz max limit", func() {
 				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "dsf", Codec: "DSD", BitRate: 5644, Channels: 2, SampleRate: 2822400, BitDepth: new(1)})
 				ci := &ClientInfo{
 					TranscodingProfiles: []Profile{
@@ -711,9 +711,9 @@ var _ = Describe("Decider", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
 				Expect(decision.TargetFormat).To(Equal("flac"))
-				// DSD64 2822400 / 8 = 352800, FLAC has no hard max
-				Expect(decision.TranscodeStream.SampleRate).To(Equal(352800))
-				Expect(decision.TargetSampleRate).To(Equal(352800))
+				// DSD64 2822400 / 8 = 352800, clamped to 176400 due to flac's 192kHz max and clean resampling
+				Expect(decision.TranscodeStream.SampleRate).To(Equal(176400))
+				Expect(decision.TargetSampleRate).To(Equal(176400))
 				// DSD 1-bit → 24-bit PCM
 				Expect(decision.TranscodeStream.BitDepth).To(Equal(24))
 				Expect(decision.TargetBitDepth).To(Equal(24))
@@ -760,9 +760,9 @@ var _ = Describe("Decider", func() {
 				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
-				// 352800*8 = 2822400 raw DSD, then ÷8 = 352800 PCM-equivalent (not ÷8 twice = 44100)
+				// 352800*8 = 2822400 raw DSD, then ÷8 = 352800 PCM-equivalent, then capped to 176400 due to flac 192kHz limit
 				Expect(decision.SourceStream.SampleRate).To(Equal(2822400))
-				Expect(decision.TargetSampleRate).To(Equal(352800))
+				Expect(decision.TargetSampleRate).To(Equal(176400))
 				// bits_per_sample=8 → 1-bit DSD → 24-bit PCM output
 				Expect(decision.TargetBitDepth).To(Equal(24))
 			})
@@ -1060,7 +1060,7 @@ var _ = Describe("Decider", func() {
 		})
 
 		Context("AAC max sample rate", func() {
-			It("caps sample rate at 96000 for AAC", func() {
+			It("caps sample rate at 88200 for AAC when source is 44.1kHz family", func() {
 				mf := withProbe(&model.MediaFile{ID: "1", Suffix: "dsf", Codec: "DSD", BitRate: 5644, Channels: 2, SampleRate: 2822400, BitDepth: new(1)})
 				ci := &ClientInfo{
 					MaxTranscodingAudioBitrate: 320,
@@ -1071,8 +1071,8 @@ var _ = Describe("Decider", func() {
 				decision, err := svc.MakeDecision(ctx, mf, ci, TranscodeOptions{})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(decision.CanTranscode).To(BeTrue())
-				// DSD64 2822400 / 8 = 352800, capped by AAC max of 96000
-				Expect(decision.TranscodeStream.SampleRate).To(Equal(96000))
+				// DSD64 2822400 / 8 = 352800, capped by AAC max of 96000, and adjusted to 88200 for clean resampling
+				Expect(decision.TranscodeStream.SampleRate).To(Equal(88200))
 			})
 		})
 

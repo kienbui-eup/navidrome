@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/conf/configtest"
-	"github.com/navidrome/navidrome/core/ffmpeg"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/scanner/metadata_old"
-	_ "github.com/navidrome/navidrome/scanner/metadata_old/ffmpeg"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/conf/configtest"
+	"github.com/vi2play/vi2play/core/ffmpeg"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/scanner/metadata_old"
+	_ "github.com/vi2play/vi2play/scanner/metadata_old/ffmpeg"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

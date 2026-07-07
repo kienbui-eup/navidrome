@@ -43,7 +43,7 @@ export const shareCoverUrl = (id, square) => {
   )
 }
 
-export const docsUrl = (path) => `https://www.navidrome.org${path}`
+export const docsUrl = (path) => `https://www.vi2play.org${path}`
 
 export const isLastFmURL = (url) => {
   try {

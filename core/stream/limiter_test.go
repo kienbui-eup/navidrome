@@ -5,8 +5,8 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/navidrome/navidrome/core/stream"
-	"github.com/navidrome/navidrome/log"
+	"github.com/vi2play/vi2play/core/stream"
+	"github.com/vi2play/vi2play/log"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

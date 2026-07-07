@@ -88,4 +88,29 @@ var _ = Describe("Codec", func() {
 			Expect(codecMaxChannels("")).To(Equal(0))
 		})
 	})
+
+	Describe("codecMaxSampleRate", func() {
+		It("returns 48000 for mp3", func() {
+			Expect(codecMaxSampleRate("mp3")).To(Equal(48000))
+		})
+
+		It("returns 96000 for aac", func() {
+			Expect(codecMaxSampleRate("aac")).To(Equal(96000))
+		})
+
+		It("returns 192000 for flac and wav", func() {
+			Expect(codecMaxSampleRate("flac")).To(Equal(192000))
+			Expect(codecMaxSampleRate("wav")).To(Equal(192000))
+		})
+
+		It("is case-insensitive", func() {
+			Expect(codecMaxSampleRate("FLAC")).To(Equal(192000))
+			Expect(codecMaxSampleRate("AAC")).To(Equal(96000))
+		})
+
+		It("returns 0 for codecs with no hard limit", func() {
+			Expect(codecMaxSampleRate("opus")).To(Equal(0))
+			Expect(codecMaxSampleRate("")).To(Equal(0))
+		})
+	})
 })

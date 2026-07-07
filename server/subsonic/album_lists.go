@@ -6,14 +6,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/navidrome/navidrome/core/scrobbler"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/server/subsonic/filter"
-	"github.com/navidrome/navidrome/server/subsonic/responses"
-	"github.com/navidrome/navidrome/utils/req"
-	"github.com/navidrome/navidrome/utils/run"
-	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/vi2play/vi2play/core/scrobbler"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/server/subsonic/filter"
+	"github.com/vi2play/vi2play/server/subsonic/responses"
+	"github.com/vi2play/vi2play/utils/req"
+	"github.com/vi2play/vi2play/utils/run"
+	"github.com/vi2play/vi2play/utils/slice"
 )
 
 func (api *Router) getAlbumList(r *http.Request) (model.Albums, int64, error) {

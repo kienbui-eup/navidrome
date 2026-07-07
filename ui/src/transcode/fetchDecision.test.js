@@ -10,7 +10,7 @@ import { httpClient } from '../dataProvider'
 
 describe('fetchTranscodeDecision', () => {
   const fakeProfile = {
-    name: 'NavidromeUI',
+    name: 'vi2playUI',
     platform: 'test',
     directPlayProfiles: [
       { containers: ['mp3'], audioCodecs: ['mp3'], protocols: ['http'] },

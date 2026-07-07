@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model/id"
-	"github.com/navidrome/navidrome/plugins/capabilities"
-	"github.com/navidrome/navidrome/plugins/host"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model/id"
+	"github.com/vi2play/vi2play/plugins/capabilities"
+	"github.com/vi2play/vi2play/plugins/host"
 )
 
 // CapabilityWebSocket indicates the plugin can receive WebSocket callbacks.

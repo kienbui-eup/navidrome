@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/navidrome/navidrome/db"
+	"github.com/vi2play/vi2play/db"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

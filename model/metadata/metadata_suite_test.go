@@ -7,8 +7,8 @@ import (
 
 	"github.com/djherbis/times"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/tests"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/tests"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

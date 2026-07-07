@@ -12,10 +12,10 @@ import (
 
 	"github.com/deluan/rest"
 	"github.com/go-chi/chi/v5"
-	"github.com/navidrome/navidrome/core/playlists"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/utils/req"
+	"github.com/vi2play/vi2play/core/playlists"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/utils/req"
 )
 
 type restHandler = func(rest.RepositoryConstructor, ...rest.Logger) http.HandlerFunc

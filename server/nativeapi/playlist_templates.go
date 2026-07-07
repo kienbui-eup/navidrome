@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/navidrome/navidrome/core/playlists"
-	"github.com/navidrome/navidrome/log"
+	"github.com/vi2play/vi2play/core/playlists"
+	"github.com/vi2play/vi2play/log"
 )
 
 // templateDTO is the wire representation of a playlist.Template, returned by

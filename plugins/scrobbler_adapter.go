@@ -5,10 +5,10 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/navidrome/navidrome/core/scrobbler"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/plugins/capabilities"
+	"github.com/vi2play/vi2play/core/scrobbler"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/request"
+	"github.com/vi2play/vi2play/plugins/capabilities"
 )
 
 // CapabilityScrobbler indicates the plugin can receive scrobble events.

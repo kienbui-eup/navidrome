@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/deluan/rest"
-	"github.com/navidrome/navidrome/model"
+	"github.com/vi2play/vi2play/model"
 )
 
 func CreateMockPluginRepo() *MockPluginRepo {

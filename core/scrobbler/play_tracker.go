@@ -7,14 +7,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/navidrome/navidrome/conf"
-	"github.com/navidrome/navidrome/consts"
-	"github.com/navidrome/navidrome/log"
-	"github.com/navidrome/navidrome/model"
-	"github.com/navidrome/navidrome/model/request"
-	"github.com/navidrome/navidrome/server/events"
-	"github.com/navidrome/navidrome/utils/cache"
-	"github.com/navidrome/navidrome/utils/singleton"
+	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/consts"
+	"github.com/vi2play/vi2play/log"
+	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/model/request"
+	"github.com/vi2play/vi2play/server/events"
+	"github.com/vi2play/vi2play/utils/cache"
+	"github.com/vi2play/vi2play/utils/singleton"
 )
 
 const (

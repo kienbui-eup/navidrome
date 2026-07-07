@@ -17,7 +17,7 @@ var _ = Describe("IgnoreChecker", func() {
 			ctx = context.Background()
 		})
 
-		Context("when .ndignore file does not exist", func() {
+		Context("when .viignore file does not exist", func() {
 			It("should return empty patterns", func() {
 				fsys := fstest.MapFS{}
 				ic = newIgnoreChecker(fsys)
@@ -26,10 +26,10 @@ var _ = Describe("IgnoreChecker", func() {
 			})
 		})
 
-		Context("when .ndignore file is empty", func() {
+		Context("when .viignore file is empty", func() {
 			It("should return wildcard to ignore everything", func() {
 				fsys := fstest.MapFS{
-					".ndignore": &fstest.MapFile{Data: []byte("")},
+					".viignore": &fstest.MapFile{Data: []byte("")},
 				}
 				ic = newIgnoreChecker(fsys)
 				patterns := ic.loadPatternsFromFolder(ctx, ".")
@@ -37,10 +37,10 @@ var _ = Describe("IgnoreChecker", func() {
 			})
 		})
 
-		DescribeTable("parsing .ndignore content",
+		DescribeTable("parsing .viignore content",
 			func(content string, expectedPatterns []string) {
 				fsys := fstest.MapFS{
-					".ndignore": &fstest.MapFile{Data: []byte(content)},
+					".viignore": &fstest.MapFile{Data: []byte(content)},
 				}
 				ic = newIgnoreChecker(fsys)
 				patterns := ic.loadPatternsFromFolder(ctx, ".")
@@ -71,9 +71,9 @@ var _ = Describe("IgnoreChecker", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
 			fsys = fstest.MapFS{
-				".ndignore":         &fstest.MapFile{Data: []byte("*.txt")},
-				"folder1/.ndignore": &fstest.MapFile{Data: []byte("*.mp3")},
-				"folder2/.ndignore": &fstest.MapFile{Data: []byte("*.flac")},
+				".viignore":         &fstest.MapFile{Data: []byte("*.txt")},
+				"folder1/.viignore": &fstest.MapFile{Data: []byte("*.mp3")},
+				"folder2/.viignore": &fstest.MapFile{Data: []byte("*.flac")},
 			}
 			ic = newIgnoreChecker(fsys)
 		})
@@ -101,7 +101,7 @@ var _ = Describe("IgnoreChecker", func() {
 				Expect(ic.currentPatterns).To(ConsistOf("*.txt", "*.mp3"))
 			})
 
-			It("should handle push when no .ndignore exists", func() {
+			It("should handle push when no .viignore exists", func() {
 				err := ic.Push(ctx, "nonexistent")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(len(ic.patternStack)).To(Equal(1))
@@ -178,10 +178,10 @@ var _ = Describe("IgnoreChecker", func() {
 		BeforeEach(func() {
 			ctx = context.Background()
 			fsys := fstest.MapFS{
-				".ndignore":                         &fstest.MapFile{Data: []byte("root.txt")},
-				"folder1/.ndignore":                 &fstest.MapFile{Data: []byte("level1.txt")},
-				"folder1/folder2/.ndignore":         &fstest.MapFile{Data: []byte("level2.txt")},
-				"folder1/folder2/folder3/.ndignore": &fstest.MapFile{Data: []byte("level3.txt")},
+				".viignore":                         &fstest.MapFile{Data: []byte("root.txt")},
+				"folder1/.viignore":                 &fstest.MapFile{Data: []byte("level1.txt")},
+				"folder1/folder2/.viignore":         &fstest.MapFile{Data: []byte("level2.txt")},
+				"folder1/folder2/folder3/.viignore": &fstest.MapFile{Data: []byte("level3.txt")},
 			}
 			ic = newIgnoreChecker(fsys)
 		})
@@ -213,11 +213,11 @@ var _ = Describe("IgnoreChecker", func() {
 			Expect(len(ic.patternStack)).To(Equal(2))
 		})
 
-		Context("when some parent folders have no .ndignore", func() {
+		Context("when some parent folders have no .viignore", func() {
 			BeforeEach(func() {
 				fsys := fstest.MapFS{
-					".ndignore":                 &fstest.MapFile{Data: []byte("root.txt")},
-					"folder1/folder2/.ndignore": &fstest.MapFile{Data: []byte("level2.txt")},
+					".viignore":                 &fstest.MapFile{Data: []byte("root.txt")},
+					"folder1/folder2/.viignore": &fstest.MapFile{Data: []byte("level2.txt")},
 				}
 				ic = newIgnoreChecker(fsys)
 			})
@@ -251,7 +251,7 @@ var _ = Describe("IgnoreChecker", func() {
 		Context("special paths", func() {
 			BeforeEach(func() {
 				fsys := fstest.MapFS{
-					".ndignore": &fstest.MapFile{Data: []byte("**/*")},
+					".viignore": &fstest.MapFile{Data: []byte("**/*")},
 				}
 				ic = newIgnoreChecker(fsys)
 				err := ic.Push(ctx, ".")
@@ -272,7 +272,7 @@ var _ = Describe("IgnoreChecker", func() {
 		DescribeTable("pattern matching",
 			func(pattern string, path string, shouldMatch bool) {
 				fsys := fstest.MapFS{
-					".ndignore": &fstest.MapFile{Data: []byte(pattern)},
+					".viignore": &fstest.MapFile{Data: []byte(pattern)},
 				}
 				ic = newIgnoreChecker(fsys)
 				err := ic.Push(ctx, ".")
@@ -295,7 +295,7 @@ var _ = Describe("IgnoreChecker", func() {
 		Context("with multiple patterns", func() {
 			BeforeEach(func() {
 				fsys := fstest.MapFS{
-					".ndignore": &fstest.MapFile{Data: []byte("*.txt\n*.log\ntemp/")},
+					".viignore": &fstest.MapFile{Data: []byte("*.txt\n*.log\ntemp/")},
 				}
 				ic = newIgnoreChecker(fsys)
 				err := ic.Push(ctx, ".")

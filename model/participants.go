@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/navidrome/navidrome/utils/slice"
+	"github.com/vi2play/vi2play/utils/slice"
 )
 
 var (
