@@ -153,8 +153,8 @@ const SongSearch = ({ libraryId, onImported, classes }) => {
     <Box className={classes.section}>
       <TextField
         className={classes.field}
-        label="Tìm bài hát"
-        placeholder="tên bài, nghệ sĩ..."
+        label="Tìm nhạc (ưu tiên album, rồi bài hát, ca sĩ)"
+        placeholder="tên album, bài hát, ca sĩ..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && query && search()}
@@ -209,7 +209,6 @@ const SongSearch = ({ libraryId, onImported, classes }) => {
           {hits.map((hit) => {
             const key = hitKey(hit)
             const meta = [
-              hit.artist,
               hit.album !== hit.title ? hit.album : null,
               formatLength(hit.length),
               hit.size ? formatBytes(hit.size) : null,
@@ -236,9 +235,7 @@ const SongSearch = ({ libraryId, onImported, classes }) => {
                       <Chip
                         size="small"
                         variant="outlined"
-                        label={
-                          hit.source === 'archive' ? 'Archive' : 'Drive'
-                        }
+                        label={hit.source === 'archive' ? 'Archive' : 'Drive'}
                       />
                     </>
                   }

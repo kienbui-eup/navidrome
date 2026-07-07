@@ -126,6 +126,56 @@ func matchesQuery(query string, candidates ...string) bool {
 	return true
 }
 
+// matchRank scores where the query matched, following the search priority
+// album > song title > artist. Hits whose tokens only match across several
+// fields (or only the filename path) rank lowest. Drive hits carry no
+// album/artist metadata, so they naturally land in the title tier.
+func matchRank(query string, h SongHit) int {
+	switch {
+	case h.Album != "" && matchesQuery(query, h.Album):
+		return 3
+	case matchesQuery(query, h.Title, h.Filename):
+		return 2
+	case h.Artist != "" && matchesQuery(query, h.Artist):
+		return 1
+	default:
+		return 0
+	}
+}
+
+// sortSongHits orders hits by matched field first (album > title > artist),
+// then by quality, exact-title match and size within the same tier.
+func sortSongHits(hits []SongHit, query string) []SongHit {
+	exact := foldSearch(query)
+	ranks := make([]int, len(hits))
+	order := make([]int, len(hits))
+	for i, h := range hits {
+		ranks[i] = matchRank(query, h)
+		order[i] = i
+	}
+	sort.SliceStable(order, func(x, y int) bool {
+		i, j := order[x], order[y]
+		a, b := hits[i], hits[j]
+		if ranks[i] != ranks[j] {
+			return ranks[i] > ranks[j]
+		}
+		if a.Quality != b.Quality {
+			return a.Quality > b.Quality
+		}
+		am := strings.Contains(foldSearch(a.Title), exact)
+		bm := strings.Contains(foldSearch(b.Title), exact)
+		if am != bm {
+			return am
+		}
+		return a.Size > b.Size
+	})
+	sorted := make([]SongHit, len(hits))
+	for x, i := range order {
+		sorted[x] = hits[i]
+	}
+	return sorted
+}
+
 // escapeArchivePath escapes each path segment of a (possibly nested) Archive
 // filename for use in a download URL.
 func escapeArchivePath(filename string) string {
@@ -182,19 +232,7 @@ func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string,
 		}
 		res.Hits = kept
 	}
-	exact := foldSearch(query)
-	sort.SliceStable(res.Hits, func(i, j int) bool {
-		a, b := res.Hits[i], res.Hits[j]
-		if a.Quality != b.Quality {
-			return a.Quality > b.Quality
-		}
-		am := strings.Contains(foldSearch(a.Title), exact)
-		bm := strings.Contains(foldSearch(b.Title), exact)
-		if am != bm {
-			return am
-		}
-		return a.Size > b.Size
-	})
+	res.Hits = sortSongHits(res.Hits, query)
 	if len(res.Hits) > searchSongsMaxHits {
 		res.Hits = res.Hits[:searchSongsMaxHits]
 	}

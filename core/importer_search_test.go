@@ -58,6 +58,44 @@ func TestMatchesQuery(t *testing.T) {
 	}
 }
 
+func TestMatchRank(t *testing.T) {
+	cases := []struct {
+		name string
+		hit  SongHit
+		want int
+	}{
+		{"album match wins", SongHit{Album: "Diễm Xưa Collection", Title: "Track 1", Artist: "Khánh Ly", Filename: "track01.flac"}, 3},
+		{"title match", SongHit{Album: "Greatest Hits", Title: "Diễm Xưa", Artist: "Khánh Ly", Filename: "diem-xua.flac"}, 2},
+		{"filename counts as title", SongHit{Title: "Diem Xua (24bit).flac", Filename: "Diem Xua (24bit).flac"}, 2},
+		{"artist match only", SongHit{Album: "Sơn Ca 7", Title: "Track 3", Artist: "Diễm Xưa Band", Filename: "track03.flac"}, 1},
+		{"cross-field match ranks lowest", SongHit{Album: "Diễm collection", Title: "Xưa", Artist: "Ai đó", Filename: "x.flac"}, 0},
+	}
+	for _, c := range cases {
+		if got := matchRank("diễm xưa", c.hit); got != c.want {
+			t.Errorf("%s: matchRank = %d, want %d", c.name, got, c.want)
+		}
+	}
+}
+
+func TestSortSongHitsAlbumFirst(t *testing.T) {
+	hits := []SongHit{
+		{Title: "Diễm Xưa", Artist: "Someone Else", Filename: "a.mp3", Quality: 40},
+		{Album: "Diễm Xưa Live", Title: "Track 2", Filename: "b.mp3", Quality: 35},
+		{Album: "Other Album", Title: "Nothing", Artist: "Diễm Xưa", Filename: "c.flac", Quality: 95},
+		{Album: "Diễm Xưa Live", Title: "Track 1", Filename: "d.flac", Quality: 80},
+	}
+	sorted := sortSongHits(hits, "diễm xưa")
+	// Album hits first (quality-sorted within), then title hit, then artist
+	// hit — even though the artist hit has the highest quality of all.
+	want := []string{"d.flac", "b.mp3", "a.mp3", "c.flac"}
+	for i, w := range want {
+		if sorted[i].Filename != w {
+			t.Errorf("sorted[%d] = %q (album=%q quality=%d), want %q",
+				i, sorted[i].Filename, sorted[i].Album, sorted[i].Quality, w)
+		}
+	}
+}
+
 // newSearchTestServer fakes both the Archive.org and Drive API endpoints.
 // driveStatus lets a test force the Drive source to fail.
 func newSearchTestServer(t *testing.T, driveStatus int) *httptest.Server {
@@ -129,21 +167,23 @@ func TestSearchSongs(t *testing.T) {
 	if len(res.Hits) != 3 {
 		t.Fatalf("got %d hits, want 3: %+v", len(res.Hits), res.Hits)
 	}
-	// Hi-end first: drive 24bit FLAC (95) > archive FLAC (80) > archive MP3 (40).
-	if res.Hits[0].Source != "drive" || res.Hits[0].Quality != 95 {
-		t.Errorf("hits[0] = %+v, want drive FLAC 24bit", res.Hits[0])
+	// Album matches outrank title-only matches: the archive hits match the
+	// album "Hotel California Live" (rank 3, quality-sorted within), while the
+	// drive file only matches by filename/title (rank 2) despite quality 95.
+	if res.Hits[0].Format != "FLAC" || !res.Hits[0].Lossless || res.Hits[0].Source != "archive" {
+		t.Errorf("hits[0] = %+v, want archive FLAC lossless", res.Hits[0])
 	}
-	if res.Hits[1].Format != "FLAC" || !res.Hits[1].Lossless {
-		t.Errorf("hits[1] = %+v, want archive FLAC lossless", res.Hits[1])
+	if res.Hits[1].Format != "MP3 VBR/320" || res.Hits[1].Lossless {
+		t.Errorf("hits[1] = %+v, want lossy MP3", res.Hits[1])
 	}
-	if res.Hits[2].Format != "MP3 VBR/320" || res.Hits[2].Lossless {
-		t.Errorf("hits[2] = %+v, want lossy MP3", res.Hits[2])
+	if res.Hits[2].Source != "drive" || res.Hits[2].Quality != 95 {
+		t.Errorf("hits[2] = %+v, want drive FLAC 24bit", res.Hits[2])
 	}
-	if !strings.HasPrefix(res.Hits[0].PreviewURL, "/api/import/preview?source=drive&id=d1") {
-		t.Errorf("drive preview URL = %q", res.Hits[0].PreviewURL)
+	if !strings.HasPrefix(res.Hits[2].PreviewURL, "/api/import/preview?source=drive&id=d1") {
+		t.Errorf("drive preview URL = %q", res.Hits[2].PreviewURL)
 	}
-	if want := srv.URL + "/download/item1/hotel-california.flac"; res.Hits[1].PreviewURL != want {
-		t.Errorf("archive preview URL = %q, want %q", res.Hits[1].PreviewURL, want)
+	if want := srv.URL + "/download/item1/hotel-california.flac"; res.Hits[0].PreviewURL != want {
+		t.Errorf("archive preview URL = %q, want %q", res.Hits[0].PreviewURL, want)
 	}
 }
 
