@@ -47,6 +47,13 @@ var ErrUpgradeScanInProgress = errors.New("upgrade scan already in progress")
 // (a missing candidate is model.ErrNotFound → 404).
 var ErrUpgradeInvalidStatus = errors.New("upgrade candidate is not in a valid status for this operation")
 
+// ErrUpgradeDisabled is returned by StartScan, Approve, Reject and
+// ApproveBatch when conf.Server.Upgrade.Enabled is false, so the kill switch
+// is single-sourced here rather than duplicated in the HTTP router (which
+// already gates the cron job and startup recovery — see cmd/root.go). The
+// HTTP handler is expected to map this to a 403 response.
+var ErrUpgradeDisabled = errors.New("quality upgrader is disabled")
+
 // Upgrader finds higher-quality versions of tracks already in the library,
 // searching the same public sources Importer downloads from (Internet
 // Archive, Google Drive, RSS), queues them (status "pending") for admin
@@ -168,6 +175,9 @@ func newUpgrader(ds model.DataStore, imp Importer, ffm ffmpeg.FFmpeg) *upgrader 
 }
 
 func (u *upgrader) StartScan(ctx context.Context, libraryID int, mediaFileIDs []string) error {
+	if !conf.Server.Upgrade.Enabled {
+		return ErrUpgradeDisabled
+	}
 	u.mu.Lock()
 	if u.state.running {
 		u.mu.Unlock()

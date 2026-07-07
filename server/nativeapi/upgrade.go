@@ -201,6 +201,10 @@ func (api *Router) upgradeApproveBatchHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 	accepted, err := api.upgrader.ApproveBatch(r.Context(), body.IDs)
+	if errors.Is(err, core.ErrUpgradeDisabled) {
+		upgradeError(w, r, "approve upgrade candidates", err)
+		return
+	}
 	if err != nil {
 		// Batch approval is best-effort: candidates that could not be approved
 		// are reported by omission from "accepted", so per-candidate errors are
@@ -215,7 +219,9 @@ func (api *Router) upgradeApproveBatchHandler(w http.ResponseWriter, r *http.Req
 
 // upgradeError maps Upgrader errors to HTTP status codes (same plain
 // http.Error response shape as importError): missing candidate → 404, scan
-// already running / status that does not allow the operation → 409, anything
+// already running / status that does not allow the operation → 409, the
+// feature's kill switch (conf.Server.Upgrade.Enabled=false) → 403 (same
+// convention as the artwork-upload kill switch in image_upload.go), anything
 // else → 400.
 func upgradeError(w http.ResponseWriter, r *http.Request, action string, err error) {
 	log.Warn(r.Context(), "Upgrade: failed to "+action, err)
@@ -224,6 +230,8 @@ func upgradeError(w http.ResponseWriter, r *http.Request, action string, err err
 		http.Error(w, err.Error(), http.StatusNotFound)
 	case errors.Is(err, core.ErrUpgradeScanInProgress), errors.Is(err, core.ErrUpgradeInvalidStatus):
 		http.Error(w, err.Error(), http.StatusConflict)
+	case errors.Is(err, core.ErrUpgradeDisabled):
+		http.Error(w, err.Error(), http.StatusForbidden)
 	default:
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}

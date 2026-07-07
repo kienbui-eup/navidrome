@@ -174,6 +174,14 @@ var _ = Describe("Upgrade API", func() {
 			Expect(w.Code).To(Equal(http.StatusConflict))
 		})
 
+		It("returns 403 when the quality upgrader is disabled (M2 kill switch)", func() {
+			upgrader.startScanErr = core.ErrUpgradeDisabled
+
+			w := doReq("POST", "/upgrade/scan", map[string]any{}, adminToken)
+
+			Expect(w.Code).To(Equal(http.StatusForbidden))
+		})
+
 		It("returns 400 for a malformed body", func() {
 			req := createAuthenticatedRequest("POST", "/upgrade/scan", bytes.NewBufferString("{not json"), adminToken)
 			w := httptest.NewRecorder()

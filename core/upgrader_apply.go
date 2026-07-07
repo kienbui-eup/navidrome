@@ -112,6 +112,9 @@ func parseUpgradeVerifyInfo(s string) *upgradeVerifyInfo {
 // ---------------------------------------------------------------------------
 
 func (u *upgrader) Approve(ctx context.Context, candidateID string, force bool) error {
+	if !conf.Server.Upgrade.Enabled {
+		return ErrUpgradeDisabled
+	}
 	repo := u.ds.UpgradeCandidate(ctx)
 	c, err := repo.Get(candidateID)
 	if err != nil {
@@ -140,6 +143,9 @@ func (u *upgrader) Approve(ctx context.Context, candidateID string, force bool) 
 }
 
 func (u *upgrader) Reject(ctx context.Context, candidateID string) error {
+	if !conf.Server.Upgrade.Enabled {
+		return ErrUpgradeDisabled
+	}
 	repo := u.ds.UpgradeCandidate(ctx)
 	c, err := repo.Get(candidateID)
 	if err != nil {
@@ -165,6 +171,9 @@ func (u *upgrader) Reject(ctx context.Context, candidateID string) error {
 }
 
 func (u *upgrader) ApproveBatch(ctx context.Context, ids []string) ([]string, error) {
+	if !conf.Server.Upgrade.Enabled {
+		return nil, ErrUpgradeDisabled
+	}
 	repo := u.ds.UpgradeCandidate(ctx)
 	user, _ := request.UserFrom(ctx)
 	accepted := []string{}
@@ -200,6 +209,12 @@ func (u *upgrader) ApproveBatch(ctx context.Context, ids []string) ([]string, er
 
 func (u *upgrader) Recover(ctx context.Context) error {
 	repo := u.ds.UpgradeCandidate(ctx)
+	// Sweep the staging area before re-enqueuing anything: sweepStaging reads
+	// every candidate's recorded StagedPath to decide what to keep, and the
+	// background worker started by the enqueue calls below downloads new
+	// (as yet unrecorded) files into that same folder — running the sweep
+	// after would race with, and could delete, a download in progress.
+	u.sweepStaging(ctx)
 	interrupted, err := repo.GetAll(model.QueryOptions{Filters: squirrel.Eq{"status": []string{
 		model.UpgradeCandidateStatusDownloading,
 		model.UpgradeCandidateStatusApproved,
@@ -272,6 +287,78 @@ func (u *upgrader) cleanupBackups(ctx context.Context) {
 	}
 }
 
+// upgradeStagingPartMaxAge is how long a *.part temp download file is allowed
+// to sit in the staging folder before sweepStaging treats it as orphaned by a
+// crash mid-download. Comfortably longer than any real download should take.
+const upgradeStagingPartMaxAge = time.Hour
+
+// sweepStaging removes leftover files from the upgrade staging area
+// (<DataFolder>/upgrade-staging) that nothing references any more: orphaned
+// ".nd-upgrade-*.part" temp files from a crash mid-download (older than
+// upgradeStagingPartMaxAge, so an in-flight download is never touched), and
+// any other staged file that is not the StagedPath of a candidate currently
+// in needs_review or downloading status (e.g. a needs_review candidate that
+// was later force-approved/rejected/reset, or a stale file left behind by a
+// re-download that overwrote VerifyInfo.StagedPath — see processCandidate).
+// Runs at startup (Recover) and every time the processing queue drains,
+// alongside cleanupBackups.
+func (u *upgrader) sweepStaging(ctx context.Context) {
+	dir := filepath.Join(conf.Server.DataFolder.String(), upgradeStagingSubdir)
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			log.Warn(ctx, "Upgrader: error reading staging folder", "path", dir, err)
+		}
+		return
+	}
+
+	referenced := map[string]bool{}
+	all, err := u.ds.UpgradeCandidate(ctx).GetAll(model.QueryOptions{Filters: squirrel.Eq{"status": []string{
+		model.UpgradeCandidateStatusNeedsReview,
+		model.UpgradeCandidateStatusDownloading,
+	}}})
+	if err != nil {
+		log.Warn(ctx, "Upgrader: error loading candidates for staging sweep", err)
+	} else {
+		for _, c := range all {
+			if c.Status != model.UpgradeCandidateStatusNeedsReview && c.Status != model.UpgradeCandidateStatusDownloading {
+				continue // defensive: the SQL filter is best-effort (mocks ignore it)
+			}
+			if vi := parseUpgradeVerifyInfo(c.VerifyInfo); vi != nil && vi.StagedPath != "" {
+				referenced[filepath.Clean(vi.StagedPath)] = true
+			}
+		}
+	}
+
+	partCutoff := time.Now().Add(-upgradeStagingPartMaxAge)
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		p := filepath.Join(dir, e.Name())
+		if strings.HasSuffix(e.Name(), ".part") {
+			info, statErr := e.Info()
+			if statErr != nil || info.ModTime().After(partCutoff) {
+				continue // gone, or fresh enough to still be an in-flight download
+			}
+			if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+				log.Warn(ctx, "Upgrader: error removing orphaned staging temp file", "path", p, err)
+			} else {
+				log.Info(ctx, "Upgrader: removed orphaned staging temp file", "path", p)
+			}
+			continue
+		}
+		if referenced[filepath.Clean(p)] {
+			continue
+		}
+		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+			log.Warn(ctx, "Upgrader: error removing orphaned staged file", "path", p, err)
+		} else {
+			log.Info(ctx, "Upgrader: removed orphaned staged file", "path", p)
+		}
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Background worker (single queue, sequential downloads)
 // ---------------------------------------------------------------------------
@@ -296,6 +383,7 @@ func (u *upgrader) runWorker() {
 			u.mu.Unlock()
 			// Retention cleanup after each drained batch, per the design doc.
 			u.cleanupBackups(context.Background())
+			u.sweepStaging(context.Background())
 			u.mu.Lock()
 			if len(u.queue) == 0 { // nothing arrived while cleaning up
 				u.workerRunning = false
@@ -385,6 +473,16 @@ func (u *upgrader) processCandidate(ctx context.Context, id string, force bool) 
 	if err != nil {
 		u.failCandidate(ctx, c, fmt.Errorf("downloading candidate: %w", err))
 		return
+	}
+	// This is the re-download path (either a fresh candidate, or one whose
+	// earlier staged file from a previous processing round is being
+	// abandoned — e.g. a force-approve that found it missing, or a restart
+	// that requeued a candidate without its "force" flag). c.VerifyInfo still
+	// holds that earlier round's StagedPath here, and it is about to be
+	// overwritten below without ever being reused again, so remove the file
+	// now instead of leaking it in the staging folder.
+	if prevVI := parseUpgradeVerifyInfo(c.VerifyInfo); prevVI != nil && prevVI.StagedPath != "" && prevVI.StagedPath != staged {
+		removeStagedFile(ctx, prevVI.StagedPath)
 	}
 
 	info := newUpgradeVerifyInfo()
@@ -551,12 +649,31 @@ func replaceMediaFile(mf model.MediaFile, oldPath, staged, fallbackExt string) (
 	if err = os.MkdirAll(filepath.Dir(backupPath), 0o755); err != nil {
 		return "", 0, "", fmt.Errorf("creating backup folder: %w", err)
 	}
+	// A same-day second upgrade of the same relative path would otherwise
+	// rename over the earlier backup; keep both by finding a free name.
+	backupPath, _ = uniqueDest(backupPath)
 	if err = moveFile(oldPath, backupPath); err != nil {
 		return "", 0, "", fmt.Errorf("backing up original: %w", err)
 	}
 
 	base := strings.TrimSuffix(filepath.Base(oldPath), filepath.Ext(oldPath))
 	newPath = filepath.Join(filepath.Dir(oldPath), base+"."+newExt)
+	if newPath != oldPath {
+		// The extension changed (e.g. mp3 -> flac) and a DIFFERENT,
+		// pre-existing library file already owns this exact name — the user
+		// may already have "<title>.flac" next to the "<title>.mp3" being
+		// upgraded. moveFile would silently clobber it, so refuse and put the
+		// original back exactly as it was. Checked right before the move
+		// (rather than earlier) to keep the TOCTOU window as small as
+		// possible.
+		if _, statErr := os.Lstat(newPath); statErr == nil {
+			if rbErr := moveFile(backupPath, oldPath); rbErr != nil {
+				log.Error("Upgrader: FAILED TO RESTORE original after aborted replacement — restore manually",
+					"backup", backupPath, "original", oldPath, rbErr)
+			}
+			return "", 0, "", fmt.Errorf("target filename already exists: %s", newPath)
+		}
+	}
 	if err = moveFile(staged, newPath); err != nil {
 		// Put the original back so the library is exactly as before.
 		if rbErr := moveFile(backupPath, oldPath); rbErr != nil {

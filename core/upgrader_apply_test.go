@@ -167,6 +167,39 @@ func TestUpgraderApproveValidation(t *testing.T) {
 	waitWorkerIdle(t, u, time.Second)
 }
 
+// TestUpgraderDisabledRejectsOperations covers M2: the kill switch
+// (conf.Server.Upgrade.Enabled=false) must gate the HTTP-reachable surface
+// (Approve/Reject/ApproveBatch/StartScan), not just the cron job and startup
+// recovery, so it is checked here in core rather than only at the router.
+func TestUpgraderDisabledRejectsOperations(t *testing.T) {
+	u, mfRepo, candRepo := newApplyTestUpgrader(t)
+	setupLibraryFile(t, mfRepo)
+	c := putCandidate(t, candRepo, model.UpgradeCandidateStatusPending)
+
+	orig := conf.Server.Upgrade.Enabled
+	conf.Server.Upgrade.Enabled = false
+	defer func() { conf.Server.Upgrade.Enabled = orig }()
+
+	if err := u.Approve(adminCtx(), c.ID, false); !errors.Is(err, ErrUpgradeDisabled) {
+		t.Errorf("Approve() err = %v, want ErrUpgradeDisabled", err)
+	}
+	if err := u.Reject(adminCtx(), c.ID); !errors.Is(err, ErrUpgradeDisabled) {
+		t.Errorf("Reject() err = %v, want ErrUpgradeDisabled", err)
+	}
+	if _, err := u.ApproveBatch(adminCtx(), []string{c.ID}); !errors.Is(err, ErrUpgradeDisabled) {
+		t.Errorf("ApproveBatch() err = %v, want ErrUpgradeDisabled", err)
+	}
+	if err := u.StartScan(context.Background(), 0, nil); !errors.Is(err, ErrUpgradeDisabled) {
+		t.Errorf("StartScan() err = %v, want ErrUpgradeDisabled", err)
+	}
+
+	// Candidate must be untouched (still pending, never enqueued).
+	got, _ := candRepo.Get(c.ID)
+	if got.Status != model.UpgradeCandidateStatusPending {
+		t.Errorf("status = %q, want unchanged pending", got.Status)
+	}
+}
+
 func TestUpgraderApproveNeedsReviewRequiresForce(t *testing.T) {
 	u, mfRepo, candRepo := newApplyTestUpgrader(t)
 	setupLibraryFile(t, mfRepo)
@@ -186,6 +219,17 @@ func TestUpgraderApproveReplacesFile(t *testing.T) {
 	libDir, mf := setupLibraryFile(t, mfRepo)
 	c := putCandidate(t, candRepo, model.UpgradeCandidateStatusPending)
 	calls := stubHappyPipeline(u, "new-flac-content")
+
+	// L1: an earlier same-day backup already occupies the exact path this
+	// upgrade's backup would use; it must be kept, not renamed over.
+	backup := filepath.Join(conf.Server.DataFolder.String(), upgradeBackupSubdir,
+		time.Now().Format(upgradeBackupDayFormat), mf.Path)
+	if err := os.MkdirAll(filepath.Dir(backup), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(backup, []byte("earlier-same-day-backup"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 
 	if err := u.Approve(adminCtx(), c.ID, false); err != nil {
 		t.Fatalf("Approve() error = %v", err)
@@ -213,15 +257,18 @@ func TestUpgraderApproveReplacesFile(t *testing.T) {
 		t.Errorf("new file content = %q, want the staged download", data)
 	}
 
-	// Old file: gone from the library, present in the dated backup tree.
+	// Old file: gone from the library, present in the dated backup tree
+	// under a unique name (L1), since the exact backup path was already taken.
 	if _, err := os.Stat(mf.AbsolutePath()); !os.IsNotExist(err) {
 		t.Errorf("old file still in the library (stat err = %v)", err)
 	}
-	backup := filepath.Join(conf.Server.DataFolder.String(), upgradeBackupSubdir,
-		time.Now().Format(upgradeBackupDayFormat), mf.Path)
-	bdata, err := os.ReadFile(backup)
+	if bdata, err := os.ReadFile(backup); err != nil || string(bdata) != "earlier-same-day-backup" {
+		t.Errorf("earlier same-day backup was overwritten: data=%q, err=%v", bdata, err)
+	}
+	uniqueBackup := filepath.Join(filepath.Dir(backup), "01 - Bohemian Rhapsody (1).mp3")
+	bdata, err := os.ReadFile(uniqueBackup)
 	if err != nil {
-		t.Fatalf("backup not found at %s: %v", backup, err)
+		t.Fatalf("backup not found at %s: %v", uniqueBackup, err)
 	}
 	if string(bdata) != "old-mp3-content" {
 		t.Errorf("backup content = %q, want the original file", bdata)
@@ -507,6 +554,112 @@ func TestUpgraderRecoverResetsInterruptedDownloads(t *testing.T) {
 	}
 }
 
+// TestUpgraderRedownloadRemovesStaleStagedFile covers the other half of M1:
+// a candidate that still carries a StagedPath from an earlier processing
+// round (e.g. a crash-interrupted force-replace, requeued by Recover without
+// its "force" flag — model.UpgradeCandidate does not persist it) goes through
+// a fresh download here, and the stale file from the earlier round must be
+// removed instead of leaking in the staging folder once VerifyInfo is
+// overwritten.
+func TestUpgraderRedownloadRemovesStaleStagedFile(t *testing.T) {
+	u, mfRepo, candRepo := newApplyTestUpgrader(t)
+	setupLibraryFile(t, mfRepo)
+	stubHappyPipeline(u, "new-flac-content")
+
+	dir, err := upgradeStagingDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	staleStaged := filepath.Join(dir, "stale-from-before-crash.flac")
+	if err := os.WriteFile(staleStaged, []byte("stale"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	c := putCandidate(t, candRepo, model.UpgradeCandidateStatusDownloading)
+	c.VerifyInfo = (&upgradeVerifyInfo{StagedPath: staleStaged}).marshal()
+	if err := candRepo.Put(c); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := u.Recover(context.Background()); err != nil {
+		t.Fatalf("Recover() error = %v", err)
+	}
+	waitWorkerIdle(t, u, 2*time.Second)
+
+	got, _ := candRepo.Get(c.ID)
+	if got.Status != model.UpgradeCandidateStatusReplaced {
+		t.Fatalf("status = %q (error=%q), want replaced", got.Status, got.Error)
+	}
+	if _, err := os.Stat(staleStaged); !os.IsNotExist(err) {
+		t.Errorf("stale staged file from the earlier round was not cleaned up (stat err = %v)", err)
+	}
+}
+
+// TestUpgraderSweepStaging covers M1: sweepStaging must remove orphaned
+// *.part temp files (crash mid-download) and any staged file no candidate
+// still needs, while never touching files referenced by the StagedPath of a
+// candidate currently in needs_review or downloading status.
+func TestUpgraderSweepStaging(t *testing.T) {
+	u, _, candRepo := newApplyTestUpgrader(t)
+
+	dir, err := upgradeStagingDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	write := func(name, content string) string {
+		p := filepath.Join(dir, name)
+		if err := os.WriteFile(p, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		return p
+	}
+	putWithStagedPath := func(sourceRef, status, stagedPath string) {
+		c := &model.UpgradeCandidate{
+			MediaFileID: "mf1", LibraryID: 1, Source: UpgradeSourceArchive,
+			SourceRef: sourceRef, Status: status,
+		}
+		if stagedPath != "" {
+			c.VerifyInfo = (&upgradeVerifyInfo{StagedPath: stagedPath}).marshal()
+		}
+		if err := candRepo.Put(c); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	keptReview := write("kept-needs-review.flac", "kept-review")
+	keptDownloading := write("kept-downloading.flac", "kept-downloading")
+	staleFromFailed := write("stale-referenced-by-failed.flac", "stale")
+	orphan := write("orphan.flac", "orphan")
+
+	oldPart := write(".nd-upgrade-old.part", "old part")
+	if err := os.Chtimes(oldPart, time.Now().Add(-2*time.Hour), time.Now().Add(-2*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	freshPart := write(".nd-upgrade-fresh.part", "fresh part")
+
+	putWithStagedPath("a/needs-review.flac", model.UpgradeCandidateStatusNeedsReview, keptReview)
+	putWithStagedPath("b/downloading.flac", model.UpgradeCandidateStatusDownloading, keptDownloading)
+	// A failed candidate's old StagedPath no longer protects the file: only
+	// needs_review/downloading candidates do.
+	putWithStagedPath("c/failed.flac", model.UpgradeCandidateStatusFailed, staleFromFailed)
+
+	u.sweepStaging(context.Background())
+
+	assertExists := func(path string, want bool) {
+		t.Helper()
+		_, err := os.Stat(path)
+		if got := err == nil; got != want {
+			t.Errorf("exists(%s) = %v (err=%v), want %v", path, got, err, want)
+		}
+	}
+	assertExists(keptReview, true)
+	assertExists(keptDownloading, true)
+	assertExists(staleFromFailed, false)
+	assertExists(orphan, false)
+	assertExists(oldPart, false)
+	assertExists(freshPart, true)
+}
+
 func TestUpgraderReplaceRollsBackOnFailure(t *testing.T) {
 	u, mfRepo, candRepo := newApplyTestUpgrader(t)
 	libDir, mf := setupLibraryFile(t, mfRepo)
@@ -531,6 +684,55 @@ func TestUpgraderReplaceRollsBackOnFailure(t *testing.T) {
 	}
 	// The original must have been restored from the backup.
 	data, err := os.ReadFile(filepath.Join(libDir, mf.Path))
+	if err != nil {
+		t.Fatalf("original file was not restored: %v", err)
+	}
+	if string(data) != "old-mp3-content" {
+		t.Errorf("restored content = %q, want the original", data)
+	}
+}
+
+// TestUpgraderReplaceRejectsCollisionWithUnrelatedFile covers C1: the upgrade
+// changes the extension (mp3 -> flac), and the user already owns an unrelated
+// "01 - Bohemian Rhapsody.flac" next to the mp3 being upgraded. Without a
+// conflict check, moveFile's rename-or-copy would silently clobber that
+// unrelated file. The candidate must instead fail, the unrelated file must be
+// left untouched, and the original mp3 must be restored to its original path.
+func TestUpgraderReplaceRejectsCollisionWithUnrelatedFile(t *testing.T) {
+	u, mfRepo, candRepo := newApplyTestUpgrader(t)
+	libDir, mf := setupLibraryFile(t, mfRepo)
+	c := putCandidate(t, candRepo, model.UpgradeCandidateStatusPending)
+	stubHappyPipeline(u, "new-flac-content")
+
+	unrelated := filepath.Join(libDir, "Queen", "01 - Bohemian Rhapsody.flac")
+	if err := os.WriteFile(unrelated, []byte("unrelated-preexisting-flac"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := u.Approve(adminCtx(), c.ID, false); err != nil {
+		t.Fatalf("Approve() error = %v", err)
+	}
+	waitWorkerIdle(t, u, 2*time.Second)
+
+	got, _ := candRepo.Get(c.ID)
+	if got.Status != model.UpgradeCandidateStatusFailed {
+		t.Fatalf("status = %q (error=%q), want failed", got.Status, got.Error)
+	}
+	if !strings.Contains(got.Error, "already exists") {
+		t.Errorf("error = %q, want a message about the target filename already existing", got.Error)
+	}
+
+	// The unrelated pre-existing file must be completely untouched.
+	data, err := os.ReadFile(unrelated)
+	if err != nil {
+		t.Fatalf("unrelated file was removed: %v", err)
+	}
+	if string(data) != "unrelated-preexisting-flac" {
+		t.Errorf("unrelated file content = %q, want untouched", data)
+	}
+
+	// The original mp3 must be restored from the backup to its original path.
+	data, err = os.ReadFile(filepath.Join(libDir, mf.Path))
 	if err != nil {
 		t.Fatalf("original file was not restored: %v", err)
 	}
