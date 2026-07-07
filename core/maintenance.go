@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"slices"
 	"strings"
@@ -189,6 +190,12 @@ func (s *maintenanceService) deleteFiles(ctx context.Context, mfs model.MediaFil
 		err := os.Remove(mf.AbsolutePath())
 		if err != nil && !os.IsNotExist(err) {
 			log.Error(ctx, "Error deleting media file from disk", "id", mf.ID, "path", mf.AbsolutePath(), err)
+			// The aggregated error reaches the HTTP response body; unwrap the
+			// PathError so the absolute library path is not exposed to clients.
+			var pathErr *fs.PathError
+			if errors.As(err, &pathErr) {
+				err = pathErr.Err
+			}
 			errs = append(errs, fmt.Errorf("%s (%s): %w", mf.Title, mf.ID, err))
 			continue
 		}

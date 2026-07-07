@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"time"
 
 	"github.com/Masterminds/squirrel"
@@ -44,7 +45,10 @@ type fakeUpgrader struct {
 	batchErr      error
 	lastBatchIDs  []string
 
-	sweepStagingCalls int
+	// Incremented from a goroutine by the deletion handlers' fire-and-forget
+	// staging sweep and polled with Eventually from the test goroutine (see
+	// deletion_test.go) — hence atomic.
+	sweepStagingCalls atomic.Int32
 }
 
 func (f *fakeUpgrader) StartScan(_ context.Context, libraryID int, mediaFileIDs []string) error {
@@ -78,7 +82,7 @@ func (f *fakeUpgrader) ApproveBatch(_ context.Context, ids []string) ([]string, 
 
 func (f *fakeUpgrader) Recover(context.Context) error { return nil }
 
-func (f *fakeUpgrader) SweepStaging(context.Context) { f.sweepStagingCalls++ }
+func (f *fakeUpgrader) SweepStaging(context.Context) { f.sweepStagingCalls.Add(1) }
 
 var _ core.Upgrader = (*fakeUpgrader)(nil)
 

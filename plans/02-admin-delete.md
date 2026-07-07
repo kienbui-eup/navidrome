@@ -97,4 +97,9 @@ Verify checklist Phase 4: build UI pass; mở trang Upgrade còn hoạt động 
 
 ## Adjustments (ghi trong lúc execute)
 
-- (trống — điền khi có quyết định sai khác spec)
+- **Phase 2 — Chi routing decision (2026-07-07): dùng primary spec paths, KHÔNG cần fallback `/api/deletion/...`.**
+  - Paths đăng ký (trong admin group, `addDeletionRoute`): `DELETE /api/song/{id}`, `DELETE /api/song?id=a&id=b`, `DELETE /api/album/{id}`.
+  - Bằng chứng: probe test throwaway với chi v5.3.0 (đúng version trong go.mod) tái tạo shape của `native_api.go` — `r.Route("/song", …)` mount (như `api.R`) + sibling `r.Get("/song/{id}/playlists")` + admin group `r.With(adminMW).Group` đăng ký `Delete("/song/{id}")`, `Delete("/song")`, `Delete("/album/{id}")`. Kết quả 10/10 case PASS: không panic khi đăng ký; `GET /song`, `GET /song/{id}`, `GET /album/{id}`, `GET /song/{id}/playlists` vẫn route vào mount (chi tree backtrack từ param node sang catchall của mount khi method không khớp); cả 3 DELETE đều reachable và bị `adminMW` chặn 403 với non-admin (inline middleware của `With().Group()` được chain vào endpoint handler). Probe đã xoá sau khi chốt (theo hard rule); coexistence được guard lâu dài bằng specs "coexistence with the /song and /album resource mounts" trong `server/nativeapi/deletion_test.go` chạy trên Router thật.
+  - Hệ quả behavioral: `DELETE /api/song/{id}` với user thường giờ trả **403** (trước là 405 vì route không tồn tại) — test cũ trong `native_api_song_test.go` ("Song endpoints are read-only") đã cập nhật 405→403.
+  - Response body: thống nhất `200 {"ids": [...]}` cho MỌI case thành công (kể cả 1 id — khác `writeDeleteManyResponse` của `/missing` vốn trả `{"id":...}` cho single); lỗi trả JSON `{"error": "<msg>"}` (409 conflict / 500 aggregate). UI Phase 3 parse theo format này.
+  - `?id=` rỗng bị lọc bỏ; không còn id nào → 400. `fakeUpgrader.sweepStagingCalls` trong `upgrade_test.go` đổi sang `atomic.Int32` (sweep giờ chạy trong goroutine từ deletion handler, test đọc qua Eventually).
