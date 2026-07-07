@@ -51,7 +51,8 @@
         "download": "Tải xuống",
         "playNext": "Phát tiếp theo",
         "info": "Xem thông tin",
-        "instantMix": "Mix nhanh"
+        "instantMix": "Mix nhanh",
+        "delete": "Xoá vĩnh viễn"
       }
     },
     "album": {
@@ -93,7 +94,8 @@
         "shuffle": "Phát ngẫu nhiên",
         "addToPlaylist": "Thêm vào danh sách phát",
         "download": "Tải xuống",
-        "info": "Xem thông tin"
+        "info": "Xem thông tin",
+        "delete": "Xoá vĩnh viễn"
       },
       "lists": {
         "all": "Tất cả",
@@ -798,6 +800,31 @@
       "scanStarted": "Đã bắt đầu quét",
       "scanDone": "Quét xong: tìm thấy %{found} ứng viên",
       "startFailed": "Không bắt đầu quét được: %{error}"
+    }
+  },
+  "deleteMedia": {
+    "dialogTitle": {
+      "song": "Xoá bài hát này?",
+      "songs": "Xoá %{count} bài hát?",
+      "album": "Xoá album này?"
+    },
+    "warning": "Thao tác này xoá vĩnh viễn file trên ổ đĩa và không thể hoàn tác.",
+    "info": {
+      "song": "%{title} - %{artist}",
+      "quality": "%{suffix} %{bitRate}kbps",
+      "album": "%{name} (%{count} bài hát)",
+      "songs": "Đã chọn %{count} bài hát"
+    },
+    "buttons": {
+      "cancel": "Huỷ",
+      "confirm": "Xoá vĩnh viễn",
+      "upgradeInstead": "Tìm bản chất lượng cao hơn"
+    },
+    "notify": {
+      "deleted": "Đã xoá %{count} bài hát",
+      "conflict409": "Không xoá được, đang được nâng cấp: %{error}",
+      "failed": "Xoá thất bại: %{error}",
+      "upgradeQueued": "Đã đưa vào quét nâng cấp"
     }
   }
 }

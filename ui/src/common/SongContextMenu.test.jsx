@@ -27,6 +27,7 @@ vi.mock('react-redux', () => ({ useDispatch: () => mockDispatch }))
 
 const getPlaylistsMock = vi.fn()
 const mockNotify = vi.fn()
+let mockPermissions = 'user'
 
 vi.mock('react-admin', async (importOriginal) => {
   const actual = await importOriginal()
@@ -42,6 +43,7 @@ vi.mock('react-admin', async (importOriginal) => {
         data: { rawTags: {} },
       }),
     }),
+    usePermissions: () => ({ permissions: mockPermissions }),
   }
 })
 
@@ -49,6 +51,7 @@ describe('SongContextMenu', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     window.location.hash = ''
+    mockPermissions = 'user'
     getPlaylistsMock.mockResolvedValue({
       data: [{ id: 'pl1', name: 'Pl 1' }],
     })
@@ -222,6 +225,40 @@ describe('SongContextMenu', () => {
       expect(id).toBe('actualSongId')
       // Verify seed song data is included
       expect(data['actualSongId']).toBeDefined()
+    })
+  })
+
+  describe('Delete action', () => {
+    it('is hidden for non-admin users', async () => {
+      mockPermissions = 'user'
+      render(
+        <TestContext>
+          <SongContextMenu record={{ id: 'song1', size: 1 }} resource="song" />
+        </TestContext>,
+      )
+      fireEvent.click(screen.getAllByRole('button')[1])
+      await waitFor(() => screen.getByText(/resources\.song\.actions\.info/))
+      expect(screen.queryByText(/resources\.song\.actions\.delete/)).toBeNull()
+    })
+
+    it('is shown for admin users and dispatches openDeleteMediaDialog', async () => {
+      mockPermissions = 'admin'
+      render(
+        <TestContext>
+          <SongContextMenu record={{ id: 'song1', size: 1 }} resource="song" />
+        </TestContext>,
+      )
+      fireEvent.click(screen.getAllByRole('button')[1])
+      await waitFor(() => screen.getByText(/resources\.song\.actions\.delete/))
+      fireEvent.click(screen.getByText(/resources\.song\.actions\.delete/))
+
+      expect(mockDispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'DELETE_MEDIA_OPEN',
+          mode: 'song',
+          record: { id: 'song1', size: 1 },
+        }),
+      )
     })
   })
 })

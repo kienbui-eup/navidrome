@@ -16,6 +16,8 @@ export const DOWNLOAD_MENU_PLAY = 'playlist'
 export const DOWNLOAD_MENU_SONG = 'song'
 export const SHARE_MENU_OPEN = 'SHARE_MENU_OPEN'
 export const SHARE_MENU_CLOSE = 'SHARE_MENU_CLOSE'
+export const DELETE_MEDIA_OPEN = 'DELETE_MEDIA_OPEN'
+export const DELETE_MEDIA_CLOSE = 'DELETE_MEDIA_CLOSE'
 
 export const openShareMenu = (ids, resource, name, label) => ({
   type: SHARE_MENU_OPEN,
@@ -85,4 +87,17 @@ export const openSaveQueueDialog = () => ({
 
 export const closeSaveQueueDialog = () => ({
   type: SAVE_QUEUE_CLOSE,
+})
+
+// mode: 'song' | 'album' | 'songs'
+// record: 'song' -> full song record, 'album' -> full album record,
+//         'songs' -> { ids: [...], count }
+export const openDeleteMediaDialog = ({ mode, record }) => ({
+  type: DELETE_MEDIA_OPEN,
+  mode,
+  record,
+})
+
+export const closeDeleteMediaDialog = () => ({
+  type: DELETE_MEDIA_CLOSE,
 })
