@@ -251,9 +251,7 @@ const Player = () => {
         playerState.autoPlay !== false &&
         (playerState.clear || playerState.playIndex === 0),
       clearPriorAudioLists: playerState.clear,
-      extendsContent: (
-        <PlayerToolbar id={current.trackId} isRadio={current.isRadio} />
-      ),
+      extendsContent: <PlayerToolbar isRadio={current.isRadio} />,
       defaultVolume: isMobilePlayer ? 1 : playerState.volume,
       showMediaSession: !current.isRadio,
     }

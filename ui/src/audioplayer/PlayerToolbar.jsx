@@ -1,13 +1,9 @@
 import React, { useCallback } from 'react'
-import { useDispatch } from 'react-redux'
-import { useGetOne } from 'react-admin'
-import { GlobalHotKeys } from 'react-hotkeys'
+import { useDispatch, useSelector } from 'react-redux'
 import IconButton from '@material-ui/core/IconButton'
 import { useMediaQuery } from '@material-ui/core'
 import { RiSaveLine } from 'react-icons/ri'
-import { LoveButton, useToggleLove } from '../common'
 import { openSaveQueueDialog } from '../actions'
-import { keyMap } from '../hotkeys'
 import { makeStyles } from '@material-ui/core/styles'
 
 const useStyles = makeStyles((theme) => ({
@@ -55,16 +51,13 @@ const useStyles = makeStyles((theme) => ({
   },
 }))
 
-const PlayerToolbar = ({ id, isRadio }) => {
+const PlayerToolbar = ({ isRadio }) => {
   const dispatch = useDispatch()
-  const { data, loading } = useGetOne('song', id, { enabled: !!id && !isRadio })
-  const [toggleLove, toggling] = useToggleLove('song', data)
+  const queueEmpty = useSelector(
+    (state) => (state.player?.queue?.length ?? 0) === 0,
+  )
   const isDesktop = useMediaQuery('(min-width:810px)')
   const classes = useStyles()
-
-  const handlers = {
-    TOGGLE_LOVE: useCallback(() => toggleLove(), [toggleLove]),
-  }
 
   const handleSaveQueue = useCallback(
     (e) => {
@@ -81,7 +74,7 @@ const PlayerToolbar = ({ id, isRadio }) => {
     <IconButton
       size={isDesktop ? 'small' : undefined}
       onClick={handleSaveQueue}
-      disabled={isRadio}
+      disabled={isRadio || queueEmpty}
       data-testid="save-queue-button"
       className={buttonClass}
     >
@@ -89,32 +82,7 @@ const PlayerToolbar = ({ id, isRadio }) => {
     </IconButton>
   )
 
-  const loveButton = (
-    <LoveButton
-      record={data}
-      resource={'song'}
-      size={isDesktop ? undefined : 'inherit'}
-      disabled={loading || toggling || !id || isRadio}
-      className={buttonClass}
-    />
-  )
-
-  return (
-    <>
-      <GlobalHotKeys keyMap={keyMap} handlers={handlers} allowChanges />
-      {isDesktop ? (
-        <li className={`${listItemClass} item`}>
-          {saveQueueButton}
-          {loveButton}
-        </li>
-      ) : (
-        <>
-          <li className={`${listItemClass} item`}>{saveQueueButton}</li>
-          <li className={`${listItemClass} item`}>{loveButton}</li>
-        </>
-      )}
-    </>
-  )
+  return <li className={`${listItemClass} item`}>{saveQueueButton}</li>
 }
 
 export default PlayerToolbar

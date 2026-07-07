@@ -42,6 +42,18 @@
         "rawTags": "Thẻ gốc",
         "missing": "Thiếu"
       },
+      "audioQuality": {
+        "format": "Định dạng",
+        "tierDsd": "Direct Stream Digital 1-bit",
+        "tierHiRes": "Lossless độ phân giải cao",
+        "tierCd": "Lossless chuẩn CD",
+        "tierLossyHigh": "Nén mất dữ liệu, bitrate cao",
+        "tierLossy": "Nén mất dữ liệu",
+        "compression": "%{pct}% so với %{pcm} kbps không nén",
+        "trackPeak": "Đỉnh bản nhạc",
+        "albumPeak": "Đỉnh album",
+        "clippingRisk": "Có thể clipping khi áp dụng ReplayGain"
+      },
       "actions": {
         "addToQueue": "Phát sau",
         "playNow": "Phát ngay",
@@ -600,6 +612,7 @@
     "transcodingDisabled": "Thay đổi cấu hình chuyển mã qua giao diện web đã bị vô hiệu hoá vì lý do bảo mật. Nếu bạn muốn thay đổi (sửa hoặc thêm) tuỳ chọn chuyển mã, hãy khởi động lại máy chủ với tuỳ chọn cấu hình %{config}.",
     "transcodingEnabled": "Trợ lý nhạc hiện đang chạy với %{config}, cho phép chạy lệnh hệ thống từ cài đặt chuyển mã bằng giao diện web. Chúng tôi khuyến nghị tắt tuỳ chọn này vì lý do bảo mật và chỉ bật khi cần cấu hình tuỳ chọn Chuyển mã.",
     "songsAddedToPlaylist": "Đã thêm 1 bài hát vào danh sách phát |||| Đã thêm %{smart_count} bài hát vào danh sách phát",
+    "songsAddedToQueue": "Đã thêm 1 bài vào hàng chờ phát |||| Đã thêm %{smart_count} bài vào hàng chờ phát",
     "noSimilarSongsFound": "Không tìm thấy bài hát tương tự",
     "startingInstantMix": "Đang tải Mix nhanh...",
     "noTopSongsFound": "Không tìm thấy bài hát nổi bật",
@@ -749,8 +762,7 @@
       "next_song": "Bài hát tiếp theo",
       "current_song": "Đến bài hát hiện tại",
       "vol_up": "Tăng âm lượng",
-      "vol_down": "Giảm âm lượng",
-      "toggle_love": "Thêm bản nhạc này vào yêu thích"
+      "vol_down": "Giảm âm lượng"
     }
   }
 }

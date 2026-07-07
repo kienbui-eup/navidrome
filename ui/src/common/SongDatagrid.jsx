@@ -166,7 +166,7 @@ const DiscSubtitleRow = forwardRef(
           <AlbumContextMenu
             record={{ id: record.albumId }}
             discNumber={record.discNumber}
-            showLove={false}
+            showQuickAdd={false}
             className={classes.contextMenu}
             hideShare={true}
             hideInfo={true}

@@ -21,7 +21,7 @@ import {
   DOWNLOAD_MENU_ARTIST,
   openShareMenu,
 } from '../actions'
-import { LoveButton } from './LoveButton'
+import { QuickAddToQueueButton } from './QuickAddToQueueButton'
 import config from '../config'
 import { formatBytes } from '../utils'
 
@@ -55,7 +55,7 @@ const MoreButton = ({ record, onClick, info, ...rest }) => {
 
 const ContextMenu = ({
   resource,
-  showLove,
+  showQuickAdd,
   record,
   color,
   className,
@@ -186,10 +186,11 @@ const ContextMenu = ({
 
   return (
     <span className={clsx(classes.noWrap, className)}>
-      <LoveButton
+      <QuickAddToQueueButton
         record={record}
         resource={resource}
-        visible={config.enableFavourites && showLove && present}
+        songQueryParams={songQueryParams}
+        visible={showQuickAdd && present}
         color={color}
       />
       <MoreButton
@@ -242,11 +243,11 @@ AlbumContextMenu.propTypes = {
   record: PropTypes.object,
   discNumber: PropTypes.number,
   color: PropTypes.string,
-  showLove: PropTypes.bool,
+  showQuickAdd: PropTypes.bool,
 }
 
 AlbumContextMenu.defaultProps = {
-  showLove: true,
+  showQuickAdd: true,
   addLabel: true,
 }
 
@@ -270,10 +271,10 @@ export const ArtistContextMenu = (props) =>
 ArtistContextMenu.propTypes = {
   record: PropTypes.object,
   color: PropTypes.string,
-  showLove: PropTypes.bool,
+  showQuickAdd: PropTypes.bool,
 }
 
 ArtistContextMenu.defaultProps = {
-  showLove: true,
+  showQuickAdd: true,
   addLabel: true,
 }

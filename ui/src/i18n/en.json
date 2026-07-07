@@ -42,6 +42,18 @@
         "rawTags": "Raw tags",
         "missing": "Missing"
       },
+      "audioQuality": {
+        "format": "Format",
+        "tierDsd": "1-bit Direct Stream Digital",
+        "tierHiRes": "High-resolution lossless",
+        "tierCd": "CD-quality lossless",
+        "tierLossyHigh": "Lossy, high bitrate",
+        "tierLossy": "Lossy",
+        "compression": "%{pct}% of %{pcm} kbps uncompressed",
+        "trackPeak": "Track peak",
+        "albumPeak": "Album peak",
+        "clippingRisk": "May clip with ReplayGain applied"
+      },
       "actions": {
         "addToQueue": "Play Later",
         "playNow": "Play Now",
@@ -600,6 +612,7 @@
     "transcodingDisabled": "Changing the transcoding configuration through the web interface is disabled for security reasons. If you would like to change (edit or add) transcoding options, restart the server with the %{config} configuration option.",
     "transcodingEnabled": "Navidrome is currently running with %{config}, making it possible to run system commands from the transcoding settings using the web interface. We recommend to disable it for security reasons and only enable it when configuring Transcoding options.",
     "songsAddedToPlaylist": "Added 1 song to playlist |||| Added %{smart_count} songs to playlist",
+    "songsAddedToQueue": "Added 1 song to the play queue |||| Added %{smart_count} songs to the play queue",
     "noSimilarSongsFound": "No similar songs found",
     "startingInstantMix": "Loading Instant Mix...",
     "noTopSongsFound": "No top songs found",
@@ -749,8 +762,7 @@
       "next_song": "Next Song",
       "current_song": "Go to Current Song",
       "vol_up": "Volume Up",
-      "vol_down": "Volume Down",
-      "toggle_love": "Add this track to favourites"
+      "vol_down": "Volume Down"
     }
   }
 }

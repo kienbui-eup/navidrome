@@ -5,7 +5,7 @@ import Card from '@material-ui/core/Card'
 import CardMedia from '@material-ui/core/CardMedia'
 import config from '../config'
 import {
-  LoveButton,
+  QuickAddToQueueButton,
   RatingField,
   ImageUploadOverlay,
   useImageLoadingState,
@@ -136,12 +136,16 @@ const MobileArtistDetails = ({ artistInfo, biography, record }) => {
               className={classes.artistName}
             >
               {title}
-              <LoveButton
+              <QuickAddToQueueButton
                 className={classes.loveButton}
                 record={record}
                 resource={'artist'}
+                songQueryParams={{
+                  pagination: { page: 1, perPage: 200 },
+                  sort: { field: 'album', order: 'ASC' },
+                  filter: { album_artist_id: record.id, missing: false },
+                }}
                 size={'small'}
-                aria-label="love"
                 color="primary"
               />
             </Typography>

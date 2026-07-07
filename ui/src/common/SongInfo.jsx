@@ -16,23 +16,17 @@ import {
 import { humanize, underscore } from 'inflection'
 import {
   ArtistLinkField,
-  BitrateField,
+  AudioQualityInfo,
   ParticipantsInfo,
   PathField,
   SizeField,
 } from './index'
 import { MultiLineTextField } from './MultiLineTextField'
 import { makeStyles } from '@material-ui/core/styles'
-import config from '../config'
 import { AlbumLinkField } from '../song/AlbumLinkField'
 import { Tab, Tabs } from '@material-ui/core'
 
 const useStyles = makeStyles({
-  gain: {
-    '&:after': {
-      content: (props) => (props.gain ? " ' db'" : ''),
-    },
-  },
   tableCell: {
     width: '17.5%',
   },
@@ -42,7 +36,7 @@ const useStyles = makeStyles({
 })
 
 export const SongInfo = (props) => {
-  const classes = useStyles({ gain: config.enableReplayGain })
+  const classes = useStyles()
   const translate = useTranslate()
   const record = useRecordContext(props)
   const [tab, setTab] = useState(0)
@@ -74,10 +68,6 @@ export const SongInfo = (props) => {
       <FunctionField render={(r) => r.genres?.map((g) => g.name).join(' • ')} />
     ),
     compilation: <BooleanField source="compilation" />,
-    bitRate: <BitrateField source="bitRate" />,
-    bitDepth: <NumberField source="bitDepth" />,
-    sampleRate: <NumberField source="sampleRate" />,
-    channels: <NumberField source="channels" />,
     size: <SizeField source="size" />,
     updatedAt: <DateField source="updatedAt" showTime />,
     playCount: <TextField source="playCount" />,
@@ -94,28 +84,12 @@ export const SongInfo = (props) => {
     roles.push([name, record.participants[name].length])
   }
 
-  const optionalFields = [
-    'discSubtitle',
-    'comment',
-    'bpm',
-    'genre',
-    'bitDepth',
-    'sampleRate',
-  ]
+  const optionalFields = ['discSubtitle', 'comment', 'bpm', 'genre']
   optionalFields.forEach((field) => {
     !record[field] && delete data[field]
   })
   if (record.playCount > 0) {
     data.playDate = <DateField record={record} source="playDate" showTime />
-  }
-
-  if (config.enableReplayGain) {
-    data.albumGain = (
-      <NumberField source="rgAlbumGain" className={classes.gain} />
-    )
-    data.trackGain = (
-      <NumberField source="rgTrackGain" className={classes.gain} />
-    )
   }
 
   const tags = Object.entries(record.tags ?? {}).filter(
@@ -124,6 +98,7 @@ export const SongInfo = (props) => {
 
   return (
     <TableContainer>
+      <AudioQualityInfo record={record} />
       {record.rawTags && (
         <Tabs value={tab} onChange={(_, value) => setTab(value)}>
           <Tab

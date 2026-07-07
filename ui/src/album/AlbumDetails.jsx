@@ -27,7 +27,7 @@ import {
   CollapsibleComment,
   DurationField,
   formatRange,
-  LoveButton,
+  QuickAddToQueueButton,
   RatingField,
   SizeField,
   useAlbumsPerPage,
@@ -287,12 +287,16 @@ const AlbumDetails = (props) => {
               className={classes.recordName}
             >
               {record.name}
-              <LoveButton
+              <QuickAddToQueueButton
                 className={classes.loveButton}
                 record={record}
                 resource={'album'}
+                songQueryParams={{
+                  pagination: { page: 1, perPage: -1 },
+                  sort: { field: 'album', order: 'ASC' },
+                  filter: { album_id: record.id, missing: false },
+                }}
                 size={isDesktop ? 'default' : 'small'}
-                aria-label="love"
                 color="primary"
               />
             </Typography>

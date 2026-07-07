@@ -7,7 +7,7 @@ import CardMedia from '@material-ui/core/CardMedia'
 import ArtistExternalLinks from './ArtistExternalLink'
 import config from '../config'
 import {
-  LoveButton,
+  QuickAddToQueueButton,
   RatingField,
   ImageUploadOverlay,
   useImageLoadingState,
@@ -134,12 +134,16 @@ const DesktopArtistDetails = ({ artistInfo, record, biography }) => {
               className={classes.artistName}
             >
               {title}
-              <LoveButton
+              <QuickAddToQueueButton
                 className={classes.loveButton}
                 record={record}
                 resource={'artist'}
+                songQueryParams={{
+                  pagination: { page: 1, perPage: 200 },
+                  sort: { field: 'album', order: 'ASC' },
+                  filter: { album_artist_id: record.id, missing: false },
+                }}
                 size={'default'}
-                aria-label="artist context menu"
                 color="primary"
               />
             </Typography>

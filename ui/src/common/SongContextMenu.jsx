@@ -22,7 +22,7 @@ import {
   DOWNLOAD_MENU_SONG,
   openShareMenu,
 } from '../actions'
-import { LoveButton } from './LoveButton'
+import { QuickAddToQueueButton } from './QuickAddToQueueButton'
 import config from '../config'
 import { playSimilar } from './playbackActions.js'
 import { formatBytes } from '../utils'
@@ -55,7 +55,7 @@ const MoreButton = ({ record, onClick, info }) => {
 export const SongContextMenu = ({
   resource,
   record,
-  showLove,
+  showQuickAdd,
   onAddToPlaylist,
   className,
 }) => {
@@ -240,10 +240,10 @@ export const SongContextMenu = ({
 
   return (
     <span className={clsx(classes.noWrap, className)}>
-      <LoveButton
+      <QuickAddToQueueButton
         record={record}
-        resource={resource}
-        visible={config.enableFavourites && showLove && present}
+        resource={'song'}
+        visible={showQuickAdd && present}
       />
       <MoreButton record={record} onClick={handleClick} info={options.info} />
       <Menu
@@ -303,13 +303,13 @@ SongContextMenu.propTypes = {
   resource: PropTypes.string.isRequired,
   record: PropTypes.object.isRequired,
   onAddToPlaylist: PropTypes.func,
-  showLove: PropTypes.bool,
+  showQuickAdd: PropTypes.bool,
 }
 
 SongContextMenu.defaultProps = {
   onAddToPlaylist: () => {},
   record: {},
   resource: 'song',
-  showLove: true,
+  showQuickAdd: true,
   addLabel: true,
 }
