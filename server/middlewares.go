@@ -97,7 +97,7 @@ func corsHandler() func(http.Handler) http.Handler {
 		},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: false,
-		ExposedHeaders:   []string{"x-content-duration", "x-total-count", "x-nd-authorization"},
+		ExposedHeaders:   []string{"x-content-duration", "x-total-count", "x-vi-authorization"},
 	})
 }
 

@@ -5,8 +5,9 @@ import config from '../config'
 import { jwtDecode } from 'jwt-decode'
 import { removeHomeCache } from '../utils/removeHomeCache'
 
-const customAuthorizationHeader = 'X-ND-Authorization'
-export const clientUniqueIdHeader = 'X-ND-Client-Unique-Id'
+// Must match consts.UIAuthorizationHeader / UIClientUniqueIDHeader on the server
+const customAuthorizationHeader = 'X-VI-Authorization'
+export const clientUniqueIdHeader = 'X-VI-Client-Unique-Id'
 export const clientUniqueId = uuidv4()
 
 const httpClient = (url, options = {}) => {
