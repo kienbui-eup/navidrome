@@ -163,13 +163,13 @@ RUN apk add -U --no-cache ffmpeg mpv sqlite libwebp libwebpdemux libwebpmux && \
 COPY --from=build-alpine /out/navidrome /app/
 
 VOLUME ["/data", "/music"]
-ENV ND_MUSICFOLDER=/music
-ENV ND_DATAFOLDER=/data
-ENV ND_CONFIGFILE=/data/navidrome.toml
-ENV ND_PORT=4533
-RUN touch /.nddockerenv
+ENV VI_MUSICFOLDER=/music
+ENV VI_DATAFOLDER=/data
+ENV VI_CONFIGFILE=/data/vi2play.toml
+ENV VI_PORT=4533
+RUN touch /.vidockerenv /.nddockerenv
 
-EXPOSE ${ND_PORT}
+EXPOSE ${VI_PORT}
 WORKDIR /app
 ENV PATH="/app:${PATH}"
 
