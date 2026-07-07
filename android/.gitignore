@@ -10,3 +10,9 @@
 .cxx/
 # Vendored bit-perfect driver (add as a git submodule, not committed inline)
 /decent-player/
+
+# Signing
+keystore.properties
+keystore/
+*.jks
+*.keystore
