@@ -44,10 +44,13 @@ Nhúng toàn bộ giao diện player Aonsoku (hiện chạy container riêng t�
 
 ### Facts còn PHẢI verify ở Phase 1 (recon chưa xác nhận được vì thiếu source)
 
-- Router mode của Aonsoku (BrowserRouter path-based hay hash) → quyết định có cần SPA fallback + `basename`.
-- Vite `base` của Aonsoku có chỉnh được `/play/` không (react-admin dùng `base: './'` — `ui/vite.config.js:32`).
-- Locale `vi` là của upstream hay do fork thêm (bundle `aonsoku-vi` có "Tiếng Việt" trong `i18n-*.js`).
-- Aonsoku player xử lý DSD/transcode thế nào — fork này có clamp codecProfiles ≤96kHz trong react-admin player (commit `caafa1fc`); Aonsoku không có logic đó → kiểm tra stream DSF qua Aonsoku có bị lỗi không.
+- [x] **ĐÃ VERIFY (Phase 1, 2026-07-07)** Router mode: **hash router** — `createHashRouter` tại `player/src/routes/router.tsx:2,52` (react-router-dom `^6.30.3`, `package.json:100`). Kết luận: KHÔNG cần SPA fallback, KHÔNG cần `basename`; handler `/play/*` chỉ cần FileServer + index.
+- [x] **ĐÃ VERIFY** Vite `base`: upstream đã đặt sẵn `base: './'` tại `player/vite.config.ts:9` — giống pattern react-admin, không phải sửa; dist/index.html ra asset path relative (`./assets/...`), serve dưới `/play/` OK.
+- [x] **ĐÃ VERIFY** Locale `vi` là **do fork thêm, upstream KHÔNG có** (v0.14.0 chỉ có 19 locale). Đã khôi phục nguyên văn từ bundle image `aonsoku-vi` (465/465 keys khớp cấu trúc en.json) vào `player/src/i18n/locales/vi.json` + đăng ký `languages.ts` + `fallbackLng: 'vi'` (`src/i18n/index.ts:12`) + default `lang.store.ts:14-16`. Entry chunk build ra **byte-identical** với chunk trong image vi gốc (`index-B2dHbO6r.js`).
+- [x] **ĐÃ VERIFY** `window.SERVER_URL` đọc tại `player/src/store/app.store.ts:23,46`, `src/utils/salt.ts:6-10`, `src/app/components/login/form.tsx:62` — đều module-scope. `env-config.js` được index.html load bằng **path RELATIVE** (`./env-config.js`, `player/index.html:18`) → serve dưới `/play/` không cần sửa; Go handler Phase 3 serve tại `/play/env-config.js`. Fallback same-origin thêm bằng inline script trong `index.html` (classic script, chạy trước mọi module ESM).
+- [ ] Aonsoku player xử lý DSD/transcode thế nào — fork này có clamp codecProfiles ≤96kHz trong react-admin player (commit `caafa1fc`); Aonsoku không có logic đó → kiểm tra stream DSF qua Aonsoku có bị lỗi không. (Phase 4)
+
+**Pin upstream (Phase 1)**: commit `c523f88ee70a6b761d62e24f0180eb26bd0a13d7` = tag `v0.14.0`, khớp label `org.opencontainers.image.revision` của image ghcr (created 2026-04-02). Build `player/` bằng **pnpm** (`pnpm install --frozen-lockfile --ignore-scripts && pnpm run build`) — upstream chỉ có `pnpm-lock.yaml`, Dockerfile upstream cũng dùng pnpm; đây là ngoại lệ có chủ đích của quy ước npm (quy ước npm áp cho `ui/`).
 
 ### Anti-patterns (cấm trong mọi phase)
 
