@@ -42,6 +42,29 @@ FROM scratch AS ui-bundle
 COPY --from=ui /build /build
 
 ########################################################################################################################
+### Build Aonsoku player UI
+FROM --platform=$BUILDPLATFORM public.ecr.aws/docker/library/node:lts-alpine AS player-ui
+WORKDIR /app
+
+# Install node dependencies (player uses pnpm, per its own lockfile/upstream Dockerfile).
+# Pin the major version: an unpinned "npm install -g pnpm" resolves to whatever is latest
+# at build time, and pnpm 11 fails "--frozen-lockfile" against this v9.0 lockfile's
+# "overrides" block ([ERR_PNPM_LOCKFILE_CONFIG_MISMATCH]) even though nothing changed.
+RUN npm install -g pnpm@10
+COPY player/package.json player/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+# Build bundle. player's "build" script chains `tsc && vite build`; pnpm's `run <script> --
+# <args>` forwarding keeps a literal `--` before the extra args (unlike npm, which strips it),
+# so `pnpm run build -- --outDir=...` silently ignores --outDir and vite falls back to ./dist.
+# Call tsc and vite directly instead so --outDir is applied.
+COPY player/ ./
+RUN pnpm exec tsc && pnpm exec vite build --outDir=/build-player
+
+FROM scratch AS player-bundle
+COPY --from=player-ui /build-player /build-player
+
+########################################################################################################################
 ### Build Navidrome binary for Docker image (dynamic musl, enables native libwebp via dlopen)
 FROM --platform=$BUILDPLATFORM public.ecr.aws/docker/library/golang:1.26-alpine AS build-alpine
 COPY --from=xx / /
@@ -64,6 +87,7 @@ ARG GIT_TAG
 
 RUN --mount=type=bind,source=. \
     --mount=from=ui,source=/build,target=./ui/build,ro \
+    --mount=from=player-ui,source=/build-player,target=./player/dist,ro \
     --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/go/pkg/mod <<EOT
     set -e
@@ -113,6 +137,7 @@ ARG GIT_TAG
 
 RUN --mount=type=bind,source=. \
     --mount=from=ui,source=/build,target=./ui/build,ro \
+    --mount=from=player-ui,source=/build-player,target=./player/dist,ro \
     --mount=from=osxcross,src=/osxcross/SDK,target=/xx-sdk,ro \
     --mount=type=cache,target=/root/.cache \
     --mount=type=cache,target=/go/pkg/mod <<EOT
