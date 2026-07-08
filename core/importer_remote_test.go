@@ -91,6 +91,11 @@ func fakeSubsonic(t *testing.T, user, pass string) *httptest.Server {
 	mux.HandleFunc("/rest/getSong", authed(func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, ok(`"song":{"id":"s1","title":"Song One","artist":"Artist A","suffix":"flac","size":1000}`))
 	}))
+	mux.HandleFunc("/rest/getRandomSongs", authed(func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, ok(`"randomSongs":{"song":[
+			{"id":"s1","title":"Song One","artist":"Artist A","album":"Album One","suffix":"flac","size":1000,"bitRate":900,"duration":200}
+		]}`))
+	}))
 	mux.HandleFunc("/rest/download", authed(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "audio/flac")
 		_, _ = fmt.Fprintf(w, "AUDIO-%s", r.URL.Query().Get("id"))
@@ -224,9 +229,14 @@ func TestRemoteSearchAndBrowse(t *testing.T) {
 		t.Fatalf("RemoteAlbum = %+v, %v", songs, err)
 	}
 
-	if _, err := imp.RemoteSearch(ctx, s.ID, "  "); err == nil {
-		t.Fatal("empty query should fail")
+	resEmpty, err := imp.RemoteSearch(ctx, s.ID, "  ")
+	if err != nil {
+		t.Fatalf("empty query RemoteSearch failed: %v", err)
 	}
+	if len(resEmpty.Songs) == 0 {
+		t.Fatalf("empty query RemoteSearch should auto-populate and return songs")
+	}
+
 	if _, err := imp.RemoteSearch(ctx, "missing-id", "x"); err == nil {
 		t.Fatal("unknown server id should fail")
 	}
