@@ -41,6 +41,7 @@ type configOptions struct {
 	BasePath                        string
 	BaseHost                        string
 	BaseScheme                      string
+	DefaultUIPath                   string
 	TLSCert                         string
 	TLSKey                          string
 	UILoginBackgroundURL            string
@@ -416,6 +417,7 @@ func Load(noConfigDump bool) {
 	}
 
 	Server.Search.Backend = normalizeSearchBackend(Server.Search.Backend)
+	Server.DefaultUIPath = normalizeUIPath(Server.DefaultUIPath)
 
 	if Server.BaseURL != "" {
 		u, err := url.Parse(Server.BaseURL)
@@ -727,6 +729,20 @@ func normalizeSearchBackend(value string) string {
 	}
 }
 
+// normalizeUIPath ensures a UI root path (e.g. DefaultUIPath) is a clean, absolute
+// path segment (leading slash, no trailing slash), falling back to the default
+// WebUI path if left empty.
+func normalizeUIPath(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return consts.URLPathUI
+	}
+	if !strings.HasPrefix(value, "/") {
+		value = "/" + value
+	}
+	return strings.TrimSuffix(value, "/")
+}
+
 // toPascalCase converts a dotted lowercase config key to PascalCase for display.
 // Example: "scanner.schedule" → "Scanner.Schedule"
 func toPascalCase(key string) string {
@@ -769,6 +785,7 @@ func setViperDefaults() {
 	viper.SetDefault("enforcenonrootuser", false)
 	viper.SetDefault("sessiontimeout", consts.DefaultSessionTimeout)
 	viper.SetDefault("baseurl", "")
+	viper.SetDefault("defaultuipath", consts.URLPathUI)
 	viper.SetDefault("tlscert", "")
 	viper.SetDefault("tlskey", "")
 	viper.SetDefault("uiloginbackgroundurl", consts.DefaultUILoginBackgroundURL)

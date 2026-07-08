@@ -24,6 +24,7 @@ import (
 	"github.com/navidrome/navidrome/core/metrics"
 	"github.com/navidrome/navidrome/log"
 	"github.com/navidrome/navidrome/model"
+	"github.com/navidrome/navidrome/player"
 	"github.com/navidrome/navidrome/server/events"
 	"github.com/navidrome/navidrome/ui"
 )
@@ -60,6 +61,7 @@ func (s *Server) MountRouter(description, urlPath string, subRouter http.Handler
 func (s *Server) Run(ctx context.Context, addr string, port int, tlsCert string, tlsKey string) error {
 	// Mount the router for the frontend assets
 	s.MountRouter("WebUI", consts.URLPathUI, s.frontendAssetsHandler())
+	s.MountRouter("Player UI", consts.URLPathPlayer, s.playerAssetsHandler())
 
 	// Create a new http.Server with the specified read header timeout and handler
 	server := &http.Server{
@@ -223,9 +225,11 @@ func (s *Server) mountAuthenticationRoutes() chi.Router {
 // Serve UI app assets
 func (s *Server) mountRootRedirector() {
 	r := s.router
-	// Redirect root to UI URL
+	// Redirect root to the configured default UI (react-admin at /app unless
+	// conf.Server.DefaultUIPath points elsewhere, e.g. /play).
+	defaultUIRoot := path.Join(conf.Server.BasePath, conf.Server.DefaultUIPath) + "/"
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, s.appRoot+"/", http.StatusFound)
+		http.Redirect(w, r, defaultUIRoot, http.StatusFound)
 	})
 	r.Get(s.appRoot, func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, s.appRoot+"/", http.StatusFound)
@@ -237,6 +241,57 @@ func (s *Server) frontendAssetsHandler() http.Handler {
 
 	r.Handle("/", Index(s.ds, ui.BuildAssets()))
 	r.Handle("/*", http.StripPrefix(s.appRoot, http.FileServer(http.FS(ui.BuildAssets()))))
+	return r
+}
+
+// playerEnvConfigJS is the runtime configuration served at GET /play/env-config.js,
+// replacing Aonsoku's upstream nginx envsubst mechanism (see player/env-config.js.template
+// for the full variable list). Values reflect a same-origin, Navidrome-backed deployment;
+// SERVER_URL is left empty so player/index.html's inline fallback script sets it to
+// window.location.origin. No new Navidrome config keys are introduced for these.
+const playerEnvConfigJS = `"use strict";
+window.SERVER_URL="";
+window.HIDE_SERVER=true;
+window.APP_USER=undefined;
+window.APP_PASSWORD=undefined;
+window.APP_AUTH_TYPE="token";
+window.HIDE_ARTISTS_SECTION=false;
+window.HIDE_SONGS_SECTION=false;
+window.HIDE_ALBUMS_SECTION=false;
+window.HIDE_GENRES_SECTION=false;
+window.HIDE_FAVORITES_SECTION=false;
+window.HIDE_PLAYLISTS_SECTION=false;
+window.HIDE_RADIOS_SECTION=false;
+window.SERVER_TYPE="navidrome";
+window.APP_THEME=undefined;
+window.APP_HIDE_THEMES=false;
+window.IMAGE_CACHE_ENABLED=false;
+window.DISABLE_IMAGE_CACHE_TOGGLE=false;
+window.DISABLE_DOWNLOADS=false;
+window.DISABLE_LRCLIB=false;
+`
+
+// playerAssetsHandler serves the embedded Aonsoku player UI (player.BuildAssets()) at
+// consts.URLPathPlayer. Aonsoku uses a hash router (createHashRouter), so unlike
+// frontendAssetsHandler no SPA path-fallback is required: the static FileServer plus a
+// static index.html at "/" are enough.
+func (s *Server) playerAssetsHandler() http.Handler {
+	r := chi.NewRouter()
+	assets := player.BuildAssets()
+	playerRoot := path.Join(conf.Server.BasePath, consts.URLPathPlayer)
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		// index.html is not hashed, so it must never be long-cached; the hashed
+		// files under /assets/ are served with FileServer's default caching.
+		w.Header().Set("Cache-Control", "no-cache")
+		http.ServeFileFS(w, r, assets, "index.html")
+	})
+	r.Get("/env-config.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		w.Header().Set("Cache-Control", "no-cache")
+		_, _ = w.Write([]byte(playerEnvConfigJS))
+	})
+	r.Handle("/*", http.StripPrefix(playerRoot, http.FileServer(http.FS(assets))))
 	return r
 }
 
