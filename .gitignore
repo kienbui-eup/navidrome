@@ -46,3 +46,4 @@ go.work*
 
 # Yarn install state (machine-local artifact)
 ui/.yarn/
+firebase-debug.log
