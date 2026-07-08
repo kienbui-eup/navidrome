@@ -19,6 +19,7 @@ import {
   openAddToPlaylist,
   openExtendedInfoDialog,
   openDownloadMenu,
+  openDeleteMediaDialog,
   DOWNLOAD_MENU_SONG,
   openShareMenu,
 } from '../actions'
@@ -167,6 +168,12 @@ export const SongContextMenu = ({
 
         dispatch(openExtendedInfoDialog(fullRecord))
       },
+    },
+    delete: {
+      enabled: permissions === 'admin',
+      label: translate('resources.song.actions.delete'),
+      action: (record) =>
+        dispatch(openDeleteMediaDialog({ mode: 'song', record })),
     },
   }
 

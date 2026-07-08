@@ -7,7 +7,12 @@ import MenuItem from '@material-ui/core/MenuItem'
 import MoreVertIcon from '@material-ui/icons/MoreVert'
 import { MdQuestionMark } from 'react-icons/md'
 import { makeStyles } from '@material-ui/core/styles'
-import { useDataProvider, useNotify, useTranslate } from 'react-admin'
+import {
+  useDataProvider,
+  useNotify,
+  usePermissions,
+  useTranslate,
+} from 'react-admin'
 import clsx from 'clsx'
 import {
   playNext,
@@ -17,6 +22,7 @@ import {
   openAddToPlaylist,
   openDownloadMenu,
   openExtendedInfoDialog,
+  openDeleteMediaDialog,
   DOWNLOAD_MENU_ALBUM,
   DOWNLOAD_MENU_ARTIST,
   openShareMenu,
@@ -68,6 +74,7 @@ const ContextMenu = ({
   const dispatch = useDispatch()
   const translate = useTranslate()
   const notify = useNotify()
+  const { permissions } = usePermissions()
   const [anchorEl, setAnchorEl] = useState(null)
 
   const options = {
@@ -133,6 +140,13 @@ const ContextMenu = ({
         action: () => dispatch(openExtendedInfoDialog(record)),
       },
     }),
+    delete: {
+      enabled: resource === 'album' && permissions === 'admin',
+      needData: false,
+      label: translate('resources.album.actions.delete'),
+      action: (record) =>
+        dispatch(openDeleteMediaDialog({ mode: 'album', record })),
+    },
   }
 
   const handleClick = (e) => {

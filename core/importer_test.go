@@ -242,7 +242,7 @@ func TestUniqueDest(t *testing.T) {
 	}
 
 	// Taken -> "song (1).mp3".
-	if err := os.WriteFile(p, []byte("x"), 0o644); err != nil {
+	if err := os.WriteFile(p, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	got, name := uniqueDest(p)
@@ -251,7 +251,7 @@ func TestUniqueDest(t *testing.T) {
 	}
 
 	// Both taken -> "song (2).mp3".
-	if err := os.WriteFile(got, []byte("x"), 0o644); err != nil {
+	if err := os.WriteFile(got, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if _, name := uniqueDest(p); name != "song (2).mp3" {

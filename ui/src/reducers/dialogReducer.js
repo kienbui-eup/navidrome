@@ -17,6 +17,8 @@ import {
   SAVE_QUEUE_CLOSE,
   SHARE_MENU_OPEN,
   SHARE_MENU_CLOSE,
+  DELETE_MEDIA_OPEN,
+  DELETE_MEDIA_CLOSE,
 } from '../actions'
 
 export const shareDialogReducer = (
@@ -182,6 +184,35 @@ export const saveQueueDialogReducer = (
       return { ...previousState, open: true }
     case SAVE_QUEUE_CLOSE:
       return { ...previousState, open: false }
+    default:
+      return previousState
+  }
+}
+
+export const deleteMediaDialogReducer = (
+  previousState = {
+    open: false,
+    mode: undefined,
+    record: undefined,
+    hideUpgradeAction: false,
+  },
+  payload,
+) => {
+  const { type } = payload
+  switch (type) {
+    case DELETE_MEDIA_OPEN:
+      return {
+        ...previousState,
+        open: true,
+        mode: payload.mode,
+        record: payload.record,
+        hideUpgradeAction: !!payload.hideUpgradeAction,
+      }
+    case DELETE_MEDIA_CLOSE:
+      return {
+        ...previousState,
+        open: false,
+      }
     default:
       return previousState
   }

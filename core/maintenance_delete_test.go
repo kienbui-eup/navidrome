@@ -27,7 +27,7 @@ var _ = Describe("Maintenance (Delete)", func() {
 	writeTrack := func(id, albumID, title string) model.MediaFile {
 		rel := id + ".flac"
 		abs := filepath.Join(libDir, rel)
-		Expect(os.WriteFile(abs, []byte("fake audio data for "+id), 0o644)).To(Succeed())
+		Expect(os.WriteFile(abs, []byte("fake audio data for "+id), 0o600)).To(Succeed())
 		return model.MediaFile{ID: id, AlbumID: albumID, Title: title, LibraryPath: libDir, Path: rel}
 	}
 
@@ -39,7 +39,7 @@ var _ = Describe("Maintenance (Delete)", func() {
 		rel := id + ".flac"
 		abs := filepath.Join(libDir, rel)
 		Expect(os.MkdirAll(abs, 0o755)).To(Succeed())
-		Expect(os.WriteFile(filepath.Join(abs, "nested"), []byte("x"), 0o644)).To(Succeed())
+		Expect(os.WriteFile(filepath.Join(abs, "nested"), []byte("x"), 0o600)).To(Succeed())
 		return model.MediaFile{ID: id, AlbumID: albumID, Title: title, LibraryPath: libDir, Path: rel}
 	}
 
@@ -89,6 +89,20 @@ var _ = Describe("Maintenance (Delete)", func() {
 
 			Expect(mfRepo.deleteMissingCalled).To(BeTrue())
 			Expect(mfRepo.deletedIDs).To(Equal([]string{"mf1"}))
+		})
+
+		It("refuses to delete anything for a non-admin user", func() {
+			mf1 := writeTrack("mf1", "album1", "Song One")
+			mfRepo.SetData(model.MediaFiles{mf1})
+			nonAdminCtx := request.WithUser(context.Background(), model.User{ID: "user2", IsAdmin: false})
+
+			err := service.DeleteMediaFiles(nonAdminCtx, []string{"mf1"})
+			Expect(errors.Is(err, model.ErrNotAuthorized)).To(BeTrue())
+			Expect(service.DeleteAlbum(nonAdminCtx, "album1")).To(MatchError(model.ErrNotAuthorized))
+
+			_, statErr := os.Stat(mf1.AbsolutePath())
+			Expect(statErr).ToNot(HaveOccurred(), "file must not be touched")
+			Expect(mfRepo.deleteMissingCalled).To(BeFalse())
 		})
 
 		It("silently skips ids that no longer exist in the DB", func() {

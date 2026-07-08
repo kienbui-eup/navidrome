@@ -16,6 +16,8 @@ export const DOWNLOAD_MENU_PLAY = 'playlist'
 export const DOWNLOAD_MENU_SONG = 'song'
 export const SHARE_MENU_OPEN = 'SHARE_MENU_OPEN'
 export const SHARE_MENU_CLOSE = 'SHARE_MENU_CLOSE'
+export const DELETE_MEDIA_OPEN = 'DELETE_MEDIA_OPEN'
+export const DELETE_MEDIA_CLOSE = 'DELETE_MEDIA_CLOSE'
 
 export const openShareMenu = (ids, resource, name, label) => ({
   type: SHARE_MENU_OPEN,
@@ -85,4 +87,23 @@ export const openSaveQueueDialog = () => ({
 
 export const closeSaveQueueDialog = () => ({
   type: SAVE_QUEUE_CLOSE,
+})
+
+// mode: 'song' | 'album' | 'songs'
+// record: 'song' -> full song record, 'album' -> full album record,
+//         'songs' -> { ids: [...], count }
+// hideUpgradeAction: hide the dialog's "find higher quality instead" button.
+// Used when opening the dialog from a context that's already about quality
+// upgrades (the Upgrade page itself), where offering to queue another scan
+// is redundant. Travels through redux (not a component prop) because
+// DeleteMediaDialog is mounted once, globally, in Dialogs.jsx.
+export const openDeleteMediaDialog = ({ mode, record, hideUpgradeAction }) => ({
+  type: DELETE_MEDIA_OPEN,
+  mode,
+  record,
+  hideUpgradeAction: !!hideUpgradeAction,
+})
+
+export const closeDeleteMediaDialog = () => ({
+  type: DELETE_MEDIA_CLOSE,
 })

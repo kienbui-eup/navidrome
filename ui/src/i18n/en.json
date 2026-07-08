@@ -63,7 +63,8 @@
         "download": "Download",
         "playNext": "Play Next",
         "info": "Get Info",
-        "instantMix": "Instant Mix"
+        "instantMix": "Instant Mix",
+        "delete": "Delete Permanently"
       }
     },
     "album": {
@@ -105,7 +106,8 @@
         "shuffle": "Shuffle",
         "addToPlaylist": "Add to Playlist",
         "download": "Download",
-        "info": "Get Info"
+        "info": "Get Info",
+        "delete": "Delete Permanently"
       },
       "lists": {
         "all": "All",
@@ -816,7 +818,8 @@
       "forceApprove": "Force approve",
       "approveSelected": "Approve selected (%{count})",
       "selectAll": "Select all",
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "deleteOriginal": "Delete original track"
     },
     "verify": {
       "title": "Verification result",
@@ -841,6 +844,31 @@
       "scanStarted": "Scan started",
       "scanDone": "Scan complete: %{found} candidates found",
       "startFailed": "Could not start scan: %{error}"
+    }
+  },
+  "deleteMedia": {
+    "dialogTitle": {
+      "song": "Delete this song?",
+      "songs": "Delete %{count} songs?",
+      "album": "Delete this album?"
+    },
+    "warning": "This permanently removes the file(s) from disk. This cannot be undone.",
+    "info": {
+      "song": "%{title} - %{artist}",
+      "quality": "%{suffix} %{bitRate}kbps",
+      "album": "%{name} (%{count} songs)",
+      "songs": "%{count} songs selected"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "confirm": "Delete Permanently",
+      "upgradeInstead": "Find higher quality instead"
+    },
+    "notify": {
+      "deleted": "Deleted %{count} song(s)",
+      "conflict409": "Cannot delete, currently being upgraded: %{error}",
+      "failed": "Delete failed: %{error}",
+      "upgradeQueued": "Queued for upgrade scan"
     }
   }
 }
