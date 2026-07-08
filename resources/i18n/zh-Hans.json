@@ -716,8 +716,7 @@
       "next_song": "下一首",
       "current_song": "转到当前播放",
       "vol_up": "增大音量",
-      "vol_down": "减小音量",
-      "toggle_love": "添加/移除收藏"
+      "vol_down": "减小音量"
     }
   }
 }

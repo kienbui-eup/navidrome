@@ -718,8 +718,7 @@
             "next_song": "Traccia Successiva",
             "current_song": "Vai alla traccia corrente",
             "vol_up": "Alza il Volume",
-            "vol_down": "Abbassa il Volume",
-            "toggle_love": "Aggiungi questa traccia ai preferiti"
+            "vol_down": "Abbassa il Volume"
         }
     }
 }

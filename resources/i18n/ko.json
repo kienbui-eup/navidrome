@@ -622,8 +622,7 @@
       "next_song": "다음 노래",
       "current_song": "현재 노래로 이동",
       "vol_up": "볼륨 높이기",
-      "vol_down": "볼륨 낮추기",
-      "toggle_love": "이 트랙을 즐겨찾기에 추가"
+      "vol_down": "볼륨 낮추기"
     }
   }
 }
