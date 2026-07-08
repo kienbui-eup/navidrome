@@ -40,30 +40,94 @@ type RemoteServer struct {
 	Password string `json:"password,omitempty"`
 }
 
+// JSONInt represents an integer that can be unmarshalled from either a JSON number or string.
+type JSONInt int
+
+func (ji *JSONInt) UnmarshalJSON(data []byte) error {
+	var val any
+	if err := json.Unmarshal(data, &val); err != nil {
+		return err
+	}
+	switch v := val.(type) {
+	case float64:
+		*ji = JSONInt(v)
+	case string:
+		var i int
+		if _, err := fmt.Sscanf(v, "%d", &i); err != nil {
+			*ji = 0
+		} else {
+			*ji = JSONInt(i)
+		}
+	case nil:
+		*ji = 0
+	default:
+		*ji = 0
+	}
+	return nil
+}
+
+func (ji JSONInt) MarshalJSON() ([]byte, error) {
+	return json.Marshal(int(ji))
+}
+
+// JSONInt64 represents an int64 that can be unmarshalled from either a JSON number or string.
+type JSONInt64 int64
+
+func (ji *JSONInt64) UnmarshalJSON(data []byte) error {
+	var val any
+	if err := json.Unmarshal(data, &val); err != nil {
+		return err
+	}
+	switch v := val.(type) {
+	case float64:
+		*ji = JSONInt64(v)
+	case string:
+		var i int64
+		if _, err := fmt.Sscanf(v, "%d", &i); err != nil {
+			*ji = 0
+		} else {
+			*ji = JSONInt64(i)
+		}
+	case nil:
+		*ji = 0
+	default:
+		*ji = 0
+	}
+	return nil
+}
+
+func (ji JSONInt64) MarshalJSON() ([]byte, error) {
+	return json.Marshal(int64(ji))
+}
+
 // RemoteSong is one song as reported by the remote server.
 type RemoteSong struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	Artist   string `json:"artist"`
-	Album    string `json:"album"`
-	Suffix   string `json:"suffix"`
-	Size     int64  `json:"size"`
-	BitRate  int    `json:"bitRate"`
-	Duration int    `json:"duration"`
+	ID        string     `json:"id"`
+	Title     string     `json:"title"`
+	Artist    string     `json:"artist"`
+	Album     string     `json:"album"`
+	Suffix    string     `json:"suffix"`
+	Size      *JSONInt64 `json:"size,omitempty"`
+	BitRate   *JSONInt   `json:"bitRate,omitempty"`
+	Duration  *JSONInt   `json:"duration,omitempty"`
+	Year      *JSONInt   `json:"year,omitempty"`
+	Genre     *string    `json:"genre,omitempty"`
+	PlayCount *JSONInt   `json:"playCount,omitempty"`
+	Starred   *string    `json:"starred,omitempty"`
 }
 
 type RemoteAlbum struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Artist    string `json:"artist"`
-	SongCount int    `json:"songCount"`
-	Year      int    `json:"year"`
+	ID        string   `json:"id"`
+	Name      string   `json:"name"`
+	Artist    string   `json:"artist"`
+	SongCount *JSONInt `json:"songCount,omitempty"`
+	Year      *JSONInt `json:"year,omitempty"`
 }
 
 type RemoteArtist struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	AlbumCount int    `json:"albumCount"`
+	ID         string   `json:"id"`
+	Name       string   `json:"name"`
+	AlbumCount *JSONInt `json:"albumCount,omitempty"`
 }
 
 type RemoteSearchResult struct {
@@ -195,12 +259,42 @@ type subsonicError struct {
 }
 
 type subsonicResponse struct {
-	Status        string          `json:"status"`
-	Error         *subsonicError  `json:"error"`
-	SearchResult3 *remoteSearch3  `json:"searchResult3"`
-	Artist        *remoteArtistID3 `json:"artist"`
-	Album         *remoteAlbumID3  `json:"album"`
-	Song          *RemoteSong      `json:"song"`
+	Status        string             `json:"status"`
+	Error         *subsonicError     `json:"error"`
+	SearchResult3 *remoteSearch3     `json:"searchResult3"`
+	Artist        *remoteArtistID3    `json:"artist"`
+	Album         *remoteAlbumID3     `json:"album"`
+	Song          *RemoteSong        `json:"song"`
+	RandomSongs   *remoteRandomSongs `json:"randomSongs"`
+	AlbumList     *remoteAlbumList   `json:"albumList"`
+	AlbumList2    *remoteAlbumList   `json:"albumList2"`
+	Starred       *remoteStarred     `json:"starred"`
+	Starred2      *remoteStarred     `json:"starred2"`
+	Indexes       *remoteIndexes     `json:"indexes"`
+	Artists       *remoteArtists     `json:"artists"`
+}
+
+type remoteStarred struct {
+	Songs   []RemoteSong   `json:"song"`
+	Albums  []RemoteAlbum  `json:"album"`
+	Artists []RemoteArtist `json:"artist"`
+}
+
+type remoteIndexes struct {
+	Index []remoteIndexItem `json:"index"`
+}
+
+type remoteArtists struct {
+	Index []remoteIndexItem `json:"index"`
+}
+
+type remoteIndexItem struct {
+	Name   string         `json:"name"`
+	Artist []RemoteArtist `json:"artist"`
+}
+
+type remoteAlbumList struct {
+	Albums []RemoteAlbum `json:"album"`
 }
 
 type subsonicEnvelope struct {
@@ -211,6 +305,10 @@ type remoteSearch3 struct {
 	Artists []RemoteArtist `json:"artist"`
 	Albums  []RemoteAlbum  `json:"album"`
 	Songs   []RemoteSong   `json:"song"`
+}
+
+type remoteRandomSongs struct {
+	Songs []RemoteSong `json:"song"`
 }
 
 type remoteArtistID3 struct {
@@ -260,7 +358,10 @@ func (imp *importer) remoteCall(ctx context.Context, server RemoteServer, endpoi
 		return nil, fmt.Errorf("không kết nối được tới %q: %w", server.Name, err)
 	}
 	var env subsonicEnvelope
-	if err := json.Unmarshal(body, &env); err != nil || env.Response.Status == "" {
+	if err := json.Unmarshal(body, &env); err != nil {
+		return nil, fmt.Errorf("lỗi đọc dữ liệu từ %q (JSON error: %w)", server.Name, err)
+	}
+	if env.Response.Status == "" {
 		return nil, fmt.Errorf("%q không trả lời như một server Subsonic/Navidrome", server.Name)
 	}
 	if env.Response.Status != "ok" {
@@ -309,8 +410,178 @@ func (imp *importer) RemoteSearch(ctx context.Context, serverID, query string) (
 		return nil, err
 	}
 	query = strings.TrimSpace(query)
-	if query == "" {
-		return nil, fmt.Errorf("thiếu từ khóa tìm kiếm")
+	if query == "" || query == "*" {
+		// Ping first to ensure the server is reachable and credentials are valid.
+		// If ping fails (e.g. offline, bad login), we bubble up the error immediately.
+		if _, err := imp.remoteCall(ctx, server, "ping", nil); err != nil {
+			return nil, err
+		}
+
+		var res *RemoteSearchResult
+		var lastErr error
+
+		// Fallback 1: getStarred2 then getStarred
+		for _, endpoint := range []string{"getStarred2", "getStarred"} {
+			resp, err := imp.remoteCall(ctx, server, endpoint, nil)
+			if err == nil && resp != nil {
+				var starred *remoteStarred
+				if endpoint == "getStarred2" {
+					starred = resp.Starred2
+				} else {
+					starred = resp.Starred
+				}
+				if starred != nil && (len(starred.Songs) > 0 || len(starred.Albums) > 0 || len(starred.Artists) > 0) {
+					return &RemoteSearchResult{
+						Songs:   starred.Songs,
+						Albums:  starred.Albums,
+						Artists: starred.Artists,
+					}, nil
+				}
+			} else if err != nil {
+				lastErr = err
+			}
+		}
+
+		// Fallback 2: getRandomSongs
+		resp, err := imp.remoteCall(ctx, server, "getRandomSongs", url.Values{
+			"size": {"50"},
+		})
+		if err == nil && resp != nil && resp.RandomSongs != nil && len(resp.RandomSongs.Songs) > 0 {
+			return &RemoteSearchResult{
+				Songs:   resp.RandomSongs.Songs,
+				Albums:  []RemoteAlbum{},
+				Artists: []RemoteArtist{},
+			}, nil
+		}
+		if err != nil {
+			lastErr = err
+		}
+
+		// Fallback 3: getAlbumList2 or getAlbumList with random, newest, highest, alphabeticalByArtist, alphabeticalByName
+		var albums []RemoteAlbum
+		for _, endpoint := range []string{"getAlbumList2", "getAlbumList"} {
+			for _, t := range []string{"random", "newest", "highest", "alphabeticalByArtist", "alphabeticalByName"} {
+				resp2, err2 := imp.remoteCall(ctx, server, endpoint, url.Values{
+					"type": {t},
+					"size": {"20"},
+				})
+				if err2 == nil && resp2 != nil {
+					var list []RemoteAlbum
+					if endpoint == "getAlbumList2" && resp2.AlbumList2 != nil {
+						list = resp2.AlbumList2.Albums
+					} else if endpoint == "getAlbumList" && resp2.AlbumList != nil {
+						list = resp2.AlbumList.Albums
+					}
+					if len(list) > 0 {
+						for _, item := range list {
+							found := false
+							for _, existing := range albums {
+								if existing.ID == item.ID {
+									found = true
+									break
+								}
+							}
+							if !found {
+								albums = append(albums, item)
+							}
+						}
+					}
+				} else if err2 != nil {
+					lastErr = err2
+				}
+			}
+			if len(albums) >= 20 {
+				break
+			}
+		}
+
+		// If we got some albums, fetch songs for up to 5 of them
+		if len(albums) > 0 {
+			res = &RemoteSearchResult{
+				Songs:   []RemoteSong{},
+				Albums:  albums,
+				Artists: []RemoteArtist{},
+			}
+			for i, alb := range albums {
+				if i >= 5 {
+					break
+				}
+				songs, err3 := imp.remoteAlbumSongs(ctx, server, alb.ID)
+				if err3 == nil && len(songs) > 0 {
+					for j := range songs {
+						if songs[j].Album == "" {
+							songs[j].Album = alb.Name
+						}
+						if songs[j].Artist == "" && alb.Artist != "" {
+							songs[j].Artist = alb.Artist
+						}
+					}
+					res.Songs = append(res.Songs, songs...)
+				} else if err3 != nil {
+					lastErr = err3
+				}
+			}
+			return res, nil
+		}
+
+		// Fallback 4: getIndexes then getArtists
+		for _, endpoint := range []string{"getIndexes", "getArtists"} {
+			respIndexes, errIndex := imp.remoteCall(ctx, server, endpoint, nil)
+			if errIndex == nil && respIndexes != nil {
+				var indexes []remoteIndexItem
+				if endpoint == "getIndexes" && respIndexes.Indexes != nil {
+					indexes = respIndexes.Indexes.Index
+				} else if endpoint == "getArtists" && respIndexes.Artists != nil {
+					indexes = respIndexes.Artists.Index
+				}
+				var artists []RemoteArtist
+				for _, idx := range indexes {
+					artists = append(artists, idx.Artist...)
+				}
+				if len(artists) > 0 {
+					res = &RemoteSearchResult{
+						Songs:   []RemoteSong{},
+						Albums:  []RemoteAlbum{},
+						Artists: artists,
+					}
+					// Load content for up to 3 artists
+					for i, art := range artists {
+						if i >= 3 {
+							break
+						}
+						albs, err3 := imp.remoteArtistAlbums(ctx, server, art.ID)
+						if err3 == nil && len(albs) > 0 {
+							res.Albums = append(res.Albums, albs...)
+							songs, err4 := imp.remoteAlbumSongs(ctx, server, albs[0].ID)
+							if err4 == nil && len(songs) > 0 {
+								for j := range songs {
+									if songs[j].Album == "" {
+										songs[j].Album = albs[0].Name
+									}
+									if songs[j].Artist == "" {
+										songs[j].Artist = art.Name
+									}
+								}
+								res.Songs = append(res.Songs, songs...)
+							}
+						}
+					}
+					return res, nil
+				}
+			} else if errIndex != nil {
+				lastErr = errIndex
+			}
+		}
+
+		// Since the ping succeeded, the server is healthy. Any errors during
+		// optional fallback endpoints are non-fatal, so we return empty results
+		// rather than failing.
+		_ = lastErr // avoid unused warning
+		return &RemoteSearchResult{
+			Songs:   []RemoteSong{},
+			Albums:  []RemoteAlbum{},
+			Artists: []RemoteArtist{},
+		}, nil
 	}
 	resp, err := imp.remoteCall(ctx, server, "search3", url.Values{
 		"query":       {query},

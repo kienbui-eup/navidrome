@@ -267,3 +267,19 @@ func TestPreviewDriveForwardsRange(t *testing.T) {
 		t.Errorf("status = %d, want 206", resp.StatusCode)
 	}
 }
+
+func TestSearchSongsEmptyQuery(t *testing.T) {
+	srv := newSearchTestServer(t, http.StatusOK)
+	defer srv.Close()
+	withDriveKey(t, "test-key")
+	imp := newTestImporter(srv)
+
+	res, err := imp.SearchSongs(context.Background(), "", "folder123", false)
+	if err != nil {
+		t.Fatalf("SearchSongs empty: %v", err)
+	}
+	if len(res.Hits) != 3 {
+		t.Errorf("got %d hits, want 3: %+v", len(res.Hits), res.Hits)
+	}
+}
+

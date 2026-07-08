@@ -23,19 +23,23 @@ import (
 
 // SongHit is one playable/importable file found by SearchSongs.
 type SongHit struct {
-	Source     string `json:"source"`               // "archive" | "drive"
-	Title      string `json:"title"`                // display title
-	Album      string `json:"album,omitempty"`      // archive item title
-	Artist     string `json:"artist,omitempty"`     // archive creator
-	Identifier string `json:"identifier,omitempty"` // archive item id
-	FileID     string `json:"fileId,omitempty"`     // drive file id
-	Filename   string `json:"filename"`
-	Format     string `json:"format"` // quality label, e.g. "FLAC 24bit"
-	Size       int64  `json:"size,omitempty"`
-	Length     string `json:"length,omitempty"` // archive duration (seconds or mm:ss)
-	Quality    int    `json:"quality"`
-	Lossless   bool   `json:"lossless"`
-	PreviewURL string `json:"previewUrl"`
+	Source     string  `json:"source"`               // "archive" | "drive"
+	Title      string  `json:"title"`                // display title
+	Album      string  `json:"album,omitempty"`      // archive item title
+	Artist     string  `json:"artist,omitempty"`     // archive creator
+	Year       string  `json:"year,omitempty"`       // archive release year
+	Region     string  `json:"region,omitempty"`     // archive language/region
+	Downloads  int64   `json:"downloads,omitempty"`  // archive downloads count
+	Likes      float64 `json:"likes,omitempty"`      // archive rating
+	Identifier string  `json:"identifier,omitempty"` // archive item id
+	FileID     string  `json:"fileId,omitempty"`     // drive file id
+	Filename   string  `json:"filename"`
+	Format     string  `json:"format"` // quality label, e.g. "FLAC 24bit"
+	Size       int64   `json:"size,omitempty"`
+	Length     string  `json:"length,omitempty"` // archive duration (seconds or mm:ss)
+	Quality    int     `json:"quality"`
+	Lossless   bool    `json:"lossless"`
+	PreviewURL string  `json:"previewUrl"`
 }
 
 // SongSearchResult aggregates hits from all sources; a failing source adds a
@@ -105,6 +109,9 @@ func foldSearch(s string) string {
 // matchesQuery reports whether every whitespace-separated token of query
 // appears in at least one candidate (case- and diacritic-insensitive).
 func matchesQuery(query string, candidates ...string) bool {
+	if query == "*" || query == "" {
+		return true
+	}
 	folded := make([]string, 0, len(candidates))
 	for _, c := range candidates {
 		if c != "" {
@@ -189,7 +196,7 @@ func escapeArchivePath(filename string) string {
 func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string, losslessOnly bool) (*SongSearchResult, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return nil, fmt.Errorf("empty search query")
+		query = "*"
 	}
 	ctx, cancel := context.WithTimeout(ctx, searchSongsTimeout)
 	defer cancel()
@@ -278,6 +285,10 @@ func (imp *importer) searchArchiveSongs(ctx context.Context, query string) ([]So
 					Title:      title,
 					Album:      item.Title,
 					Artist:     item.Creator,
+					Year:       item.Year,
+					Region:     item.Language,
+					Downloads:  item.Downloads,
+					Likes:      item.AvgRating,
 					Identifier: item.Identifier,
 					Filename:   f.Name,
 					Format:     label,

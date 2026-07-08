@@ -10,6 +10,8 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  FormControlLabel,
+  Grid,
   IconButton,
   InputLabel,
   List,
@@ -20,7 +22,9 @@ import {
   Select,
   TextField,
   Typography,
+  Divider,
 } from '@material-ui/core'
+import { makeStyles } from '@material-ui/core/styles'
 import AddIcon from '@material-ui/icons/Add'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import DeleteIcon from '@material-ui/icons/Delete'
@@ -29,8 +33,66 @@ import GetAppIcon from '@material-ui/icons/GetApp'
 import PlayArrowIcon from '@material-ui/icons/PlayArrow'
 import SearchIcon from '@material-ui/icons/Search'
 import StopIcon from '@material-ui/icons/Stop'
+import FilterListIcon from '@material-ui/icons/FilterList'
+import AlbumIcon from '@material-ui/icons/Album'
+import ClearIcon from '@material-ui/icons/Clear'
+import StarIcon from '@material-ui/icons/Star'
+import LanguageIcon from '@material-ui/icons/Language'
+import SortIcon from '@material-ui/icons/Sort'
+import MusicNoteIcon from '@material-ui/icons/MusicNote'
+import GraphicEqIcon from '@material-ui/icons/GraphicEq'
+import CloudQueueIcon from '@material-ui/icons/CloudQueue'
 import { httpClient } from '../dataProvider'
 import { formatBytes } from '../utils'
+
+const useLocalStyles = makeStyles((theme) => ({
+  filterContainer: {
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+    padding: theme.spacing(2.5),
+    backgroundColor: theme.palette.background.paper,
+    borderRadius: theme.shape.borderRadius,
+    border: `1px solid ${theme.palette.divider}`,
+    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+  },
+  albumHeader: {
+    backgroundColor: theme.palette.action.hover,
+    padding: theme.spacing(1.5, 2.5),
+    marginTop: theme.spacing(3),
+    borderRadius: theme.shape.borderRadius,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1.5),
+    borderLeft: `4px solid ${theme.palette.primary.main}`,
+  },
+  albumTitle: {
+    fontWeight: 'bold',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+  },
+  songList: {
+    paddingLeft: theme.spacing(1),
+  },
+  metaSeparator: {
+    margin: theme.spacing(0, 1),
+    opacity: 0.5,
+  },
+  interactiveSelect: {
+    transition: 'all 0.2s ease-in-out',
+    '&:hover': {
+      borderColor: theme.palette.primary.main,
+    },
+  },
+  songItem: {
+    transition: 'background-color 0.2s ease',
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    },
+  },
+}))
 
 const errMsg = (e) => (e && (e.body || e.message)) || 'Lỗi không xác định'
 
@@ -48,23 +110,81 @@ const previewSrc = (serverId, songId) => {
   )}&id=${encodeURIComponent(songId)}&jwt=${encodeURIComponent(token || '')}`
 }
 
+const foldSearch = (s) => {
+  if (!s) return ''
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+const formatRegion = (region) => {
+  if (!region) return 'Không xác định'
+  const r = region.toLowerCase().trim()
+  if (r === 'vietnamese' || r === 'vi' || r === 'vie') return 'Việt Nam 🇻🇳'
+  if (r === 'english' || r === 'eng' || r === 'en' || r === 'us' || r === 'gb') return 'Âu Mỹ 🇺🇸🇬🇧'
+  if (r === 'french' || r === 'fr' || r === 'fre') return 'Pháp 🇫🇷'
+  if (r === 'japanese' || r === 'ja' || r === 'jp' || r === 'jpn') return 'Nhật Bản 🇯🇵'
+  if (r === 'chinese' || r === 'zh' || r === 'cn' || r === 'chi') return 'Trung Quốc 🇨🇳'
+  if (r === 'korean' || r === 'ko' || r === 'kor') return 'Hàn Quốc 🇰🇷'
+  return r.charAt(0).toUpperCase() + r.slice(1)
+}
+
+const detectRegion = (song) => {
+  const g = (song.genre || '').toLowerCase()
+  const a = (song.artist || '').toLowerCase()
+  const t = (song.title || '').toLowerCase()
+  const al = (song.album || '').toLowerCase()
+  if (g.includes('viet') || g.includes('vi_') || g.includes('v-pop') || g.includes('nhac tre') || g.includes('tru tinh') || g.includes('que huong') || g.includes('cai luong') ||
+      a.includes('trịnh công sơn') || a.includes('lệ quyên') || a.includes('bằng kiều') || a.includes('đàm vĩnh hưng') || a.includes('tuấn hưng') || a.includes('hà anh tuấn') || a.includes('khánh ly')) {
+    return 'vietnamese'
+  }
+  if (g.includes('french') || g.includes('fr_')) return 'french'
+  if (g.includes('japan') || g.includes('ja_') || g.includes('j-pop')) return 'japanese'
+  if (g.includes('china') || g.includes('zh_') || g.includes('c-pop')) return 'chinese'
+  if (g.includes('korea') || g.includes('ko_') || g.includes('k-pop')) return 'korean'
+  if (g.includes('english') || g.includes('eng') || g.includes('rock') || g.includes('pop') || g.includes('jazz') || g.includes('blues') || g.includes('metal')) return 'english'
+  return g || 'Không xác định'
+}
+
+const getFormatRank = (suffix) => {
+  const f = (suffix || '').toLowerCase()
+  if (f.includes('dsd') || f.includes('dsf') || f.includes('dff')) return 100
+  if (f.includes('flac')) return 80
+  if (f.includes('alac') || f.includes('m4a')) return 78
+  if (f.includes('ape') || f.includes('wavpack')) return 75
+  if (f.includes('wav') || f.includes('aiff')) return 70
+  if (f.includes('mp3')) return 35
+  if (f.includes('ogg') || f.includes('opus')) return 35
+  return 20
+}
+
 const emptyForm = { id: '', name: '', url: '', username: '', password: '' }
 
-// Import from another vi2play/Subsonic server: manage saved source servers,
-// search songs/albums/artists there and queue original-file downloads.
 const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
+  const localClasses = useLocalStyles()
   const notify = useNotify()
   const [servers, setServers] = useState([])
   const [serverId, setServerId] = useState('')
-  const [dialog, setDialog] = useState(null) // null | form object
-  const [testState, setTestState] = useState(null) // null | 'busy' | 'ok' | error text
+  const [dialog, setDialog] = useState(null)
+  const [testState, setTestState] = useState(null)
   const [query, setQuery] = useState('')
   const [result, setResult] = useState(null)
-  // view: {type:'search'} | {type:'artist',artist,albums} | {type:'album',album,songs}
   const [view, setView] = useState({ type: 'search' })
   const [busy, setBusy] = useState(null)
   const [playing, setPlaying] = useState(null)
   const audioRef = useRef(null)
+
+  // Filters State
+  const [filterSinger, setFilterSinger] = useState('')
+  const [filterComposer, setFilterComposer] = useState('')
+  const [filterYear, setFilterYear] = useState('all')
+  const [filterSize, setFilterSize] = useState('all')
+  const [filterFormat, setFilterFormat] = useState('all')
+  
+  // Grouping & Sorting State
+  const [groupBy, setGroupBy] = useState('album') // 'album' | 'artist' | 'region' | 'none'
+  const [sortBy, setSortBy] = useState('format') // 'format' (default best first) | 'year' | 'playcount' | 'likes' | 'quality'
 
   useEffect(() => {
     const audio = new Audio()
@@ -83,7 +203,9 @@ const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
   }, [notify])
 
   const stopPreview = () => {
-    audioRef.current.pause()
+    if (audioRef.current) {
+      audioRef.current.pause()
+    }
     setPlaying(null)
   }
 
@@ -117,6 +239,15 @@ const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
   useEffect(() => {
     loadServers()
   }, [loadServers])
+
+  useEffect(() => {
+    if (serverId) {
+      search()
+    } else {
+      setResult(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverId])
 
   const openDialog = (server) => {
     setTestState(null)
@@ -180,11 +311,6 @@ const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
         `/api/import/remote/search?${params.toString()}`,
       )
       setResult(json || { songs: [], albums: [], artists: [] })
-      const total =
-        ((json && json.songs) || []).length +
-        ((json && json.albums) || []).length +
-        ((json && json.artists) || []).length
-      if (total === 0) notify('Không tìm thấy kết quả nào', 'info')
     } catch (e) {
       notify(`Tìm kiếm lỗi: ${errMsg(e)}`, 'warning')
     } finally {
@@ -239,6 +365,37 @@ const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
     }
   }
 
+  const importGroup = async (group) => {
+    if (!group || !group.songs || group.songs.length === 0) return
+    const key = 'group-' + group.key
+    setBusy(key)
+    try {
+      const items = group.songs.map((song) => ({
+        type: 'remote',
+        serverId: serverId,
+        id: song.id,
+        name: song.title,
+      }))
+      const { json } = await httpClient('/api/import/job', {
+        method: 'POST',
+        body: JSON.stringify({ items, libraryId }),
+      })
+      if (onJobStarted) {
+        onJobStarted(json.jobId, items.length)
+        notify(
+          `Đã bắt đầu import nhóm "${group.title}" (${items.length} bài)...`,
+          'info',
+        )
+      } else {
+        notify(`Đã thêm nhóm "${group.title}" vào hàng đợi tải.`, 'info')
+      }
+    } catch (e) {
+      notify(`Không tải được nhóm: ${errMsg(e)}`, 'warning')
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const importButton = (type, id, label, confirmText) => (
     <IconButton
       edge="end"
@@ -254,6 +411,177 @@ const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
     </IconButton>
   )
 
+  const renderFormatChip = (song) => {
+    const f = (song.suffix || '').toLowerCase()
+    let style = {}
+    let label = song.suffix ? song.suffix.toUpperCase() : ''
+    
+    const isLossless = getFormatRank(song.suffix) >= 70 || song.bitRate > 320
+    
+    if (f.includes('dsd') || f.includes('dsf') || f.includes('dff')) {
+      style = {
+        background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+        color: '#000',
+        fontWeight: 'bold',
+      }
+    } else if (isLossless) {
+      style = {
+        backgroundColor: '#00e5ff',
+        color: '#000',
+        fontWeight: '500',
+      }
+    }
+    return (
+      <Chip
+        size="small"
+        label={label}
+        style={style}
+        color={!style.backgroundColor && isLossless ? 'primary' : 'default'}
+      />
+    )
+  }
+
+  const renderLikes = (song) => {
+    if (!song.starred) return null
+    return (
+      <Box display="inline-flex" alignItems="center" style={{ color: '#ffb300', fontSize: '0.8rem', gap: 2, marginRight: 8 }}>
+        <StarIcon style={{ fontSize: '0.9rem' }} />
+        <span>Yêu thích</span>
+      </Box>
+    )
+  }
+
+  const songs = (result && result.songs) || []
+
+  // Dynamic filter lists
+  const uniqueYears = Array.from(
+    new Set(songs.map((s) => s.year).filter(Boolean)),
+  )
+    .sort()
+    .reverse()
+  const uniqueFormats = Array.from(
+    new Set(songs.map((s) => s.suffix).filter(Boolean)),
+  ).sort()
+
+  // 1. Filter local songs
+  const filteredSongs = songs.filter((song) => {
+    if (filterSinger.trim()) {
+      const s = foldSearch(filterSinger.trim())
+      const artist = foldSearch(song.artist || '')
+      if (!artist.includes(s)) return false
+    }
+    if (filterComposer.trim()) {
+      const c = foldSearch(filterComposer.trim())
+      const title = foldSearch(song.title || '')
+      const artist = foldSearch(song.artist || '')
+      if (!title.includes(c) && !artist.includes(c)) return false
+    }
+    if (filterYear !== 'all') {
+      if (song.year !== parseInt(filterYear)) return false
+    }
+    if (filterFormat !== 'all') {
+      if (song.suffix !== filterFormat) return false
+    }
+    if (filterSize !== 'all') {
+      const sizeMB = (song.size || 0) / (1024 * 1024)
+      if (filterSize === 'small' && sizeMB >= 10) return false
+      if (filterSize === 'medium' && (sizeMB < 10 || sizeMB >= 50)) return false
+      if (filterSize === 'large' && (sizeMB < 50 || sizeMB >= 100)) return false
+      if (filterSize === 'xlarge' && sizeMB < 100) return false
+    }
+    return true
+  })
+
+  // 2. Sort filtered songs
+  const sortedSongs = [...filteredSongs].sort((a, b) => {
+    if (sortBy === 'year') {
+      const yA = a.year || 0
+      const yB = b.year || 0
+      if (yB !== yA) return yB - yA
+    } else if (sortBy === 'playcount') {
+      const pA = a.playCount || 0
+      const pB = b.playCount || 0
+      if (pB !== pA) return pB - pA
+    } else if (sortBy === 'likes') {
+      const sA = a.starred ? 1 : 0
+      const sB = b.starred ? 1 : 0
+      if (sB !== sA) return sB - sA
+    } else if (sortBy === 'quality') {
+      const qA = a.bitRate || 0
+      const qB = b.bitRate || 0
+      if (qB !== qA) return qB - qA
+    } else if (sortBy === 'format') {
+      const rA = getFormatRank(a.suffix)
+      const rB = getFormatRank(b.suffix)
+      if (rB !== rA) return rB - rA
+    }
+    return 0
+  })
+
+  // 3. Group songs
+  const groupSongs = (songsList, groupByOption) => {
+    const groups = {}
+    songsList.forEach((song) => {
+      let key = ''
+      let title = ''
+      let subtitle = ''
+      let icon = <AlbumIcon color="primary" />
+
+      if (groupByOption === 'album') {
+        key = song.album || 'Không rõ Album'
+        title = key
+        subtitle = [
+          song.artist,
+          song.year,
+        ].filter(Boolean).join(' • ')
+        icon = <AlbumIcon color="primary" />
+      } else if (groupByOption === 'artist') {
+        key = song.artist || 'Không rõ Ca sĩ'
+        title = key
+        subtitle = 'Ca sĩ trình bày'
+        icon = <MusicNoteIcon color="primary" />
+      } else if (groupByOption === 'region') {
+        const reg = detectRegion(song)
+        key = reg
+        title = formatRegion(reg)
+        subtitle = 'Khu vực / Ngôn ngữ phát hành'
+        icon = <LanguageIcon color="primary" />
+      } else {
+        key = 'all'
+        title = 'Tất cả bài hát'
+        subtitle = `${songsList.length} bài hát`
+        icon = <GraphicEqIcon color="primary" />
+      }
+
+      if (!groups[key]) {
+        groups[key] = {
+          key: key,
+          title: title,
+          subtitle: subtitle,
+          icon: icon,
+          songs: [],
+        }
+      }
+      groups[key].songs.push(song)
+    })
+
+    return Object.values(groups).sort((a, b) => {
+      if (groupByOption === 'none') return 0
+      const isUnkA = a.title.includes('Không rõ') || a.title.includes('Không xác định')
+      const isUnkB = b.title.includes('Không rõ') || b.title.includes('Không xác định')
+      if (isUnkA && !isUnkB) return 1
+      if (!isUnkA && isUnkB) return -1
+      return a.title.localeCompare(b.title, 'vi')
+    })
+  }
+
+  const getButtonText = (group) => {
+    if (groupBy === 'album') return `Tải cả album (${group.songs.length})`
+    if (groupBy === 'artist') return `Tải tất cả bài của ca sĩ (${group.songs.length})`
+    if (groupBy === 'region') return `Tải tất cả thuộc khu vực (${group.songs.length})`
+    return `Tải toàn bộ nhóm (${group.songs.length})`
+  }
+
   const songItem = (song) => {
     const meta = [
       song.artist,
@@ -264,17 +592,15 @@ const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
       .filter(Boolean)
       .join(' • ')
     return (
-      <ListItem key={song.id} divider>
+      <ListItem key={song.id} divider className={localClasses.songItem}>
         <IconButton aria-label="Nghe thử" onClick={() => togglePreview(song)}>
           {playing === song.id ? <StopIcon /> : <PlayArrowIcon />}
         </IconButton>
         <ListItemText
           primary={
-            <>
-              {song.title}{' '}
-              {song.suffix && (
-                <Chip size="small" label={song.suffix.toUpperCase()} />
-              )}{' '}
+            <Box display="flex" alignItems="center" flexWrap="wrap" style={{ gap: 8 }}>
+              <Typography variant="body1" style={{ fontWeight: 500 }}>{song.title}</Typography>
+              {renderFormatChip(song)}
               {song.bitRate > 0 && (
                 <Chip
                   size="small"
@@ -282,7 +608,15 @@ const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
                   label={`${song.bitRate} kbps`}
                 />
               )}
-            </>
+              {song.playCount > 0 && (
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={`🎧 ${song.playCount} lượt nghe`}
+                />
+              )}
+              {renderLikes(song)}
+            </Box>
           }
           secondary={<span className={classes.itemMeta}>{meta}</span>}
         />
@@ -401,7 +735,7 @@ const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
               label="Tìm bài hát, album, ca sĩ"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && query && search()}
+              onKeyDown={(e) => e.key === 'Enter' && search()}
               variant="outlined"
               size="small"
             />
@@ -415,7 +749,7 @@ const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
                   <SearchIcon />
                 )
               }
-              disabled={!query || busy === 'search'}
+              disabled={busy === 'search'}
               onClick={search}
             >
               Tìm
@@ -438,25 +772,252 @@ const RemoteImport = ({ libraryId, onJobStarted, classes }) => {
             </Box>
           )}
 
-          {view.type === 'search' && result && (
+          {view.type === 'search' && (
             <>
-              {result.songs.length > 0 && (
-                <Box className={classes.section}>
-                  <Typography variant="subtitle1">Bài hát</Typography>
-                  <List dense>{result.songs.map(songItem)}</List>
+              {busy === 'search' && !result && (
+                <Box display="flex" justifyContent="center" my={4}>
+                  <CircularProgress />
                 </Box>
               )}
-              {result.albums.length > 0 && (
-                <Box className={classes.section}>
-                  <Typography variant="subtitle1">Album</Typography>
-                  <List dense>{result.albums.map(albumItem)}</List>
-                </Box>
-              )}
-              {result.artists.length > 0 && (
-                <Box className={classes.section}>
-                  <Typography variant="subtitle1">Ca sĩ</Typography>
-                  <List dense>{result.artists.map(artistItem)}</List>
-                </Box>
+
+              {result && (
+                <>
+                  {/* Premium Filters, Grouping & Sorting Panel */}
+                  {songs.length > 0 && (
+                    <Box className={localClasses.filterContainer}>
+                      <Box
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          marginBottom: 16,
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <FilterListIcon color="primary" />
+                        <Typography variant="subtitle1" style={{ fontWeight: 'bold' }}>
+                          Bộ lọc & Sắp xếp ({sortedSongs.length} / {songs.length} bài)
+                        </Typography>
+                        {(filterSinger ||
+                          filterComposer ||
+                          filterYear !== 'all' ||
+                          filterSize !== 'all' ||
+                          filterFormat !== 'all' ||
+                          groupBy !== 'album' ||
+                          sortBy !== 'format') && (
+                          <Button
+                            size="small"
+                            variant="text"
+                            color="secondary"
+                            startIcon={<ClearIcon />}
+                            onClick={() => {
+                              setFilterSinger('')
+                              setFilterComposer('')
+                              setFilterYear('all')
+                              setFilterSize('all')
+                              setFilterFormat('all')
+                              setGroupBy('album')
+                              setSortBy('format')
+                            }}
+                          >
+                            Đặt lại mặc định
+                          </Button>
+                        )}
+                      </Box>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <TextField
+                            label="Ca sĩ"
+                            placeholder="Nhập tên ca sĩ..."
+                            value={filterSinger}
+                            onChange={(e) => setFilterSinger(e.target.value)}
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                          <TextField
+                            label="Tên bài / Tác giả"
+                            placeholder="Nhập tên bài..."
+                            value={filterComposer}
+                            onChange={(e) => setFilterComposer(e.target.value)}
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={4} md={2}>
+                          <FormControl variant="outlined" size="small" fullWidth>
+                            <InputLabel id="filter-year-label">Năm</InputLabel>
+                            <Select
+                              labelId="filter-year-label"
+                              label="Năm"
+                              value={filterYear}
+                              onChange={(e) => setFilterYear(e.target.value)}
+                            >
+                              <MenuItem value="all">Tất cả năm</MenuItem>
+                              {uniqueYears.map((y) => (
+                                <MenuItem key={y} value={y}>
+                                  {y}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12} sm={4} md={2}>
+                          <FormControl variant="outlined" size="small" fullWidth>
+                            <InputLabel id="filter-size-label">Dung lượng</InputLabel>
+                            <Select
+                              labelId="filter-size-label"
+                              label="Dung lượng"
+                              value={filterSize}
+                              onChange={(e) => setFilterSize(e.target.value)}
+                            >
+                              <MenuItem value="all">Mọi dung lượng</MenuItem>
+                              <MenuItem value="small">Nhỏ (&lt; 10MB)</MenuItem>
+                              <MenuItem value="medium">Vừa (10MB - 50MB)</MenuItem>
+                              <MenuItem value="large">Lớn (50MB - 100MB)</MenuItem>
+                              <MenuItem value="xlarge">Cực lớn (&gt; 100MB)</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12} sm={4} md={2}>
+                          <FormControl variant="outlined" size="small" fullWidth>
+                            <InputLabel id="filter-format-label">Định dạng</InputLabel>
+                            <Select
+                              labelId="filter-format-label"
+                              label="Định dạng"
+                              value={filterFormat}
+                              onChange={(e) => setFilterFormat(e.target.value)}
+                            >
+                              <MenuItem value="all">Mọi định dạng</MenuItem>
+                              {uniqueFormats.map((f) => (
+                                <MenuItem key={f} value={f}>
+                                  {f.toUpperCase()}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+
+                        <Grid item xs={12}>
+                          <Divider style={{ margin: '8px 0 16px 0', opacity: 0.5 }} />
+                        </Grid>
+                        
+                        <Grid item xs={12} sm={6}>
+                          <FormControl variant="outlined" size="small" fullWidth>
+                            <InputLabel id="group-by-label">Nhóm danh sách theo</InputLabel>
+                            <Select
+                              labelId="group-by-label"
+                              label="Nhóm danh sách theo"
+                              value={groupBy}
+                              onChange={(e) => setGroupBy(e.target.value)}
+                              className={localClasses.interactiveSelect}
+                              startAdornment={<AlbumIcon style={{ marginRight: 8, opacity: 0.7 }} />}
+                            >
+                              <MenuItem value="album">📀 Nhóm theo Album (Mặc định)</MenuItem>
+                              <MenuItem value="artist">🎙️ Nhóm theo Ca sĩ / Nghệ sĩ</MenuItem>
+                              <MenuItem value="region">🌏 Nhóm theo Region / Quốc gia</MenuItem>
+                              <MenuItem value="none">📄 Không nhóm (Danh sách phẳng)</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        
+                        <Grid item xs={12} sm={6}>
+                          <FormControl variant="outlined" size="small" fullWidth>
+                            <InputLabel id="sort-by-label">Sắp xếp theo (từ cao đến thấp)</InputLabel>
+                            <Select
+                              labelId="sort-by-label"
+                              label="Sắp xếp theo (từ cao đến thấp)"
+                              value={sortBy}
+                              onChange={(e) => setSortBy(e.target.value)}
+                              className={localClasses.interactiveSelect}
+                              startAdornment={<SortIcon style={{ marginRight: 8, opacity: 0.7 }} />}
+                            >
+                              <MenuItem value="format">🎵 Định dạng cao cấp nhất (DSD, FLAC 24bit...)</MenuItem>
+                              <MenuItem value="year">📅 Năm phát hành (Mới nhất)</MenuItem>
+                              <MenuItem value="playcount">🎧 Lượt nghe (PlayCount) nhiều nhất</MenuItem>
+                              <MenuItem value="likes">⭐ Lượt thích (Starred) ưu tiên</MenuItem>
+                              <MenuItem value="quality">🎧 BitRate chất lượng cao nhất</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  )}
+
+                  {/* Render Results */}
+                  {groupBy !== 'none' && sortedSongs.length > 0 ? (
+                    groupSongs(sortedSongs, groupBy).map((group) => {
+                      const key = 'group-container-' + group.key
+                      return (
+                        <Box key={key} className={classes.section}>
+                          <Box className={localClasses.albumHeader}>
+                            <Box style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              {group.icon}
+                              <Box>
+                                <Typography
+                                  variant="subtitle1"
+                                  className={localClasses.albumTitle}
+                                >
+                                  {group.title}
+                                </Typography>
+                                <Typography variant="body2" color="textSecondary">
+                                  {group.subtitle}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              startIcon={
+                                busy === 'group-' + group.key ? (
+                                  <CircularProgress size={14} />
+                                ) : (
+                                  <CloudQueueIcon />
+                                )
+                              }
+                              disabled={busy === 'group-' + group.key}
+                              onClick={() => importGroup(group)}
+                            >
+                              {getButtonText(group)}
+                            </Button>
+                          </Box>
+                          <List dense className={localClasses.songList}>
+                            {group.songs.map(songItem)}
+                          </List>
+                        </Box>
+                      )
+                    })
+                  ) : (
+                    sortedSongs.length > 0 && (
+                      <Box className={classes.section}>
+                        <Typography variant="subtitle1">Bài hát</Typography>
+                        <List dense>{sortedSongs.map(songItem)}</List>
+                      </Box>
+                    )
+                  )}
+
+                  {result.albums.length > 0 && view.type === 'search' && (
+                    <Box className={classes.section}>
+                      <Typography variant="subtitle1" style={{ fontWeight: 'bold', marginTop: 16 }}>Album</Typography>
+                      <List dense>{result.albums.map(albumItem)}</List>
+                    </Box>
+                  )}
+                  {result.artists.length > 0 && view.type === 'search' && (
+                    <Box className={classes.section}>
+                      <Typography variant="subtitle1" style={{ fontWeight: 'bold', marginTop: 16 }}>Ca sĩ / Nghệ sĩ</Typography>
+                      <List dense>{result.artists.map(artistItem)}</List>
+                    </Box>
+                  )}
+
+                  {sortedSongs.length === 0 && result.albums.length === 0 && result.artists.length === 0 && (
+                    <Typography className={classes.hint}>
+                      Không tìm thấy kết quả nào.
+                    </Typography>
+                  )}
+                </>
               )}
             </>
           )}

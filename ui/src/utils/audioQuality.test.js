@@ -83,6 +83,60 @@ describe('analyzeAudioQuality', () => {
     expect(q.isLossless).toBe(true)
   })
 
+  it('detects AIFF as CD lossless quality', () => {
+    const q = analyzeAudioQuality({
+      suffix: 'aif',
+      codec: 'pcm',
+      bitRate: 1411,
+      sampleRate: 44100,
+      bitDepth: 16,
+      channels: 2,
+    })
+    expect(q.tier).toEqual(QUALITY_TIERS.CD)
+    expect(q.isLossless).toBe(true)
+    expect(q.badge).toEqual('CD 16/44.1')
+  })
+
+  it('detects TTA as Hi-Res lossless quality', () => {
+    const q = analyzeAudioQuality({
+      suffix: 'tta',
+      codec: 'tta',
+      bitRate: 2300,
+      sampleRate: 96000,
+      bitDepth: 24,
+      channels: 2,
+    })
+    expect(q.tier).toEqual(QUALITY_TIERS.HI_RES)
+    expect(q.isLossless).toBe(true)
+    expect(q.badge).toEqual('Hi-Res 24/96')
+  })
+
+  it('detects WavPack using wavpack codec as lossless', () => {
+    const q = analyzeAudioQuality({
+      suffix: 'wv',
+      codec: 'wavpack',
+      bitRate: 1100,
+      sampleRate: 44100,
+      bitDepth: 16,
+      channels: 2,
+    })
+    expect(q.tier).toEqual(QUALITY_TIERS.CD)
+    expect(q.isLossless).toBe(true)
+  })
+
+  it('detects MQA as lossless quality', () => {
+    const q = analyzeAudioQuality({
+      suffix: 'mqa',
+      codec: 'mqa',
+      bitRate: 1200,
+      sampleRate: 48000,
+      bitDepth: 24,
+      channels: 2,
+    })
+    expect(q.tier).toEqual(QUALITY_TIERS.HI_RES)
+    expect(q.isLossless).toBe(true)
+  })
+
   it('classifies high-bitrate lossy at 256 kbps and above', () => {
     const q = analyzeAudioQuality({
       suffix: 'mp3',

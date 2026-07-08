@@ -19,6 +19,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -159,10 +160,13 @@ type FeedItem struct {
 }
 
 type ArchiveItem struct {
-	Identifier string `json:"identifier"`
-	Title      string `json:"title"`
-	Creator    string `json:"creator"`
-	Year       string `json:"year"`
+	Identifier string  `json:"identifier"`
+	Title      string  `json:"title"`
+	Creator    string  `json:"creator"`
+	Year       string  `json:"year"`
+	Language   string  `json:"language,omitempty"`
+	Downloads  int64   `json:"downloads,omitempty"`
+	AvgRating  float64 `json:"avgRating,omitempty"`
 }
 
 type ArchiveFile struct {
@@ -175,6 +179,7 @@ type ArchiveFile struct {
 type DriveFile struct {
 	Name string `json:"name"`
 	ID   string `json:"id"`
+	Size int64  `json:"size,omitempty"`
 }
 
 const (
@@ -305,13 +310,19 @@ func (imp *importer) SearchArchive(ctx context.Context, query string, rows int) 
 		rows = 25
 	}
 	q := url.Values{}
-	q.Set("q", fmt.Sprintf("(%s) AND mediatype:(audio)", query))
+	if query == "*" {
+		q.Set("q", "mediatype:(audio)")
+	} else {
+		q.Set("q", fmt.Sprintf("(%s) AND mediatype:(audio)", query))
+	}
 	q.Set("rows", fmt.Sprintf("%d", rows))
 	q.Set("page", "1")
 	q.Set("output", "json")
-	// fl[] repeated for each field we want back
+	// fl[] repeated for each field we want back, sorted by downloads descending
 	endpoint := imp.archiveBase + "/advancedsearch.php?" +
-		"fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=creator&fl%5B%5D=year&" + q.Encode()
+		"fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=creator&fl%5B%5D=year&" +
+		"fl%5B%5D=language&fl%5B%5D=downloads&fl%5B%5D=avg_rating&" +
+		"sort%5B%5D=downloads+desc&" + q.Encode()
 
 	body, err := imp.getBody(ctx, endpoint, maxFeedResponseSize)
 	if err != nil {
@@ -324,6 +335,9 @@ func (imp *importer) SearchArchive(ctx context.Context, query string, rows int) 
 				Title      iaString `json:"title"`
 				Creator    iaString `json:"creator"`
 				Year       iaString `json:"year"`
+				Language   iaString `json:"language"`
+				Downloads  int64    `json:"downloads"`
+				AvgRating  float64  `json:"avg_rating"`
 			} `json:"docs"`
 		} `json:"response"`
 	}
@@ -340,6 +354,9 @@ func (imp *importer) SearchArchive(ctx context.Context, query string, rows int) 
 			Title:      string(d.Title),
 			Creator:    string(d.Creator),
 			Year:       string(d.Year),
+			Language:   string(d.Language),
+			Downloads:  d.Downloads,
+			AvgRating:  d.AvgRating,
 		})
 	}
 	return items, nil
@@ -792,7 +809,7 @@ func (imp *importer) listDriveFolderAPI(ctx context.Context, folderID, apiKey st
 		q := url.Values{}
 		q.Set("q", fmt.Sprintf("'%s' in parents and trashed=false", folderID))
 		q.Set("key", apiKey)
-		q.Set("fields", "nextPageToken,files(id,name,mimeType)")
+		q.Set("fields", "nextPageToken,files(id,name,mimeType,size)")
 		q.Set("pageSize", "1000")
 		q.Set("supportsAllDrives", "true")
 		q.Set("includeItemsFromAllDrives", "true")
@@ -810,6 +827,7 @@ func (imp *importer) listDriveFolderAPI(ctx context.Context, folderID, apiKey st
 				ID       string `json:"id"`
 				Name     string `json:"name"`
 				MimeType string `json:"mimeType"`
+				Size     string `json:"size"`
 			} `json:"files"`
 		}
 		if err := json.Unmarshal(body, &res); err != nil {
@@ -817,7 +835,13 @@ func (imp *importer) listDriveFolderAPI(ctx context.Context, folderID, apiKey st
 		}
 		for _, f := range res.Files {
 			if isAudioExt(f.Name) || strings.HasPrefix(f.MimeType, "audio/") {
-				files = append(files, DriveFile{ID: f.ID, Name: f.Name})
+				var size int64
+				if f.Size != "" {
+					if s, err := strconv.ParseInt(f.Size, 10, 64); err == nil {
+						size = s
+					}
+				}
+				files = append(files, DriveFile{ID: f.ID, Name: f.Name, Size: size})
 			}
 		}
 		if res.NextPageToken == "" {

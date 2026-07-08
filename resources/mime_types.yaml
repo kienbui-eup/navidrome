@@ -29,6 +29,8 @@ types:
   .wv: audio/x-wavpack
   .wvp: audio/x-wavpack 
   .tak: audio/tak 
+  .tta: audio/x-tta
+  .mqa: audio/x-mqa
   .mka: audio/x-matroska 
 
 # Image
@@ -51,3 +53,7 @@ lossless:
   - .wvp
   - .tak
   - .wav
+  - .aif
+  - .aiff
+  - .tta
+  - .mqa

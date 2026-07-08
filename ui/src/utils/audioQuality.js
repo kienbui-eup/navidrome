@@ -9,9 +9,11 @@ const LOSSLESS_CODECS = new Set([
   'dsd',
   'ape',
   'wv',
+  'wavpack',
   'tta',
   'tak',
   'shn',
+  'mqa',
 ])
 
 const DSD_SUFFIXES = new Set(['DSF', 'DFF'])

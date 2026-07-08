@@ -27,9 +27,19 @@ import {
   TableRow,
   TableCell,
   Chip,
+  Grid,
 } from '@material-ui/core'
 import GetAppIcon from '@material-ui/icons/GetApp'
 import SearchIcon from '@material-ui/icons/Search'
+import FilterListIcon from '@material-ui/icons/FilterList'
+import AlbumIcon from '@material-ui/icons/Album'
+import ClearIcon from '@material-ui/icons/Clear'
+import StarIcon from '@material-ui/icons/Star'
+import LanguageIcon from '@material-ui/icons/Language'
+import SortIcon from '@material-ui/icons/Sort'
+import MusicNoteIcon from '@material-ui/icons/MusicNote'
+import GraphicEqIcon from '@material-ui/icons/GraphicEq'
+import CloudQueueIcon from '@material-ui/icons/CloudQueue'
 import { makeStyles } from '@material-ui/core/styles'
 import { httpClient } from '../dataProvider'
 import { APP_NAME } from '../consts'
@@ -37,6 +47,109 @@ import { formatBytes } from '../utils'
 import config from '../config'
 import SongSearch from './SongSearch'
 import RemoteImport from './RemoteImport'
+
+const foldSearch = (s) => {
+  if (!s) return ''
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
+const formatRegion = (region) => {
+  if (!region) return 'Không xác định'
+  const r = region.toLowerCase().trim()
+  if (r === 'vietnamese' || r === 'vi' || r === 'vie') return 'Việt Nam 🇻🇳'
+  if (r === 'english' || r === 'eng' || r === 'en' || r === 'us' || r === 'gb') return 'Âu Mỹ 🇺🇸🇬🇧'
+  if (r === 'french' || r === 'fr' || r === 'fre') return 'Pháp 🇫🇷'
+  if (r === 'japanese' || r === 'ja' || r === 'jp' || r === 'jpn') return 'Nhật Bản 🇯🇵'
+  if (r === 'chinese' || r === 'zh' || r === 'cn' || r === 'chi') return 'Trung Quốc 🇨🇳'
+  if (r === 'korean' || r === 'ko' || r === 'kor') return 'Hàn Quốc 🇰🇷'
+  return r.charAt(0).toUpperCase() + r.slice(1)
+}
+
+const detectRegion = (song) => {
+  const g = (song.genre || '').toLowerCase()
+  const a = (song.artist || '').toLowerCase()
+  const t = (song.title || '').toLowerCase()
+  const al = (song.album || '').toLowerCase()
+  if (g.includes('viet') || g.includes('vi_') || g.includes('v-pop') || g.includes('nhac tre') || g.includes('tru tinh') || g.includes('que huong') || g.includes('cai luong') ||
+      a.includes('trịnh công sơn') || a.includes('lệ quyên') || a.includes('bằng kiều') || a.includes('đàm vĩnh hưng') || a.includes('tuấn hưng') || a.includes('hà anh tuấn') || a.includes('khánh ly')) {
+    return 'vietnamese'
+  }
+  if (g.includes('french') || g.includes('fr_')) return 'french'
+  if (g.includes('japan') || g.includes('ja_') || g.includes('j-pop')) return 'japanese'
+  if (g.includes('china') || g.includes('zh_') || g.includes('c-pop')) return 'chinese'
+  if (g.includes('korea') || g.includes('ko_') || g.includes('k-pop')) return 'korean'
+  if (g.includes('english') || g.includes('eng') || g.includes('rock') || g.includes('pop') || g.includes('jazz') || g.includes('blues') || g.includes('metal')) return 'english'
+  return g || 'Không xác định'
+}
+
+const getFormatRank = (suffix) => {
+  const f = (suffix || '').toLowerCase()
+  if (f.includes('dsd') || f.includes('dsf') || f.includes('dff')) return 100
+  if (f.includes('flac')) return 80
+  if (f.includes('alac') || f.includes('m4a')) return 78
+  if (f.includes('ape') || f.includes('wavpack')) return 75
+  if (f.includes('wav') || f.includes('aiff')) return 70
+  if (f.includes('mp3')) return 35
+  if (f.includes('ogg') || f.includes('opus')) return 35
+  return 20
+}
+
+const parseDriveFilename = (file) => {
+  const name = file.name || ''
+  const id = file.id
+
+  // 1. Get file extension / suffix
+  const dotIdx = name.lastIndexOf('.')
+  const ext = dotIdx > 0 ? name.slice(dotIdx + 1).toLowerCase() : 'mp3'
+  let rawName = dotIdx > 0 ? name.slice(0, dotIdx) : name
+
+  // 2. Try to extract Year (4 consecutive digits like 19xx or 20xx in brackets or standalone)
+  let year = null
+  const yearMatch = rawName.match(/(?:^|\D)(19\d{2}|20\d{2})(?:\D|$)/)
+  if (yearMatch) {
+    year = parseInt(yearMatch[1], 10)
+    rawName = rawName.replace(/[\(\[\s]*\b(19\d{2}|20\d{2})\b[\)\]\s]*/g, ' ').trim()
+  }
+
+  // 3. Try to extract Album from bracketed or parenthesized parts
+  let album = 'Không rõ Album'
+  const bracketMatch = rawName.match(/[\[\({]([^\]\)}]+)[\]\)}]/)
+  if (bracketMatch) {
+    const candidate = bracketMatch[1].trim()
+    if (!['flac', 'dsd', 'dsf', 'wav', 'mp3', 'lossless', '24bit', '192khz'].includes(candidate.toLowerCase())) {
+      album = candidate
+      rawName = rawName.replace(/[\[\({][^\]\)}]+[\]\)}]/g, ' ').trim()
+    }
+  }
+
+  // 4. Try to extract Artist and Title from hyphen ( - ) separator
+  let artist = 'Không rõ Ca sĩ'
+  let title = rawName
+
+  const splitMatch = rawName.split(/\s*(?:\-|\_|\—)\s*/)
+  if (splitMatch.length >= 2) {
+    artist = splitMatch[0].trim()
+    title = splitMatch.slice(1).join(' - ').trim()
+  }
+
+  title = title.replace(/\s+/g, ' ').trim() || 'Bài hát không tên'
+  artist = artist.replace(/\s+/g, ' ').trim() || 'Không rõ Ca sĩ'
+
+  return {
+    id,
+    title,
+    artist,
+    album,
+    year,
+    suffix: ext,
+    size: file.size || 0,
+    starred: false,
+    bitRate: ext === 'flac' ? 1411 : (ext === 'mp3' ? 320 : 0),
+  }
+}
 
 const useStyles = makeStyles((theme) => ({
   root: { marginTop: '1em' },
@@ -226,6 +339,15 @@ const ImportMusic = () => {
     }
   }
 
+  useEffect(() => {
+    if (isDrive && url.trim()) {
+      const t = setTimeout(() => {
+        listDrive()
+      }, 500)
+      return () => clearTimeout(t)
+    }
+  }, [url, isDrive])
+
   const importDriveFile = async (file) => {
     setBusy(file.id)
     try {
@@ -410,6 +532,7 @@ const ImportMusic = () => {
           <SongSearch
             libraryId={libraryId}
             onImported={afterImport}
+            onJobStarted={onRemoteJobStarted}
             classes={classes}
           />
         )}

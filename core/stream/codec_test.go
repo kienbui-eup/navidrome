@@ -16,6 +16,8 @@ var _ = Describe("Codec", func() {
 			Expect(isLosslessFormat("ape")).To(BeTrue())
 			Expect(isLosslessFormat("wv")).To(BeTrue())
 			Expect(isLosslessFormat("wavpack")).To(BeTrue()) // ffprobe codec_name for WavPack
+			Expect(isLosslessFormat("tta")).To(BeTrue())
+			Expect(isLosslessFormat("aiff")).To(BeTrue())
 		})
 
 		It("returns false for lossy codecs", func() {
