@@ -1,9 +1,12 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
+import { Play, Pause } from 'lucide-react'
 import { getSongStreamUrl } from '@/api/httpClient'
 import { getProxyURL } from '@/api/podcastClient'
 import { MiniPlayerButton } from '@/app/components/mini-player/button'
 import { RadioInfo } from '@/app/components/player/radio-info'
 import { TrackInfo } from '@/app/components/player/track-info'
+import { Button } from '@/app/components/ui/button'
+import { useIsMobile } from '@/app/hooks/use-mobile'
 import { podcasts } from '@/service/podcasts'
 import {
   getVolume,
@@ -15,8 +18,12 @@ import {
   usePlayerSonglist,
   usePlayerStore,
   useReplayGainState,
+  usePlayerProgress,
+  usePlayerDuration,
+  usePlayerFullscreen,
 } from '@/store/player.store'
 import { LoopState } from '@/types/playerContext'
+import { cn } from '@/lib/utils'
 import { hasPiPSupport } from '@/utils/browser'
 import { logger } from '@/utils/logger'
 import { ReplayGainParams } from '@/utils/replayGain'
@@ -47,6 +54,10 @@ const MemoLyricsButton = memo(PlayerLyricsButton)
 const MemoMiniPlayerButton = memo(MiniPlayerButton)
 
 export function Player() {
+  const isMobile = useIsMobile()
+  const progress = usePlayerProgress()
+  const duration = usePlayerDuration()
+  const { setIsFullscreen } = usePlayerFullscreen()
   const audioRef = useRef<HTMLAudioElement>(null)
   const radioRef = useRef<HTMLAudioElement>(null)
   const podcastRef = useRef<HTMLAudioElement>(null)
@@ -58,6 +69,7 @@ export function Player() {
     handleSongEnded,
     getCurrentProgress,
     getCurrentPodcastProgress,
+    togglePlayPause,
   } = usePlayerActions()
   const { currentList, currentSongIndex, radioList, podcastList } =
     usePlayerSonglist()
@@ -186,6 +198,100 @@ export function Player() {
     }
     return { gain: trackGain, peak: trackPeak, preAmp }
   }, [song, replayGainDefaultGain, replayGainPreAmp, replayGainType])
+
+  if (isMobile) {
+    const percentage = duration > 0 ? (progress / duration) * 100 : 0
+
+    return (
+      <footer 
+        className="border-t h-[72px] w-full flex items-center fixed bottom-0 left-0 right-0 z-40 bg-background/85 backdrop-blur-md cursor-pointer select-none"
+        onClick={() => setIsFullscreen(true)}
+      >
+        <div className="w-full h-full flex items-center justify-between px-4 relative">
+          {/* Thin Progress bar */}
+          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-secondary/30">
+            <div 
+              className="h-full bg-primary transition-all duration-300" 
+              style={{ width: `${percentage}%` }} 
+            />
+          </div>
+
+          {/* Left: Track/Media Info scaled down on mobile */}
+          <div className="flex items-center gap-2 min-w-0 max-w-[70%] flex-1 [&_img]:w-12 [&_img]:h-12 [&_.min-w-\[70px\]]:min-w-12 [&_.max-w-\[70px\]]:max-w-12 [&_.min-w-\[70px\]]:h-12 [&_.w-\[70px\]]:w-12 [&_.h-\[70px\]]:h-12">
+            {isSong && <MemoTrackInfo song={song} />}
+            {isRadio && <MemoRadioInfo radio={radio} />}
+            {isPodcast && <MemoPodcastInfo podcast={podcast} />}
+          </div>
+
+          {/* Right: Quick Controls */}
+          <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-1">
+            {isSong && <MemoPlayerLikeButton disabled={!song} />}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 [&_svg]:h-6 [&_svg]:w-6"
+              onClick={togglePlayPause}
+            >
+              {isPlaying ? (
+                <Pause className="fill-foreground text-foreground" />
+              ) : (
+                <Play className="fill-foreground text-foreground" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Hidden Audio Player components to drive background play */}
+        {isSong && song && (
+          <AudioPlayer
+            replayGain={trackReplayGain}
+            src={getSongStreamUrl(song.id)}
+            autoPlay={isPlaying}
+            audioRef={audioRef}
+            loop={loopState === LoopState.One}
+            onPlay={() => setPlayingState(true)}
+            onPause={() => setPlayingState(false)}
+            onLoadedMetadata={setupDuration}
+            onTimeUpdate={setupProgress}
+            onEnded={handleSongEnded}
+            onLoadStart={setupInitialVolume}
+            data-testid="player-song-audio"
+          />
+        )}
+
+        {isRadio && radio && (
+          <AudioPlayer
+            src={radio.streamUrl}
+            autoPlay={isPlaying}
+            audioRef={radioRef}
+            onPlay={() => setPlayingState(true)}
+            onPause={() => setPlayingState(false)}
+            onLoadStart={setupInitialVolume}
+            data-testid="player-radio-audio"
+          />
+        )}
+
+        {isPodcast && podcast && (
+          <AudioPlayer
+            src={getProxyURL(podcast.audio_url)}
+            autoPlay={isPlaying}
+            audioRef={podcastRef}
+            preload="auto"
+            onPlay={() => setPlayingState(true)}
+            onPause={() => setPlayingState(false)}
+            onLoadedMetadata={setupDuration}
+            onTimeUpdate={setupProgress}
+            onEnded={() => {
+              sendFinishProgress()
+              handleSongEnded()
+            }}
+            onLoadStart={setupInitialVolume}
+            data-testid="player-podcast-audio"
+          />
+        )}
+      </footer>
+    )
+  }
 
   return (
     <footer className="border-t h-[--player-height] w-full flex items-center fixed bottom-0 left-0 right-0 z-40 bg-background">

@@ -10,7 +10,7 @@ export function FullscreenSongImage() {
   })
 
   return (
-    <div className="2xl:w-[33%] h-full max-w-[450px] max-h-[450px] 2xl:max-w-[550px] 2xl:max-h-[550px] items-end flex aspect-square">
+    <div className="w-full md:w-auto md:2xl:w-[33%] h-auto md:h-full max-w-[260px] sm:max-w-[320px] md:max-w-[450px] 2xl:max-w-[550px] max-h-[260px] sm:max-h-[320px] md:max-h-[450px] 2xl:max-h-[550px] items-end flex aspect-square mx-auto md:mx-0">
       <AspectRatio
         ratio={1 / 1}
         className="rounded-lg 2xl:rounded-2xl overflow-hidden bg-accent/60"
