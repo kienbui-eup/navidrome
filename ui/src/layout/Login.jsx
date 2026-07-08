@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { Field, Form } from 'react-final-form'
 import { useDispatch } from 'react-redux'
@@ -13,6 +13,7 @@ import {
   createMuiTheme,
   useLogin,
   useNotify,
+  useRedirect,
   useTranslate,
   useVersion,
 } from 'react-admin'
@@ -23,6 +24,9 @@ import useCurrentTheme from '../themes/useCurrentTheme'
 import config from '../config'
 import { clearQueue } from '../actions'
 import { INSIGHTS_DOC_URL, APP_NAME } from '../consts.js'
+import { baseUrl } from '../utils'
+import { storeAuthenticationInfo } from '../authProvider'
+import { readPlayerSession, PLAYER_SALT } from '../utils/playerSession'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -329,6 +333,45 @@ const Login = ({ location }) => {
   const notify = useNotify()
   const login = useLogin()
   const dispatch = useDispatch()
+  const redirect = useRedirect()
+
+  // If the user is already signed into the embedded player (/play), exchange
+  // its Subsonic token for a web session instead of asking to log in again.
+  useEffect(() => {
+    if (config.firstTime) {
+      return
+    }
+    const session = readPlayerSession()
+    if (!session) {
+      return
+    }
+    setLoading(true)
+    fetch(baseUrl('/auth/sso/subsonic'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: session.username,
+        token: session.token,
+        salt: PLAYER_SALT,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(response.statusText)
+        }
+        return response.json()
+      })
+      .then((authInfo) => {
+        storeAuthenticationInfo(authInfo)
+        redirect(location.state ? location.state.nextPathname : '/')
+      })
+      .catch(() => {
+        // Stale/invalid player session: fall back to the regular login form
+        setLoading(false)
+      })
+    // Run once on mount only
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSubmit = useCallback(
     (auth) => {

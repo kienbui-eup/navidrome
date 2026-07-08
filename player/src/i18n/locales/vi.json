@@ -24,7 +24,8 @@
     "language": "Ngôn ngữ",
     "server": "Máy chủ",
     "about": "Giới thiệu",
-    "serverLogout": "Đăng xuất"
+    "serverLogout": "Đăng xuất",
+    "adminUI": "Giao diện quản trị"
   },
   "generic": {
     "seeMore": "Xem thêm",

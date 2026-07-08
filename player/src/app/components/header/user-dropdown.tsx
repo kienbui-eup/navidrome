@@ -1,4 +1,4 @@
-import { Info, Keyboard, LogOut, User } from 'lucide-react'
+import { Info, Keyboard, LogOut, Shield, User } from 'lucide-react'
 import { useState } from 'react'
 import { Fragment } from 'react/jsx-runtime'
 import { useHotkeys } from 'react-hotkeys-hook'
@@ -71,6 +71,20 @@ export function UserDropdown() {
           <DropdownMenuItem onClick={() => setAboutOpen(true)}>
             <Info className="mr-2 h-4 w-4" />
             <span>{t('menu.about')}</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              // Admin UI lives on the same origin at /app (see plan 03);
+              // resolving against /play/ keeps any base path intact.
+              window.location.href = new URL(
+                '../app/',
+                window.location.href,
+              ).toString()
+            }}
+          >
+            <Shield className="mr-2 h-4 w-4" />
+            <span>{t('menu.adminUI')}</span>
           </DropdownMenuItem>
           {!lockUser && (
             <>

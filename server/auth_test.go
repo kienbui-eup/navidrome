@@ -215,6 +215,51 @@ var _ = Describe("Auth", func() {
 				Expect(parsed["token"]).ToNot(BeEmpty())
 			})
 		})
+
+		Describe("loginWithSubsonicToken", func() {
+			ssoBody := func(username, password, salt string) *strings.Reader {
+				token := fmt.Sprintf("%x", md5.Sum([]byte(password+salt)))
+				body, _ := json.Marshal(map[string]string{"username": username, "token": token, "salt": salt})
+				return strings.NewReader(string(body))
+			}
+
+			BeforeEach(func() {
+				resp = httptest.NewRecorder()
+				usr := ds.User(context.Background())
+				_ = usr.Put(&model.User{ID: "222", UserName: "janedoe", NewPassword: "abc123", Name: "Jane", IsAdmin: true})
+			})
+
+			It("exchanges a valid subsonic token for a web session", func() {
+				req = httptest.NewRequest("POST", "/sso/subsonic", ssoBody("janedoe", "abc123", "somesalt"))
+				loginWithSubsonicToken(ds)(resp, req)
+				Expect(resp.Code).To(Equal(http.StatusOK))
+
+				var parsed map[string]any
+				Expect(json.Unmarshal(resp.Body.Bytes(), &parsed)).To(BeNil())
+				Expect(parsed["username"]).To(Equal("janedoe"))
+				Expect(parsed["isAdmin"]).To(Equal(true))
+				Expect(parsed["token"]).ToNot(BeEmpty())
+				Expect(parsed["subsonicToken"]).ToNot(BeEmpty())
+			})
+
+			It("rejects a token computed with the wrong password", func() {
+				req = httptest.NewRequest("POST", "/sso/subsonic", ssoBody("janedoe", "wrongpass", "somesalt"))
+				loginWithSubsonicToken(ds)(resp, req)
+				Expect(resp.Code).To(Equal(http.StatusUnauthorized))
+			})
+
+			It("rejects an unknown user", func() {
+				req = httptest.NewRequest("POST", "/sso/subsonic", ssoBody("nobody", "abc123", "somesalt"))
+				loginWithSubsonicToken(ds)(resp, req)
+				Expect(resp.Code).To(Equal(http.StatusUnauthorized))
+			})
+
+			It("rejects missing fields", func() {
+				req = httptest.NewRequest("POST", "/sso/subsonic", strings.NewReader(`{"username":"janedoe"}`))
+				loginWithSubsonicToken(ds)(resp, req)
+				Expect(resp.Code).To(Equal(http.StatusUnauthorized))
+			})
+		})
 	})
 
 	Describe("tokenFromHeader", func() {

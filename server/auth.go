@@ -68,6 +68,53 @@ func doLogin(ds model.DataStore, username string, password string, w http.Respon
 	_ = rest.RespondWithJSON(w, http.StatusOK, payload)
 }
 
+// loginWithSubsonicToken exchanges Subsonic-style token credentials
+// (username + md5(password+salt) + salt), as persisted by the embedded
+// player, for a regular web session. It grants nothing a /rest request
+// with the same credentials could not already do — it only lets the two
+// UIs share one sign-in.
+func loginWithSubsonicToken(ds model.DataStore) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data := make(map[string]string)
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			_ = rest.RespondWithError(w, http.StatusUnprocessableEntity, "invalid request payload")
+			return
+		}
+		username, token, salt := data["username"], data["token"], data["salt"]
+		if username == "" || token == "" || salt == "" {
+			_ = rest.RespondWithError(w, http.StatusUnauthorized, "Invalid username or password")
+			return
+		}
+		user, err := ds.User(r.Context()).FindByUsernameWithPassword(username)
+		if errors.Is(err, model.ErrNotFound) {
+			log.Warn(r, "Unsuccessful SSO login", "username", username)
+			_ = rest.RespondWithError(w, http.StatusUnauthorized, "Invalid username or password")
+			return
+		}
+		if err != nil {
+			_ = rest.RespondWithError(w, http.StatusInternalServerError, "Unknown error authenticating user. Please try again")
+			return
+		}
+		expected := fmt.Sprintf("%x", md5.Sum([]byte(user.Password+salt)))
+		if expected != token {
+			log.Warn(r, "Unsuccessful SSO login", "username", username)
+			_ = rest.RespondWithError(w, http.StatusUnauthorized, "Invalid username or password")
+			return
+		}
+		if err := ds.User(r.Context()).UpdateLastLoginAt(user.ID); err != nil {
+			log.Error(r, "Could not update LastLoginAt", "user", username, err)
+		}
+		tokenString, err := auth.CreateToken(user)
+		if err != nil {
+			_ = rest.RespondWithError(w, http.StatusInternalServerError, "Unknown error authenticating user. Please try again")
+			return
+		}
+		payload := buildAuthPayload(user)
+		payload["token"] = tokenString
+		_ = rest.RespondWithJSON(w, http.StatusOK, payload)
+	}
+}
+
 func buildAuthPayload(user *model.User) map[string]any {
 	payload := map[string]any{
 		"id":       user.ID,

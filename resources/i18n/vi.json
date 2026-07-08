@@ -683,7 +683,8 @@
     "playlists": "Danh sách phát",
     "sharedPlaylists": "Danh sách phát được chia sẻ",
     "about": "Giới thiệu",
-    "upgradeQuality": "Nâng cấp chất lượng"
+    "upgradeQuality": "Nâng cấp chất lượng",
+    "openPlayer": "Trình phát nhạc"
   },
   "player": {
     "playListsText": "Hàng chờ phát",

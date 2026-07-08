@@ -24,7 +24,8 @@
     "language": "Language",
     "server": "Server",
     "about": "About",
-    "serverLogout": "Logout"
+    "serverLogout": "Logout",
+    "adminUI": "Admin interface"
   },
   "generic": {
     "seeMore": "See more",

@@ -2,6 +2,7 @@ import { jwtDecode } from 'jwt-decode'
 import { baseUrl } from './utils'
 import config from './config'
 import { removeHomeCache } from './utils/removeHomeCache'
+import { syncPlayerSession } from './utils/playerSession'
 
 // config sent from server may contain authentication info, for example when the user is authenticated
 // by a reverse proxy request header
@@ -14,7 +15,7 @@ if (config.auth) {
   }
 }
 
-function storeAuthenticationInfo(authInfo) {
+export function storeAuthenticationInfo(authInfo) {
   authInfo.token && localStorage.setItem('token', authInfo.token)
   localStorage.setItem('userId', authInfo.id)
   localStorage.setItem('name', authInfo.name)
@@ -47,6 +48,8 @@ const authProvider = {
       .then((response) => {
         jwtDecode(response.token) // Validate token
         storeAuthenticationInfo(response)
+        // Sign the embedded player (/play) in with the same credentials
+        syncPlayerSession(username, password)
         // Avoid "going to create admin" dialog after logout/login without a refresh
         config.firstTime = false
         removeHomeCache()

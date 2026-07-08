@@ -215,10 +215,12 @@ func (s *Server) mountAuthenticationRoutes() chi.Router {
 
 			rateLimiter := httprate.LimitByIP(conf.Server.AuthRequestLimit, conf.Server.AuthWindowLength)
 			r.With(rateLimiter).Post("/login", login(s.ds))
+			r.With(rateLimiter).Post("/sso/subsonic", loginWithSubsonicToken(s.ds))
 		} else {
 			log.Warn("Login rate limit is disabled! Consider enabling it to be protected against brute-force attacks")
 
 			r.Post("/login", login(s.ds))
+			r.Post("/sso/subsonic", loginWithSubsonicToken(s.ds))
 		}
 		r.Post("/createAdmin", createAdmin(s.ds))
 	})

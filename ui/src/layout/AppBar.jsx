@@ -6,9 +6,21 @@ import {
   usePermissions,
   getResources,
 } from 'react-admin'
-import { MdInfo, MdPerson, MdSupervisorAccount } from 'react-icons/md'
+import {
+  MdHeadset,
+  MdInfo,
+  MdPerson,
+  MdSupervisorAccount,
+} from 'react-icons/md'
 import { useSelector } from 'react-redux'
-import { makeStyles, MenuItem, ListItemIcon, Divider } from '@material-ui/core'
+import {
+  makeStyles,
+  IconButton,
+  MenuItem,
+  ListItemIcon,
+  Divider,
+  Tooltip,
+} from '@material-ui/core'
 import ViewListIcon from '@material-ui/icons/ViewList'
 import { Dialogs } from '../dialogs/Dialogs'
 import { AboutDialog } from '../dialogs'
@@ -19,6 +31,7 @@ import ActivityPanel from './ActivityPanel'
 import NowPlayingPanel from './NowPlayingPanel'
 import UserMenu from './UserMenu'
 import config from '../config'
+import { baseUrl } from '../utils'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -62,6 +75,26 @@ const AboutMenuItem = forwardRef(({ onClick, ...rest }, ref) => {
 })
 
 AboutMenuItem.displayName = 'AboutMenuItem'
+
+// Opens the embedded Aonsoku player (/play). The session is shared: logging
+// in here also signs the player in (see authProvider/syncPlayerSession).
+const OpenPlayerButton = () => {
+  const translate = useTranslate()
+  const label = translate('menu.openPlayer', { _: 'Music Player' })
+  return (
+    <Tooltip title={label}>
+      <IconButton
+        color="inherit"
+        component="a"
+        href={baseUrl('/play/')}
+        aria-label={label}
+        data-testid="open-player-button"
+      >
+        <MdHeadset size={22} />
+      </IconButton>
+    </Tooltip>
+  )
+}
 
 const settingsResources = (resource) =>
   resource.name !== 'user' &&
@@ -122,6 +155,7 @@ const CustomUserMenu = ({ onClick, ...rest }) => {
 
   return (
     <>
+      <OpenPlayerButton />
       {config.devActivityPanel &&
         permissions === 'admin' &&
         config.enableNowPlaying && <NowPlayingPanel />}

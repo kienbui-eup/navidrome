@@ -683,7 +683,8 @@
     "playlists": "Playlists",
     "sharedPlaylists": "Shared Playlists",
     "about": "About",
-    "upgradeQuality": "Quality Upgrader"
+    "upgradeQuality": "Quality Upgrader",
+    "openPlayer": "Music Player"
   },
   "player": {
     "playListsText": "Play Queue",
