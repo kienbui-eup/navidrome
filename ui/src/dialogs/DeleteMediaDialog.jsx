@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import PropTypes from 'prop-types'
 import { useDispatch, useSelector } from 'react-redux'
 import {
   useDataProvider,
@@ -82,7 +81,7 @@ const deletePath = (mode, record) => {
 const errorMessage = (e) =>
   (e && e.body && e.body.error) || (e && e.message) || ''
 
-export const DeleteMediaDialog = ({ hideUpgradeAction }) => {
+export const DeleteMediaDialog = () => {
   const classes = useStyles()
   const dispatch = useDispatch()
   const translate = useTranslate()
@@ -91,7 +90,9 @@ export const DeleteMediaDialog = ({ hideUpgradeAction }) => {
   const dataProvider = useDataProvider()
   const { permissions } = usePermissions()
   const unselectAll = useUnselectAll()
-  const { open, mode, record } = useSelector((state) => state.deleteMediaDialog)
+  const { open, mode, record, hideUpgradeAction } = useSelector(
+    (state) => state.deleteMediaDialog,
+  )
   const [busy, setBusy] = useState(false)
 
   const handleClose = () => {
@@ -259,14 +260,6 @@ export const DeleteMediaDialog = ({ hideUpgradeAction }) => {
       )}
     </Dialog>
   )
-}
-
-DeleteMediaDialog.propTypes = {
-  hideUpgradeAction: PropTypes.bool,
-}
-
-DeleteMediaDialog.defaultProps = {
-  hideUpgradeAction: false,
 }
 
 export default DeleteMediaDialog

@@ -775,7 +775,8 @@
       "forceApprove": "Ép duyệt",
       "approveSelected": "Duyệt %{count} mục đã chọn",
       "selectAll": "Chọn tất cả",
-      "loadMore": "Tải thêm"
+      "loadMore": "Tải thêm",
+      "deleteOriginal": "Xoá bài gốc"
     },
     "verify": {
       "title": "Kết quả xác minh",

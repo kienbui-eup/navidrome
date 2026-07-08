@@ -93,6 +93,22 @@ describe('DeleteMediaDialog', () => {
     expect(screen.queryByText('deleteMedia.buttons.upgradeInstead')).toBeNull()
   })
 
+  it('hides the upgrade option when hideUpgradeAction is set, even for a lossy song', () => {
+    renderDialog({
+      open: true,
+      mode: 'song',
+      hideUpgradeAction: true,
+      record: {
+        id: 'mf-1',
+        title: 'My Song',
+        artist: 'My Artist',
+        suffix: 'mp3',
+        bitRate: 320,
+      },
+    })
+    expect(screen.queryByText('deleteMedia.buttons.upgradeInstead')).toBeNull()
+  })
+
   it('hides the upgrade option for non-admins', () => {
     mockPermissions = 'user'
     renderDialog({

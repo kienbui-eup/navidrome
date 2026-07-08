@@ -775,7 +775,8 @@
       "forceApprove": "Force approve",
       "approveSelected": "Approve selected (%{count})",
       "selectAll": "Select all",
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "deleteOriginal": "Delete original track"
     },
     "verify": {
       "title": "Verification result",

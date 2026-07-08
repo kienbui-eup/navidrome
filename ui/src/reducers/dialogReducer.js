@@ -194,6 +194,7 @@ export const deleteMediaDialogReducer = (
     open: false,
     mode: undefined,
     record: undefined,
+    hideUpgradeAction: false,
   },
   payload,
 ) => {
@@ -205,6 +206,7 @@ export const deleteMediaDialogReducer = (
         open: true,
         mode: payload.mode,
         record: payload.record,
+        hideUpgradeAction: !!payload.hideUpgradeAction,
       }
     case DELETE_MEDIA_CLOSE:
       return {

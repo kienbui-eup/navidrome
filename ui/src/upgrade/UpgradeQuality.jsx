@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Title, useNotify, usePermissions, useTranslate } from 'react-admin'
+import { useDispatch } from 'react-redux'
+import {
+  Title,
+  useNotify,
+  usePermissions,
+  useTranslate,
+  useVersion,
+} from 'react-admin'
 import {
   Card,
   CardContent,
@@ -27,10 +34,12 @@ import {
 import SearchIcon from '@material-ui/icons/Search'
 import CheckIcon from '@material-ui/icons/Check'
 import CloseIcon from '@material-ui/icons/Close'
+import DeleteIcon from '@material-ui/icons/Delete'
 import WarningIcon from '@material-ui/icons/Warning'
-import { makeStyles } from '@material-ui/core/styles'
+import { alpha, makeStyles } from '@material-ui/core/styles'
 import { httpClient } from '../dataProvider'
 import { APP_NAME } from '../consts'
+import { openDeleteMediaDialog } from '../actions'
 
 const PAGE_SIZE = 50
 const PENDING_STATUSES = ['pending', 'needs_review']
@@ -68,6 +77,15 @@ const useStyles = makeStyles((theme) => ({
   },
   tagChip: { height: 20 },
   errText: { color: theme.palette.error.main, fontSize: '0.8rem' },
+  deleteButton: {
+    color: theme.palette.error.main,
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.error.main, 0.12),
+      '@media (hover: none)': {
+        backgroundColor: 'transparent',
+      },
+    },
+  },
 }))
 
 // verifyInfo may arrive as a JSON-encoded string (the backend model stores it
@@ -139,6 +157,11 @@ const UpgradeQuality = () => {
   const classes = useStyles()
   const notify = useNotify()
   const translate = useTranslate()
+  const dispatch = useDispatch()
+  // Bumped by react-admin's refresh() (e.g. called by DeleteMediaDialog after
+  // a successful delete). This page fetches its own state via httpClient
+  // rather than the react-admin store, so it doesn't otherwise notice.
+  const version = useVersion()
   const { permissions, loaded: permsLoaded } = usePermissions()
   const [tab, setTab] = useState(0)
 
@@ -211,17 +234,20 @@ const UpgradeQuality = () => {
       .catch(() => {})
   }, [])
 
-  // Load the pending queue on mount, and again whenever pendingEnd grows
-  // ("load more").
+  // Load the pending queue on mount, again whenever pendingEnd grows ("load
+  // more"), and again whenever `version` changes - i.e. whenever something
+  // outside this page called react-admin's refresh() (the delete-original
+  // action below opens DeleteMediaDialog, which does exactly that on a
+  // successful delete).
   useEffect(() => {
     loadPending()
-  }, [loadPending])
+  }, [loadPending, version])
 
-  // Load history whenever its tab is active, and again whenever historyEnd
-  // grows ("load more").
+  // Load history whenever its tab is active, again whenever historyEnd grows
+  // ("load more"), and again on `version` bumps (see above).
   useEffect(() => {
     if (tab === 1) loadHistory()
-  }, [tab, loadHistory])
+  }, [tab, loadHistory, version])
 
   // Poll scan status while a scan is running.
   useEffect(() => {
@@ -335,6 +361,27 @@ const UpgradeQuality = () => {
     } finally {
       setBusy(null)
     }
+  }
+
+  // Opens the shared delete-confirmation dialog for a candidate's original
+  // (current) track. hideUpgradeAction is set because we're already on the
+  // Upgrade page - offering to queue another upgrade scan from here would be
+  // redundant. The dialog itself performs the DELETE and calls refresh() on
+  // success, which this page picks up via the `version` effect above.
+  const deleteOriginal = (c) => {
+    dispatch(
+      openDeleteMediaDialog({
+        mode: 'song',
+        hideUpgradeAction: true,
+        record: {
+          id: c.mediaFileId,
+          title: c.currentTitle,
+          artist: c.currentArtist,
+          suffix: c.currentFormat,
+          bitRate: c.currentBitRate,
+        },
+      }),
+    )
   }
 
   const toggleSelect = (id) => {
@@ -646,6 +693,23 @@ const UpgradeQuality = () => {
                               </IconButton>
                             </span>
                           </Tooltip>
+                          <Tooltip
+                            title={translate('upgrade.actions.deleteOriginal')}
+                          >
+                            <span>
+                              <IconButton
+                                size="small"
+                                className={classes.deleteButton}
+                                disabled={busy === c.id}
+                                onClick={() => deleteOriginal(c)}
+                                aria-label={translate(
+                                  'upgrade.actions.deleteOriginal',
+                                )}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -692,6 +756,9 @@ const UpgradeQuality = () => {
                       </TableCell>
                       <TableCell>
                         {translate('upgrade.table.updatedAt')}
+                      </TableCell>
+                      <TableCell align="right">
+                        {translate('upgrade.table.actions')}
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -751,6 +818,29 @@ const UpgradeQuality = () => {
                           {c.updatedAt
                             ? new Date(c.updatedAt).toLocaleString()
                             : '—'}
+                        </TableCell>
+                        <TableCell align="right">
+                          {(c.status === 'failed' ||
+                            c.status === 'rejected') && (
+                            <Tooltip
+                              title={translate(
+                                'upgrade.actions.deleteOriginal',
+                              )}
+                            >
+                              <span>
+                                <IconButton
+                                  size="small"
+                                  className={classes.deleteButton}
+                                  onClick={() => deleteOriginal(c)}
+                                  aria-label={translate(
+                                    'upgrade.actions.deleteOriginal',
+                                  )}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
