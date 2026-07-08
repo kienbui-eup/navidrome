@@ -1,0 +1,331 @@
+[debug] [2026-07-08T01:08:57.244Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:57.248Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:57.248Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:57.249Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:57.250Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:08:57.250Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:08:57.250Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:08:57.251Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:08:57.251Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:57.259Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:57.260Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:08:57.260Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:08:57.260Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:57.742Z] Checked if tokens are valid: false, expires at: 1783422802370
+[debug] [2026-07-08T01:08:57.743Z] Checked if tokens are valid: false, expires at: 1783422802370
+[debug] [2026-07-08T01:08:57.743Z] > refreshing access token with scopes: []
+[debug] [2026-07-08T01:08:57.744Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-08T01:08:57.744Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T01:08:57.745Z] Checked if tokens are valid: false, expires at: 1783422802370
+[debug] [2026-07-08T01:08:57.745Z] Checked if tokens are valid: false, expires at: 1783422802370
+[debug] [2026-07-08T01:08:57.745Z] > refreshing access token with scopes: []
+[debug] [2026-07-08T01:08:57.746Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-08T01:08:57.746Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T01:08:57.962Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-08T01:08:57.963Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T01:08:57.981Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T01:08:57.981Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T01:08:57.983Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-08T01:08:57.983Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T01:08:58.017Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T01:08:58.017Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T01:08:59.223Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T01:08:59.224Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T01:08:59.225Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:59.278Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:59.279Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:59.279Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:08:59.279Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:08:59.287Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:59.308Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T01:08:59.308Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T01:08:59.308Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:59.432Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:59.433Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:08:59.433Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:08:59.433Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:08:59.433Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:09:00.541Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:09:00.542Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:09:00.542Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:09:00.549Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:09:00.550Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:09:00.550Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:22:08.093Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:08.095Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:08.096Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:08.097Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:08.097Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:22:08.097Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:22:08.097Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:22:08.097Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:22:08.098Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:08.104Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:08.105Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:22:08.105Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:22:08.106Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:08.489Z] Checked if tokens are valid: true, expires at: 1783476536983
+[debug] [2026-07-08T01:22:08.490Z] Checked if tokens are valid: true, expires at: 1783476536983
+[debug] [2026-07-08T01:22:08.490Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T01:22:08.490Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T01:22:08.492Z] Checked if tokens are valid: true, expires at: 1783476536983
+[debug] [2026-07-08T01:22:08.492Z] Checked if tokens are valid: true, expires at: 1783476536983
+[debug] [2026-07-08T01:22:08.492Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T01:22:08.492Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T01:22:09.745Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T01:22:09.745Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T01:22:09.746Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:09.752Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T01:22:09.752Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T01:22:09.752Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:09.791Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:09.791Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:09.791Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:22:09.791Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:22:09.792Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:09.795Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:09.796Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:09.796Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:22:09.796Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:22:09.796Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:10.549Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:10.550Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:22:10.550Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:22:10.550Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:22:10.551Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:22:10.551Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:46:24.535Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:24.539Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:24.539Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:24.540Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:24.540Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:46:24.540Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:46:24.540Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:46:24.540Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:46:24.541Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:24.548Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:24.549Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:46:24.549Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:46:24.550Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:24.942Z] Checked if tokens are valid: true, expires at: 1783476536983
+[debug] [2026-07-08T01:46:24.942Z] Checked if tokens are valid: true, expires at: 1783476536983
+[debug] [2026-07-08T01:46:24.942Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T01:46:24.942Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T01:46:24.944Z] Checked if tokens are valid: true, expires at: 1783476536983
+[debug] [2026-07-08T01:46:24.944Z] Checked if tokens are valid: true, expires at: 1783476536983
+[debug] [2026-07-08T01:46:24.944Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T01:46:24.944Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T01:46:26.182Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T01:46:26.182Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T01:46:26.183Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:26.218Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T01:46:26.218Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T01:46:26.219Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:26.241Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:26.241Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:26.241Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:46:26.241Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:46:26.242Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:26.264Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:26.264Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:26.264Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:46:26.265Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:46:26.265Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:26.765Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:26.766Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:46:26.766Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T01:46:27.025Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T01:46:27.026Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T01:46:27.026Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:12:23.142Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:23.149Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:23.156Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:23.216Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:23.301Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:12:23.323Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:12:23.346Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:12:23.384Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:12:23.449Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:23.645Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:23.647Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:12:23.648Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:12:23.648Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:24.948Z] Checked if tokens are valid: false, expires at: 1783476536983
+[debug] [2026-07-08T02:12:24.948Z] Checked if tokens are valid: false, expires at: 1783476536983
+[debug] [2026-07-08T02:12:24.949Z] > refreshing access token with scopes: []
+[debug] [2026-07-08T02:12:24.951Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-08T02:12:24.951Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T02:12:24.953Z] Checked if tokens are valid: false, expires at: 1783476536983
+[debug] [2026-07-08T02:12:24.953Z] Checked if tokens are valid: false, expires at: 1783476536983
+[debug] [2026-07-08T02:12:24.953Z] > refreshing access token with scopes: []
+[debug] [2026-07-08T02:12:24.957Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-08T02:12:24.957Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T02:12:25.287Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-08T02:12:25.287Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T02:12:25.331Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T02:12:25.331Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T02:12:25.344Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-08T02:12:25.344Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T02:12:25.367Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T02:12:25.368Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T02:12:25.817Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T02:12:25.817Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T02:12:25.819Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:25.883Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:25.884Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:25.885Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:12:25.885Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:12:25.885Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:25.978Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:25.979Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:12:25.979Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:12:26.739Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T02:12:26.740Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T02:12:26.741Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:26.807Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:26.807Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:26.808Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:12:26.808Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:12:26.808Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:27.738Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:12:27.739Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:12:27.739Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:49:10.680Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:10.684Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:10.684Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:10.685Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:10.685Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:49:10.686Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:49:10.686Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:49:10.686Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:49:10.686Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:10.698Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:10.699Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:49:10.699Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:49:10.699Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:11.066Z] Checked if tokens are valid: true, expires at: 1783480344344
+[debug] [2026-07-08T02:49:11.066Z] Checked if tokens are valid: true, expires at: 1783480344344
+[debug] [2026-07-08T02:49:11.066Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T02:49:11.067Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T02:49:11.069Z] Checked if tokens are valid: true, expires at: 1783480344344
+[debug] [2026-07-08T02:49:11.069Z] Checked if tokens are valid: true, expires at: 1783480344344
+[debug] [2026-07-08T02:49:11.069Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T02:49:11.069Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T02:49:12.387Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T02:49:12.387Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T02:49:12.388Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:12.400Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T02:49:12.400Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T02:49:12.402Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:12.449Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:12.449Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:12.450Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:49:12.450Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:49:12.450Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:12.468Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:12.470Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:12.471Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:49:12.471Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:49:12.471Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:13.333Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:13.334Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:49:13.334Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T02:49:13.334Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T02:49:13.335Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T02:49:13.335Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:28:29.094Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:29.097Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:29.098Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:29.098Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:29.098Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:28:29.099Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:28:29.099Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:28:29.099Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:28:29.099Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:29.106Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:29.107Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:28:29.108Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:28:29.108Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:29.420Z] Checked if tokens are valid: false, expires at: 1783480344344
+[debug] [2026-07-08T03:28:29.421Z] Checked if tokens are valid: false, expires at: 1783480344344
+[debug] [2026-07-08T03:28:29.421Z] > refreshing access token with scopes: []
+[debug] [2026-07-08T03:28:29.422Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-08T03:28:29.422Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T03:28:29.425Z] Checked if tokens are valid: false, expires at: 1783480344344
+[debug] [2026-07-08T03:28:29.425Z] Checked if tokens are valid: false, expires at: 1783480344344
+[debug] [2026-07-08T03:28:29.425Z] > refreshing access token with scopes: []
+[debug] [2026-07-08T03:28:29.425Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-07-08T03:28:29.425Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T03:28:29.640Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-08T03:28:29.640Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T03:28:29.657Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T03:28:29.659Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T03:28:29.663Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-07-08T03:28:29.663Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-07-08T03:28:29.678Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T03:28:29.678Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T03:28:30.995Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T03:28:30.995Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T03:28:30.997Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:31.017Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T03:28:31.018Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T03:28:31.018Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:31.077Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:31.077Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:31.077Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:28:31.077Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:28:31.078Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:31.079Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:31.079Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:31.079Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:28:31.079Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:28:31.079Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:31.804Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:31.805Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:28:31.805Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:28:31.805Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:28:31.806Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:28:31.806Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:44:25.341Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:25.347Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:25.349Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:25.350Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:25.350Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:44:25.350Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:44:25.350Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:44:25.352Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:44:25.358Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:25.398Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:25.400Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:44:25.400Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:44:25.401Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:25.914Z] Checked if tokens are valid: true, expires at: 1783484908663
+[debug] [2026-07-08T03:44:25.914Z] Checked if tokens are valid: true, expires at: 1783484908663
+[debug] [2026-07-08T03:44:25.914Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T03:44:25.915Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T03:44:25.919Z] Checked if tokens are valid: true, expires at: 1783484908663
+[debug] [2026-07-08T03:44:25.919Z] Checked if tokens are valid: true, expires at: 1783484908663
+[debug] [2026-07-08T03:44:25.919Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [none]
+[debug] [2026-07-08T03:44:25.919Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com x-goog-quota-user=projects/
+[debug] [2026-07-08T03:44:27.544Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T03:44:27.544Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T03:44:27.545Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:27.567Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com 400
+[debug] [2026-07-08T03:44:27.567Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects//services/firebaseappdistribution.googleapis.com [omitted]
+[debug] [2026-07-08T03:44:27.567Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:27.616Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:27.617Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:27.617Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:44:27.617Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:44:27.617Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:27.625Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:27.626Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:27.626Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:44:27.626Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:44:27.626Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:28.550Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:28.551Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:44:28.551Z] > authorizing via signed-in user (kienbd@eupgroup.net)
+[debug] [2026-07-08T03:44:28.552Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2026-07-08T03:44:28.552Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-07-08T03:44:28.552Z] > authorizing via signed-in user (kienbd@eupgroup.net)

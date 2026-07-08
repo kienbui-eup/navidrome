@@ -23,6 +23,7 @@ DOCKER_TAG ?= vi2play/vi2play:develop
 GOLANGCI_LINT_VERSION ?= v2.12.0
 
 UI_SRC_FILES := $(shell find ui -type f -not -path "ui/build/*" -not -path "ui/node_modules/*")
+PLAYER_SRC_FILES := $(shell find player -type f -not -path "player/dist/*" -not -path "player/node_modules/*")
 
 setup: check_env download-deps install-golangci-lint setup-git ##@1_Run_First Install dependencies and prepare development environment
 	@echo Downloading Node dependencies...
@@ -33,7 +34,7 @@ dev: check_env   ##@Development Start vi2play in development mode, with hot-relo
 	npx foreman -j Procfile.dev -p 4533 start
 .PHONY: dev
 
-server: check_go_env buildjs ##@Development Start the backend in development mode
+server: check_go_env buildjs buildplayer ##@Development Start the backend in development mode
 	go tool reflex -d none -c reflex.conf
 .PHONY: server
 
@@ -143,14 +144,14 @@ setup-git: ##@Development Setup Git hooks (pre-commit and pre-push)
 	@(cd .git/hooks && ln -sf ../../git/* .)
 .PHONY: setup-git
 
-build: check_go_env buildjs ##@Build Build the project
+build: check_go_env buildjs buildplayer ##@Build Build the project
 	go build -ldflags="-X github.com/vi2play/vi2play/consts.gitSha=$(GIT_SHA) -X github.com/vi2play/vi2play/consts.gitTag=$(GIT_TAG)" -tags=$(GO_BUILD_TAGS)
 .PHONY: build
 
 buildall: deprecated build
 .PHONY: buildall
 
-debug-build: check_go_env buildjs ##@Build Build the project (with remote debug on)
+debug-build: check_go_env buildjs buildplayer ##@Build Build the project (with remote debug on)
 	go build -gcflags="all=-N -l" -ldflags="-X github.com/vi2play/vi2play/consts.gitSha=$(GIT_SHA) -X github.com/vi2play/vi2play/consts.gitTag=$(GIT_TAG)" -tags=$(GO_BUILD_TAGS)
 .PHONY: debug-build
 
@@ -163,6 +164,17 @@ docker-buildjs: ##@Build Build only frontend using Docker
 
 ui/build/index.html: $(UI_SRC_FILES)
 	@(cd ./ui && npm run build)
+
+buildplayer: check_node_env player/dist/index.html ##@Build Build only player frontend
+.PHONY: buildplayer
+
+docker-buildplayer: ##@Build Build only player frontend using Docker
+	docker build --output "./player" --target player-bundle .
+.PHONY: docker-buildplayer
+
+player/dist/index.html: $(PLAYER_SRC_FILES)
+	@(cd ./player && pnpm install --frozen-lockfile --ignore-scripts && pnpm run build)
+	@touch player/dist/.gitkeep # vite empties dist/; keep the tracked placeholder (Docker context needs player/dist/ present)
 
 docker-platforms: ##@Cross_Compilation List supported platforms
 	@echo "Supported platforms:"
@@ -267,8 +279,9 @@ ls-wt: ##@Worktrees List all active git worktrees
 #### Miscellaneous
 
 clean:
-	@rm -rf ./binaries ./dist ./ui/build/*
+	@rm -rf ./binaries ./dist ./ui/build/* ./player/dist/*
 	@touch ./ui/build/.gitkeep
+	@touch ./player/dist/.gitkeep
 .PHONY: clean
 
 release:

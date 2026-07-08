@@ -18,7 +18,7 @@ testDB
 cache/*
 *.swp
 coverage.out
-dist
+/dist
 music
 music.old
 *.db*

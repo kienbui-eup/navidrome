@@ -2,6 +2,9 @@
 ui/node_modules
 ui/build
 !ui/build/.gitkeep
+player/node_modules
+player/dist
+!player/dist/.gitkeep
 Dockerfile
 docker-compose*.yml
 data

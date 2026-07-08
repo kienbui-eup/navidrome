@@ -1,0 +1,70 @@
+appId: com.victoralvesf.aonsoku
+productName: Aonsoku
+copyright: Copyright © 2026 Victor Alves
+icon: ./build/icon.ico
+artifactName: '${productName}-v${version}-${os}-${arch}.${ext}'
+
+directories:
+  buildResources: build
+
+files:
+  - '!**/*'
+  - 'out/**'
+  - '!out/renderer/screenshots{,/**}'
+  - 'package.json'
+
+extraResources:
+  - from: resources
+    to: resources
+
+win:
+  executableName: Aonsoku
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - arm64
+
+nsis:
+  shortcutName: ${productName}
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+  license: ./LICENSE.txt
+  uninstallerIcon: ./build/icon.ico
+
+mac:
+  category: public.app-category.music
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: false
+  identity: "-"
+  icon: ./build/icon.icns
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+        - arm64
+    - target: tar.gz
+      arch:
+        - x64
+        - arm64
+    - deb
+  maintainer: victoralvesf
+  category: AudioVideo
+  synopsis: 'A modern desktop music client for Navidrome and OpenSubsonic servers.'
+
+npmRebuild: true
+nativeRebuilder: legacy
+
+publish:
+  provider: github
+  owner: victoralvesf
+  repo: aonsoku

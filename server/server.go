@@ -24,16 +24,18 @@ import (
 	"github.com/vi2play/vi2play/core/metrics"
 	"github.com/vi2play/vi2play/log"
 	"github.com/vi2play/vi2play/model"
+	"github.com/vi2play/vi2play/player"
 	"github.com/vi2play/vi2play/server/events"
 	"github.com/vi2play/vi2play/ui"
 )
 
 type Server struct {
-	router   chi.Router
-	ds       model.DataStore
-	appRoot  string
-	broker   events.Broker
-	insights metrics.Insights
+	router     chi.Router
+	ds         model.DataStore
+	appRoot    string
+	playerRoot string
+	broker     events.Broker
+	insights   metrics.Insights
 }
 
 func New(ds model.DataStore, broker events.Broker, insights metrics.Insights) *Server {
@@ -58,8 +60,9 @@ func (s *Server) MountRouter(description, urlPath string, subRouter http.Handler
 
 // Run starts the server with the given address, and if specified, with TLS enabled.
 func (s *Server) Run(ctx context.Context, addr string, port int, tlsCert string, tlsKey string) error {
-	// Mount the router for the frontend assets
+	// Mount the routers for the frontend assets
 	s.MountRouter("WebUI", consts.URLPathUI, s.frontendAssetsHandler())
+	s.MountRouter("Player", consts.URLPathPlayer, s.playerAssetsHandler())
 
 	// Create a new http.Server with the specified read header timeout and handler
 	server := &http.Server{
@@ -166,6 +169,7 @@ func createUnixSocketFile(socketPath string, socketPerm string) (net.Listener, e
 
 func (s *Server) initRoutes() {
 	s.appRoot = path.Join(conf.Server.BasePath, consts.URLPathUI)
+	s.playerRoot = path.Join(conf.Server.BasePath, consts.URLPathPlayer)
 
 	r := chi.NewRouter()
 
@@ -223,12 +227,16 @@ func (s *Server) mountAuthenticationRoutes() chi.Router {
 // Serve UI app assets
 func (s *Server) mountRootRedirector() {
 	r := s.router
-	// Redirect root to UI URL
+	// Redirect root (and any unmatched path) to the Aonsoku player; the
+	// react-admin UI stays at URLPathUI for admin features.
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, s.appRoot+"/", http.StatusFound)
+		http.Redirect(w, r, s.playerRoot+"/", http.StatusFound)
 	})
 	r.Get(s.appRoot, func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, s.appRoot+"/", http.StatusFound)
+	})
+	r.Get(s.playerRoot, func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, s.playerRoot+"/", http.StatusFound)
 	})
 }
 
@@ -237,6 +245,22 @@ func (s *Server) frontendAssetsHandler() http.Handler {
 
 	r.Handle("/", Index(s.ds, ui.BuildAssets()))
 	r.Handle("/*", http.StripPrefix(s.appRoot, http.FileServer(http.FS(ui.BuildAssets()))))
+	return r
+}
+
+// Serve the embedded Aonsoku player. It is a plain static SPA with a hash
+// router and relative asset paths, so a FileServer is enough — no template
+// rendering or history fallback needed.
+func (s *Server) playerAssetsHandler() http.Handler {
+	r := chi.NewRouter()
+
+	// Aonsoku's index.html loads ./env-config.js before its inline
+	// same-origin fallback; serve an empty script instead of a 404.
+	r.Get("/env-config.js", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		_, _ = w.Write([]byte("// SERVER_URL falls back to same-origin (see index.html)\n"))
+	})
+	r.Handle("/*", http.StripPrefix(s.playerRoot, http.FileServer(http.FS(player.BuildAssets()))))
 	return r
 }
 
