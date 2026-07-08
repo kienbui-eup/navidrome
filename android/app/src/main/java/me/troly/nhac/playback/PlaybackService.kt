@@ -31,9 +31,15 @@ class PlaybackService : MediaLibraryService() {
                 .build(),
         ) { renderers.currentUsbSink?.isNativeEngineActive == true }
 
+        // Định cấu hình Audio Attributes tối ưu cho Âm nhạc chất lượng cao
+        val audioAttributes = AudioAttributes.Builder()
+            .setContentType(androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC)
+            .setUsage(androidx.media3.common.C.USAGE_MEDIA)
+            .build()
+
         val player = ExoPlayer.Builder(this, renderers)
             .setLoadControl(loadControl)
-            .setAudioAttributes(AudioAttributes.DEFAULT, /* handleAudioFocus= */ true)
+            .setAudioAttributes(audioAttributes, /* handleAudioFocus= */ true)
             .setHandleAudioBecomingNoisy(true)
             .build()
 

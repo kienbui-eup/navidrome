@@ -30,6 +30,7 @@ import me.troly.nhac.data.subsonic.SearchResult3
 import me.troly.nhac.data.subsonic.SubsonicRepository
 import me.troly.nhac.ui.LocalPlayer
 import me.troly.nhac.ui.LocalRepo
+import me.troly.nhac.ui.components.AddToPlaylistSheet
 import me.troly.nhac.ui.components.AlbumRow
 import me.troly.nhac.ui.components.SongRow
 
@@ -49,6 +50,7 @@ fun SearchScreen(onAlbum: (Album) -> Unit, onNowPlaying: () -> Unit) {
     val vm: SearchViewModel = viewModel(key = "search") { SearchViewModel(repo) }
     val result by vm.result.collectAsState()
     var query by remember { mutableStateOf("") }
+    var pendingAdd by remember { mutableStateOf<List<String>?>(null) }
 
     Column(Modifier.fillMaxSize()) {
         OutlinedTextField(
@@ -69,11 +71,15 @@ fun SearchScreen(onAlbum: (Album) -> Unit, onNowPlaying: () -> Unit) {
                         modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp))
                 }
                 itemsIndexed(result.song, key = { _, s -> s.id }) { index, song ->
-                    SongRow(song, index, isCurrent = false, onClick = {
-                        player.play(result.song, index); onNowPlaying()
-                    })
+                    SongRow(song, index, isCurrent = false,
+                        onClick = { player.play(result.song, index); onNowPlaying() },
+                        onAdd = { pendingAdd = listOf(song.id) })
                 }
             }
         }
+    }
+
+    pendingAdd?.let { ids ->
+        AddToPlaylistSheet(songIds = ids, onDismiss = { pendingAdd = null })
     }
 }

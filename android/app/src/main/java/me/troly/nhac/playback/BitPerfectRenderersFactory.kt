@@ -35,18 +35,10 @@ class BitPerfectRenderersFactory(context: Context) : DefaultRenderersFactory(con
         enableFloatOutput: Boolean,
         enableAudioTrackPlaybackParams: Boolean,
     ): AudioSink {
-        // With libFLAC on the classpath, FLAC is decoded to raw int at the
-        // extractor level → float output off. Without it, FFmpeg needs float.
-        val hasLibFlac = try {
-            Class.forName("androidx.media3.decoder.flac.LibflacAudioRenderer")
-            true
-        } catch (_: ClassNotFoundException) {
-            false
-        }
-        val useFloat = !hasLibFlac
-
+        // Luôn bật Float Output để giữ độ phân giải 24-bit/32-bit cho nguồn âm thanh chất lượng cao,
+        // giúp hệ thống truyền tải Hi-Res nguyên bản qua Bluetooth (LDAC / SSC).
         val delegate = DefaultAudioSink.Builder(context)
-            .setEnableFloatOutput(useFloat)
+            .setEnableFloatOutput(true)
             .setAudioCapabilities(AudioCapabilities.getCapabilities(context))
             .build()
 

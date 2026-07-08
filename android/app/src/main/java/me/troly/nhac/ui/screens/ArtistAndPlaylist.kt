@@ -1,5 +1,6 @@
 package me.troly.nhac.ui.screens
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -21,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -32,9 +35,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +63,8 @@ import me.troly.nhac.ui.LocalPlayer
 import me.troly.nhac.ui.LocalRepo
 import me.troly.nhac.ui.rememberInteractionSource
 import me.troly.nhac.ui.tvFocusable
+import me.troly.nhac.ui.components.AddToPlaylistSheet
+import me.troly.nhac.ui.components.DeletePlaylistDialog
 import me.troly.nhac.ui.components.SongRow
 
 // ── Artist detail ───────────────────────────────────────────────────────────
@@ -80,10 +90,11 @@ fun ArtistDetailScreen(artistId: String, onBack: () -> Unit, onAlbum: (String) -
         modifier = Modifier.fillMaxSize(),
     ) {
         item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-            Column {
+            Column(Modifier.statusBarsPadding()) {
                 Row(Modifier.fillMaxWidth()) {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại", tint = MaterialTheme.colorScheme.onBackground)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại", tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(28.dp))
                     }
                 }
                 Text(a.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold,
@@ -118,7 +129,8 @@ fun ArtistDetailScreen(artistId: String, onBack: () -> Unit, onAlbum: (String) -
 class PlaylistsViewModel(private val repo: SubsonicRepository) : ViewModel() {
     private val _items = MutableStateFlow<List<Playlist>>(emptyList())
     val items = _items.asStateFlow()
-    init { viewModelScope.launch { runCatching { _items.value = repo.playlists() } } }
+    init { reload() }
+    fun reload() { viewModelScope.launch { runCatching { _items.value = repo.playlists() } } }
 }
 
 @Composable
@@ -127,6 +139,9 @@ fun PlaylistsScreen(onPlaylist: (String) -> Unit) {
     val isTv = LocalIsTv.current
     val vm: PlaylistsViewModel = viewModel(key = "playlists") { PlaylistsViewModel(repo) }
     val items by vm.items.collectAsState()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var toDelete by remember { mutableStateOf<Playlist?>(null) }
     LazyColumn(Modifier.fillMaxSize()) {
         items(items, key = { it.id }) { pl ->
             val source = rememberInteractionSource()
@@ -135,21 +150,42 @@ fun PlaylistsScreen(onPlaylist: (String) -> Unit) {
                 modifier = Modifier.fillMaxWidth()
                     .then(if (isTv) Modifier.tvFocusable(source) else Modifier)
                     .clickable(interactionSource = source, indication = null) { onPlaylist(pl.id) }
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                    .padding(start = 16.dp, top = 10.dp, bottom = 10.dp),
             ) {
                 AsyncImage(
                     model = repo.config.coverArtUrl(pl.coverArt, 200),
                     contentDescription = pl.name,
                     modifier = Modifier.size(52.dp).clip(RoundedCornerShape(8.dp)),
                 )
-                Column(Modifier.padding(start = 12.dp)) {
+                Column(Modifier.weight(1f).padding(start = 12.dp)) {
                     Text(pl.name, style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text("${pl.songCount ?: 0} bài", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+                IconButton(onClick = { toDelete = pl }) {
+                    Icon(Icons.Filled.DeleteOutline, "Xoá playlist",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
+    }
+
+    toDelete?.let { pl ->
+        DeletePlaylistDialog(
+            name = pl.name,
+            onDismiss = { toDelete = null },
+            onConfirm = {
+                toDelete = null
+                scope.launch {
+                    val ok = runCatching { repo.deletePlaylist(pl.id) }.isSuccess
+                    Toast.makeText(context,
+                        if (ok) "Đã xoá \"${pl.name}\"" else "Không xoá được, thử lại",
+                        Toast.LENGTH_SHORT).show()
+                    if (ok) vm.reload()
+                }
+            },
+        )
     }
 }
 
@@ -169,15 +205,24 @@ fun PlaylistDetailScreen(playlistId: String, onBack: () -> Unit, onNowPlaying: (
     val pl by vm.pl.collectAsState()
     if (pl == null) { Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }; return }
     val p = pl!!
+    var pendingAdd by remember { mutableStateOf<List<String>?>(null) }
+    var confirmDelete by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     LazyColumn(Modifier.fillMaxSize()) {
         item {
-            Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại", tint = MaterialTheme.colorScheme.onBackground)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại", tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.size(28.dp))
                 }
                 Text(p.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(start = 4.dp))
+                    modifier = Modifier.weight(1f).padding(start = 4.dp))
+                IconButton(onClick = { confirmDelete = true }) {
+                    Icon(Icons.Filled.DeleteOutline, "Xoá playlist",
+                        tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(26.dp))
+                }
             }
             Button(
                 onClick = { player.play(p.entry, 0); onNowPlaying() },
@@ -191,7 +236,30 @@ fun PlaylistDetailScreen(playlistId: String, onBack: () -> Unit, onNowPlaying: (
             }
         }
         itemsIndexed(p.entry, key = { _, s -> s.id }) { index, song ->
-            SongRow(song, index, isCurrent = false, onClick = { player.play(p.entry, index); onNowPlaying() })
+            SongRow(song, index, isCurrent = false,
+                onClick = { player.play(p.entry, index); onNowPlaying() },
+                onAdd = { pendingAdd = listOf(song.id) })
         }
+    }
+
+    pendingAdd?.let { ids ->
+        AddToPlaylistSheet(songIds = ids, onDismiss = { pendingAdd = null })
+    }
+
+    if (confirmDelete) {
+        DeletePlaylistDialog(
+            name = p.name,
+            onDismiss = { confirmDelete = false },
+            onConfirm = {
+                confirmDelete = false
+                scope.launch {
+                    val ok = runCatching { repo.deletePlaylist(playlistId) }.isSuccess
+                    Toast.makeText(context,
+                        if (ok) "Đã xoá playlist" else "Không xoá được, thử lại",
+                        Toast.LENGTH_SHORT).show()
+                    if (ok) onBack()
+                }
+            },
+        )
     }
 }

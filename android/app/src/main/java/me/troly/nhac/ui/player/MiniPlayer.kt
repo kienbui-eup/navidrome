@@ -1,11 +1,14 @@
 package me.troly.nhac.ui.player
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -20,13 +23,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import me.troly.nhac.ui.LocalPlayer
 import me.troly.nhac.ui.components.CoverImage
+import me.troly.nhac.playback.AudioDeviceHelper
 
 @Composable
 fun MiniPlayer(onExpand: () -> Unit) {
@@ -65,6 +72,70 @@ fun MiniPlayer(onExpand: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
+                    
+                    // Compact Signal Path & Connected Device
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    val activeDevice = remember(context) { AudioDeviceHelper.getActiveDeviceDetails(context) }
+                    
+                    val extras = meta?.extras
+                    val suffix = extras?.getString("suffix")
+                    val bitRate = extras?.getInt("bitRate") ?: 0
+                    val bitDepth = extras?.getInt("bitDepth") ?: 0
+                    val samplingRate = extras?.getInt("samplingRate") ?: 0
+                    
+                    val isDsdOrHighRes = remember(suffix, bitDepth) {
+                        suffix?.lowercase() in setOf("dsf", "dff", "dsd") || bitDepth >= 24
+                    }
+                    val ledColor = remember(activeDevice, isDsdOrHighRes) {
+                        when {
+                            activeDevice.isLossless && isDsdOrHighRes -> Color(0xFF00E676)
+                            activeDevice.isHiResCapable -> Color(0xFF29B6F6)
+                            else -> Color(0xFFFFB300)
+                        }
+                    }
+                    
+                    val summaryText = remember(suffix, bitDepth, samplingRate, bitRate, activeDevice) {
+                        val src = if (!suffix.isNullOrBlank()) {
+                            val fmt = suffix.uppercase()
+                            val spec = if (bitDepth > 0 && samplingRate > 0) {
+                                "${bitDepth}b/${samplingRate / 1000}k"
+                            } else if (bitRate > 0) {
+                                "${bitRate}k"
+                            } else ""
+                            if (spec.isNotEmpty()) "$fmt $spec" else fmt
+                        } else "Audio"
+                        
+                        val isTranscoded = me.troly.nhac.data.subsonic.isServerTranscodeSuffix(suffix)
+                        val transcodeStr = if (isTranscoded) " ➔ FLAC" else ""
+                        
+                        val shortDeviceName = when {
+                            activeDevice.typeLabel == "USB DAC" -> "DAC"
+                            activeDevice.name.contains("Buds2 Pro", ignoreCase = true) -> "Buds 2 Pro"
+                            activeDevice.name.contains("UP5", ignoreCase = true) -> "UP5"
+                            else -> activeDevice.typeLabel
+                        }
+                        
+                        "$src$transcodeStr ➔ $shortDeviceName"
+                    }
+                    
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 2.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .padding(end = 6.dp)
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(ledColor)
+                        )
+                        Text(
+                            text = summaryText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = ledColor.copy(alpha = 0.85f),
+                            maxLines = 1, overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
                 IconButton(onClick = { player.togglePlay() }) {
                     Icon(

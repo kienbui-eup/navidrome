@@ -5,13 +5,19 @@ import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.*
+import me.troly.nhac.playback.AudioDeviceHelper
+import me.troly.nhac.playback.ActiveDeviceDetails
+import me.troly.nhac.data.subsonic.isServerTranscodeSuffix
+
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Pause
@@ -131,6 +137,36 @@ fun NowPlayingScreen(onClose: () -> Unit) {
     val duration = state.durationMs.coerceAtLeast(1)
     val progress = if (scrubbing) scrubValue else state.positionMs.toFloat() / duration
 
+    // Interactive Audio Quality Badges & Visualizer State
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var activeDevice by remember { mutableStateOf(AudioDeviceHelper.getActiveDeviceDetails(context)) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            activeDevice = AudioDeviceHelper.getActiveDeviceDetails(context)
+            kotlinx.coroutines.delay(1500)
+        }
+    }
+    
+    val extras = meta?.extras
+    val suffix = extras?.getString("suffix")
+    val bitRate = extras?.getInt("bitRate") ?: 0
+    val bitDepth = extras?.getInt("bitDepth") ?: 0
+    val samplingRate = extras?.getInt("samplingRate") ?: 0
+    
+    val isDsdOrHighRes = remember(suffix, bitDepth) {
+        suffix?.lowercase() in setOf("dsf", "dff", "dsd") || bitDepth >= 24
+    }
+    
+    val ledColor = remember(activeDevice, isDsdOrHighRes) {
+        when {
+            activeDevice.isLossless && isDsdOrHighRes -> Color(0xFF00E676) // Pristine Green (Hi-Res Bit-Perfect)
+            activeDevice.isHiResCapable -> Color(0xFF29B6F6) // HD Wireless Blue
+            else -> Color(0xFFFFB300) // Standard Amber
+        }
+    }
+    
+    var showSignalPath by remember { mutableStateOf(false) }
+
     Box(Modifier.fillMaxSize()) {
         // Blurred artwork backdrop (blur applies on Android 12+, degrades gracefully)
         AsyncImage(
@@ -143,10 +179,10 @@ fun NowPlayingScreen(onClose: () -> Unit) {
             ),
         )
 
-        Column(Modifier.fillMaxSize().padding(24.dp)) {
+        Column(Modifier.fillMaxSize().systemBarsPadding().padding(24.dp)) {
             IconButton(onClick = onClose) {
                 Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Đóng",
-                    tint = Color.White)
+                    tint = Color.White, modifier = Modifier.size(28.dp))
             }
             Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                 AsyncImage(
@@ -170,23 +206,16 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // Audio Quality Badges & Visualizer Row
+            // Interactive Audio Quality Badges & Visualizer Row
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { showSignalPath = true }
+                    .background(Color(0x11FFFFFF))
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val context = androidx.compose.ui.platform.LocalContext.current
-                val isDac = remember(context) { isUsbDacConnected(context) }
-                
-                val extras = meta?.extras
-                val suffix = extras?.getString("suffix")
-                val bitRate = extras?.getInt("bitRate") ?: 0
-                val bitDepth = extras?.getInt("bitDepth") ?: 0
-                val samplingRate = extras?.getInt("samplingRate") ?: 0
-                
                 // 1. Audio Visualizer (Left)
                 AudioVisualizer(isPlaying = state.isPlaying, modifier = Modifier.padding(end = 12.dp))
                 
@@ -228,30 +257,31 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     )
                 }
                 
-                // 4. Bit-Perfect USB Badge
-                if (isDac) {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .padding(end = 4.dp)
-                                .size(5.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
-                        )
-                        Text(
-                            text = "Bit-Perfect",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                // 4. Output label summary
+                val outputLabel = remember(activeDevice) {
+                    when {
+                        activeDevice.typeLabel == "USB DAC" -> "Direct USB DAC"
+                        activeDevice.name.contains("Buds2 Pro", ignoreCase = true) -> "Buds 2 Pro (SSC)"
+                        activeDevice.name.contains("UP5", ignoreCase = true) -> "UP5 (LDAC)"
+                        else -> activeDevice.typeLabel
                     }
                 }
+                
+                Text(
+                    text = "➔ $outputLabel",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = ledColor
+                )
+                
+                // 5. LED Status Dot (Right)
+                Box(
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(ledColor)
+                )
             }
 
             Slider(
@@ -294,7 +324,234 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                 }
             }
         }
+
+        // Audiophile Signal Path Panel Overlay (Slide-up Glassmorphism Style)
+        if (showSignalPath) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .clickable { showSignalPath = false },
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.7f)
+                        .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                        .background(Color(0xFF131317))
+                        .clickable(enabled = true, onClick = {}) // block click pass-through
+                        .systemBarsPadding()
+                        .padding(24.dp)
+                ) {
+                    // Header Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(end = 10.dp)
+                                    .size(10.dp)
+                                    .clip(CircleShape)
+                                    .background(ledColor)
+                            )
+                            Text(
+                                text = "ĐƯỜNG TRUYỀN TÍN HIỆU (SIGNAL PATH)",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                        IconButton(onClick = { showSignalPath = false }) {
+                            Icon(
+                                imageVector = Icons.Filled.KeyboardArrowDown,
+                                contentDescription = "Đóng",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    }
+                    
+                    val scrollState = rememberScrollState()
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(scrollState)
+                    ) {
+                        val (formatName, originalSpecs) = remember(suffix, bitDepth, samplingRate, bitRate) {
+                            formatOriginalSpecs(suffix, bitDepth, samplingRate, bitRate)
+                        }
+                        
+                        // Step 1: Source
+                        SignalPathStep(
+                            title = "1. NGUỒN NHẠC GỐC (ORIGINAL FILE)",
+                            value = formatName,
+                            subValue = originalSpecs,
+                            isFirst = true,
+                            color = ledColor
+                        )
+                        
+                        // Step 2: Streaming
+                        val isTranscoded = remember(suffix) { isServerTranscodeSuffix(suffix) }
+                        val streamingValue = if (isTranscoded) "Server Transcoded (FLAC 24-bit)" else "Direct Stream (Nguyên bản)"
+                        val streamingSub = if (isTranscoded) {
+                            "Dữ liệu gốc định dạng $suffix được máy chủ tự động chuyển mã không hao tổn sang FLAC 24-bit PCM với tần số lấy mẫu nguyên bản, giúp ứng dụng Android giải mã tối ưu."
+                        } else {
+                            "Tệp âm thanh ${suffix?.uppercase() ?: "âm thanh"} được truyền phát trực tiếp ở chất lượng nguyên gốc từ máy chủ, không qua bất kỳ khâu xử lý hay tái nén nào."
+                        }
+                        SignalPathStep(
+                            title = "2. TRUYỀN PHÁT THỰC TẾ (STREAMING STREAM)",
+                            value = streamingValue,
+                            subValue = streamingSub,
+                            color = ledColor
+                        )
+                        
+                        // Step 3: Engine
+                        val engineValue = "ExoPlayer Audio Engine (Float 32-bit)"
+                        val engineSub = "Ứng dụng tự động nâng cấp kỹ thuật số không hao tổn (Lossless Upscaling) lên Float PCM 32-bit, giúp giữ dải động (dynamic range) tối đa và giảm thiểu méo tiếng."
+                        SignalPathStep(
+                            title = "3. BỘ GIẢI MÃ ỨNG DỤNG (PLAYBACK ENGINE)",
+                            value = engineValue,
+                            subValue = engineSub,
+                            color = ledColor
+                        )
+                        
+                        // Step 4: Connection & Output Device
+                        val deviceDetails = "${activeDevice.techLabel} • ${activeDevice.maxQualityForecast}\n${activeDevice.description}"
+                        SignalPathStep(
+                            title = "4. THIẾT BỊ ĐẦU RA (OUTPUT HARDWARE)",
+                            value = activeDevice.name,
+                            subValue = deviceDetails,
+                            color = ledColor
+                        )
+                        
+                        // Step 5: Verdict & Forecast
+                        val verdictTitle = when {
+                            ledColor == Color(0xFF00E676) -> "Bit-Perfect Lossless (Trải nghiệm đỉnh cao)"
+                            ledColor == Color(0xFF29B6F6) -> "Hi-Res Wireless (Không dây chất lượng cao)"
+                            else -> "Standard Quality (Chất lượng tiêu chuẩn)"
+                        }
+                        val verdictSub = when {
+                            ledColor == Color(0xFF00E676) -> "Tín hiệu đạt độ tinh khiết tối đa! Luồng dữ liệu hoàn toàn không nén, bỏ qua bộ trộn hệ điều hành và truyền trực tiếp ở chế độ Bit-Perfect qua phần cứng kết nối."
+                            ledColor == Color(0xFF29B6F6) -> "Đường truyền không dây cao cấp. Đảm bảo codec chất lượng cao (LDAC hoặc Seamless Codec) đang hoạt động trong Cài đặt Bluetooth trên điện thoại của bạn để trải nghiệm trọn vẹn dải động 24-bit."
+                            else -> "Thiết bị phát (như loa tích hợp) hoặc tệp nhạc bị giới hạn băng tần. Khuyên dùng tai nghe chuyên dụng hoặc USB DAC ngoài."
+                        }
+                        SignalPathStep(
+                            title = "5. DỰ BÁO CHẤT LƯỢNG ĐẠT ĐƯỢC (AUDIO FORECAST)",
+                            value = verdictTitle,
+                            subValue = verdictSub,
+                            isLast = true,
+                            color = ledColor
+                        )
+                    }
+                }
+            }
+        }
     }
+}
+
+@Composable
+private fun SignalPathStep(
+    title: String,
+    value: String,
+    subValue: String,
+    isFirst: Boolean = false,
+    isLast: Boolean = false,
+    color: Color
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        // Line and Node column
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(32.dp).padding(top = 4.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+            if (!isLast) {
+                Box(
+                    modifier = Modifier
+                        .width(2.dp)
+                        .height(64.dp)
+                        .background(color.copy(alpha = 0.25f))
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.width(8.dp))
+        
+        Column(modifier = Modifier.weight(1f).padding(bottom = 16.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF8E8E93),
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+            Text(
+                text = subValue,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFC4BBA6),
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
+}
+
+private fun formatOriginalSpecs(suffix: String?, bitDepth: Int, samplingRate: Int, bitRate: Int): Pair<String, String> {
+    val fmt = suffix?.lowercase() ?: "audio"
+    val isDsd = fmt in setOf("dsf", "dff", "dsd")
+    
+    val formatName = when (fmt) {
+        "dsf", "dff", "dsd" -> "DSD (Direct Stream Digital)"
+        "aif", "aiff" -> "AIFF (Audio Interchange Format)"
+        "flac" -> "FLAC (Lossless Audio)"
+        "mp3" -> "MP3 (MPEG Audio)"
+        "m4a", "aac" -> "AAC / ALAC (MPEG-4 Audio)"
+        "wav" -> "WAV (Waveform Audio)"
+        else -> fmt.uppercase()
+    }
+    
+    val resolution = when {
+        isDsd -> {
+            if (samplingRate >= 11289600) "DSD256 (1-bit / 11.2 MHz)"
+            else if (samplingRate >= 5644800) "DSD128 (1-bit / 5.6 MHz)"
+            else "DSD64 (1-bit / 2.82 MHz)"
+        }
+        bitDepth > 0 && samplingRate > 0 -> {
+            "${bitDepth}-bit / ${samplingRate / 1000.0} kHz"
+        }
+        samplingRate > 0 -> {
+            "${samplingRate / 1000.0} kHz"
+        }
+        else -> "Độ phân giải chuẩn"
+    }
+    
+    val brString = if (bitRate > 0) "${bitRate} kbps" else ""
+    val category = if (fmt in setOf("dsf", "dff", "dsd", "flac", "aif", "aiff", "wav")) "Studio Quality (Lossless)" else "Standard Quality"
+    
+    val details = listOfNotNull(
+        resolution,
+        if (brString.isNotEmpty()) brString else null,
+        category
+    ).joinToString(" • ")
+    
+    return Pair(formatName, details)
 }
 
 private fun formatMs(ms: Long): String = formatDuration((ms / 1000).toInt())

@@ -13,6 +13,11 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.http.GET
 import retrofit2.http.Query
+import retrofit2.http.POST
+import retrofit2.http.DELETE
+import retrofit2.http.Header
+import retrofit2.http.Body
+import retrofit2.http.Path
 import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.random.Random
@@ -55,8 +60,17 @@ private fun ServerConfig.authQuery(): String {
     val salt = SubsonicAuth.salt()
     return "u=$username&t=${SubsonicAuth.token(password, salt)}&s=$salt&v=$apiVersion&c=$clientName"
 }
-fun ServerConfig.streamUrl(id: String): String =
-    "${baseUrl.trimEnd('/')}/rest/stream.view?id=$id&${authQuery()}"
+// With no [format], the server sends the Original file (bit-perfect PCM/FLAC).
+// Pass format="flac" for sources Android/ExoPlayer can't demux natively (DSD:
+// .dsf/.dff) so the server transcodes DSD → 24-bit FLAC PCM on the fly.
+fun ServerConfig.streamUrl(id: String, format: String? = null): String {
+    val url = "${baseUrl.trimEnd('/')}/rest/stream.view?id=$id&${authQuery()}"
+    return if (format.isNullOrBlank()) url else "$url&format=$format"
+}
+
+/** Codecs ExoPlayer/Media3 has no extractor for → must be server-transcoded. */
+fun isServerTranscodeSuffix(suffix: String?): Boolean =
+    suffix?.lowercase() in setOf("dsf", "dff", "dsd", "aif", "aiff")
 fun ServerConfig.coverArtUrl(coverArtId: String?, size: Int = 300): String? =
     coverArtId?.let { "${baseUrl.trimEnd('/')}/rest/getCoverArt.view?id=$it&size=$size&${authQuery()}" }
 
@@ -79,7 +93,67 @@ interface SubsonicApi {
     suspend fun search(@Query("query") query: String, @Query("songCount") songCount: Int = 30,
                        @Query("albumCount") albumCount: Int = 20,
                        @Query("artistCount") artistCount: Int = 20): SubsonicResponse
+
+    // Each list element becomes a repeated query param (songId=a&songId=b…).
+    @GET("rest/createPlaylist.view")
+    suspend fun createPlaylist(@Query("name") name: String,
+                               @Query("songId") songId: List<String>): SubsonicResponse
+
+    @GET("rest/updatePlaylist.view")
+    suspend fun updatePlaylist(@Query("playlistId") playlistId: String,
+                               @Query("songIdToAdd") songIdToAdd: List<String>): SubsonicResponse
+
+    @GET("rest/deletePlaylist.view")
+    suspend fun deletePlaylist(@Query("id") id: String): SubsonicResponse
 }
+
+// ── NATIVE API ──────────────────────────────────────────────────────────────
+@Serializable
+data class SsoRequest(
+    val username: String,
+    val token: String,
+    val salt: String
+)
+
+@Serializable
+data class SsoResponse(
+    val id: String,
+    val name: String,
+    val username: String,
+    val isAdmin: Boolean,
+    val token: String
+)
+
+@Serializable
+data class ScanResponse(
+    val status: String
+)
+
+@Serializable
+data class DeleteResponse(
+    val ids: List<String>
+)
+
+interface NativeApi {
+    @POST("auth/sso/subsonic")
+    suspend fun ssoLogin(@Body body: SsoRequest): SsoResponse
+
+    @POST("api/import/scan")
+    suspend fun triggerScan(@Header("X-VI-Authorization") authHeader: String): ScanResponse
+
+    @DELETE("api/song/{id}")
+    suspend fun deleteSong(
+        @Header("X-VI-Authorization") authHeader: String,
+        @Path("id") id: String
+    ): DeleteResponse
+
+    @DELETE("api/album/{id}")
+    suspend fun deleteAlbum(
+        @Header("X-VI-Authorization") authHeader: String,
+        @Path("id") id: String
+    ): DeleteResponse
+}
+
 
 // ── DTOs ────────────────────────────────────────────────────────────────────
 @Serializable data class SubsonicResponse(@SerialName("subsonic-response") val response: SubsonicBody? = null)
@@ -167,6 +241,60 @@ class SubsonicRepository(val config: ServerConfig) {
             .create(SubsonicApi::class.java)
     }
 
+    private val nativeApi: NativeApi by lazy {
+        val http = OkHttpClient.Builder()
+            .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
+            .build()
+        Retrofit.Builder()
+            .baseUrl(config.baseUrl.trimEnd('/') + "/")
+            .client(http)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(NativeApi::class.java)
+    }
+
+    private var cachedSsoToken: String? = null
+    var isAdmin: Boolean? = null
+        private set
+
+    suspend fun getSsoToken(): String {
+        cachedSsoToken?.let { return it }
+        val salt = SubsonicAuth.salt()
+        val token = SubsonicAuth.token(config.password, salt)
+        val response = nativeApi.ssoLogin(SsoRequest(config.username, token, salt))
+        isAdmin = response.isAdmin
+        cachedSsoToken = response.token
+        return response.token
+    }
+
+    suspend fun checkAdminStatus(): Boolean {
+        if (isAdmin != null) return isAdmin!!
+        return try {
+            getSsoToken()
+            isAdmin ?: false
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun triggerLibraryScan(): Boolean {
+        val sso = getSsoToken()
+        val res = nativeApi.triggerScan("Bearer $sso")
+        return res.status == "scan_started"
+    }
+
+    suspend fun deleteSong(songId: String): Boolean {
+        val sso = getSsoToken()
+        val res = nativeApi.deleteSong("Bearer $sso", songId)
+        return res.ids.contains(songId)
+    }
+
+    suspend fun deleteAlbum(albumId: String): Boolean {
+        val sso = getSsoToken()
+        val res = nativeApi.deleteAlbum("Bearer $sso", albumId)
+        return res.ids.contains(albumId)
+    }
+
     private fun body(r: SubsonicResponse): SubsonicBody {
         val b = r.response ?: throw IllegalStateException("Phản hồi rỗng")
         if (b.status != "ok") throw IllegalStateException(b.error?.message ?: "Máy chủ trả lỗi")
@@ -182,4 +310,19 @@ class SubsonicRepository(val config: ServerConfig) {
     suspend fun playlist(id: String) = body(api.playlist(id)).playlist
     suspend fun starredSongs() = body(api.starred()).starred2?.song ?: emptyList()
     suspend fun search(q: String) = body(api.search(q)).searchResult3 ?: SearchResult3()
+
+    /** Creates a new playlist seeded with [songIds]. */
+    suspend fun createPlaylist(name: String, songIds: List<String>) {
+        body(api.createPlaylist(name, songIds))
+    }
+
+    /** Appends [songIds] to an existing playlist. */
+    suspend fun addToPlaylist(playlistId: String, songIds: List<String>) {
+        body(api.updatePlaylist(playlistId, songIds))
+    }
+
+    /** Deletes a playlist (must be owned by the current user). */
+    suspend fun deletePlaylist(id: String) {
+        body(api.deletePlaylist(id))
+    }
 }

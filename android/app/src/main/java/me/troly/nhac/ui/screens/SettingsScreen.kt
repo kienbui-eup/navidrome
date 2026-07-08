@@ -31,8 +31,24 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
+import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.launch
 import me.troly.nhac.ui.LocalRepo
+
+// Audiophile settings additions
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.collectAsState
+import me.troly.nhac.ui.LocalPlayer
+import me.troly.nhac.playback.AudioDeviceHelper
 
 @Composable
 fun SettingsScreen() {
@@ -41,11 +57,83 @@ fun SettingsScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var pingResult by remember { mutableStateOf<String?>(null) }
+    var isAdmin by remember { mutableStateOf(false) }
+
+    LaunchedEffect(repo) {
+        isAdmin = repo.checkAdminStatus()
+    }
 
     val version = remember {
         runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
         }.getOrNull() ?: "—"
+    }
+
+    // Audiophile hardware monitoring additions
+    val player = LocalPlayer.current
+    val playerState by player.state.collectAsState()
+    val meta = playerState.current
+    
+    var activeDevice by remember { mutableStateOf(AudioDeviceHelper.getActiveDeviceDetails(context)) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            activeDevice = AudioDeviceHelper.getActiveDeviceDetails(context)
+            kotlinx.coroutines.delay(2000)
+        }
+    }
+    
+    val extras = meta?.extras
+    val suffix = extras?.getString("suffix")
+    val bitRate = extras?.getInt("bitRate") ?: 0
+    val bitDepth = extras?.getInt("bitDepth") ?: 0
+    val samplingRate = extras?.getInt("samplingRate") ?: 0
+    
+    val currentSourceText = remember(meta, suffix, bitDepth, samplingRate, bitRate) {
+        if (meta == null) {
+            "Không phát nhạc (Sẵn sàng)"
+        } else {
+            val fmt = suffix?.uppercase() ?: "AUDIO"
+            val resolution = if (bitDepth > 0 && samplingRate > 0) {
+                "${bitDepth}-bit / ${samplingRate / 1000.0} kHz"
+            } else if (bitRate > 0) {
+                "${bitRate} kbps"
+            } else {
+                "Chuẩn"
+            }
+            "$fmt • $resolution"
+        }
+    }
+    
+    val isDsdOrHighRes = remember(suffix, bitDepth) {
+        suffix?.lowercase() in setOf("dsf", "dff", "dsd") || bitDepth >= 24
+    }
+    
+    val (ledColor, forecastTitle, forecastDesc) = remember(meta, activeDevice, isDsdOrHighRes) {
+        if (meta == null) {
+            Triple(
+                Color(0xFF8E8E93), // Gray
+                "Chờ tín hiệu nhạc",
+                "Phát nhạc để đo lường đường truyền tín hiệu."
+            )
+        } else {
+            when {
+                activeDevice.isLossless && isDsdOrHighRes -> Triple(
+                    Color(0xFF00E676), // Green
+                    "Bit-Perfect Lossless (Trực tiếp)",
+                    "Tín hiệu tinh khiết tuyệt đối! Luồng dữ liệu giải mã Bit-Perfect trực tiếp qua phần cứng ngoài."
+                )
+                activeDevice.isHiResCapable -> Triple(
+                    Color(0xFF29B6F6), // Blue
+                    "Hi-Res Wireless (Không dây cao cấp)",
+                    "Đang phát Bluetooth chất lượng cao (LDAC/SSC). Vui lòng bật HD Audio trong cài đặt Bluetooth."
+                )
+                else -> Triple(
+                    Color(0xFFFFB300), // Amber
+                    "Standard Quality (Chất lượng tiêu chuẩn)",
+                    "Bị giới hạn bởi loa tích hợp hoặc băng thông kết nối. Khuyên dùng USB DAC hoặc tai nghe dây."
+                )
+            }
+        }
     }
 
     Column(
@@ -75,15 +163,93 @@ fun SettingsScreen() {
             ) { Text("Kiểm tra kết nối") }
         }
 
-        SettingsCard(Icons.Filled.GraphicEq, "Âm thanh") {
-            InfoLine("Chất lượng", "Nguyên bản (bit-perfect)")
-            InfoLine("Đầu ra", "Ưu tiên USB DAC khi cắm")
+        SettingsCard(Icons.Filled.GraphicEq, "Âm thanh & Thiết bị") {
+            InfoLine("Thiết bị ra", activeDevice.name)
+            InfoLine("Loại kết nối", activeDevice.techLabel)
+            InfoLine("Hỗ trợ tối đa", activeDevice.maxQualityForecast)
+            InfoLine("Nguồn nhạc", currentSourceText)
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(ledColor)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = forecastTitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = ledColor
+                        )
+                        Text(
+                            text = forecastDesc,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                }
+            }
+            
             Text(
-                "Phát nguyên gốc không nén lại, xuất trực tiếp qua DAC USB để giữ đúng bit và tần số lấy mẫu.",
+                "Mẹo: Hệ thống luôn tự động tối ưu dải động bằng luồng âm thanh PCM 32-bit Float không nén trước khi định tuyến qua phần cứng đầu ra.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 8.dp),
+                modifier = Modifier.padding(top = 10.dp),
             )
+        }
+
+        if (isAdmin) {
+            var scanStatus by remember { mutableStateOf<String?>(null) }
+            SettingsCard(Icons.Filled.Dns, "Quản trị / Admin") {
+                Text(
+                    "Quản lý máy chủ nhạc và tài nguyên hệ thống.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                scanStatus?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+                OutlinedButton(
+                    onClick = {
+                        scanStatus = "Đang gửi yêu cầu quét thư viện…"
+                        scope.launch {
+                            try {
+                                val success = repo.triggerLibraryScan()
+                                if (success) {
+                                    scanStatus = "Yêu cầu thành công: Đang quét thư viện!"
+                                    Toast.makeText(context, "Đã bắt đầu quét thư viện thành công!", Toast.LENGTH_LONG).show()
+                                } else {
+                                    scanStatus = "Lỗi: Không thể khởi động quét"
+                                    Toast.makeText(context, "Lỗi: Không thể khởi động quét", Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                scanStatus = "Lỗi: ${e.message}"
+                                Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    },
+                    modifier = Modifier.padding(top = 10.dp),
+                ) { Text("Quét lại thư viện (Rescan)") }
+            }
         }
 
         SettingsCard(Icons.Filled.Info, "Giới thiệu") {
