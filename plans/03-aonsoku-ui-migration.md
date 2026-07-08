@@ -132,16 +132,86 @@ Nhúng toàn bộ giao diện player Aonsoku (hiện chạy container riêng t�
 
 ## Phase 4 — Kiểm thử tính năng player trên dev + vá gap DSD
 
-**Làm gì:**
-1. Smoke toàn tính năng Aonsoku trên dev server với thư viện thật (copy vài album từ VM nếu cần, gồm ≥1 album DSF): browse album/artist, search, queue, playlist (đọc + sửa), radio, lyrics (plugin nd-lyrics), scrobble.
-2. DSD: phát file .dsf/.dff qua Aonsoku — kiểm tra server trả transcode được browser decode (fork đã fix quy ước ffprobe DSD `caafa1fc`; react-admin gửi codecProfiles clamp — Aonsoku KHÔNG gửi). Nếu lỗi: fix phía server (default transcoding cho player client `c=Aonsoku` hoặc dựa trên player record trong bảng player), KHÔNG fork sâu Aonsoku.
-3. Ghi các tính năng Aonsoku không hoạt động với Navidrome (nếu có) vào mục Backlog cuối file này thay vì cố fix trong plan.
+**ĐÃ CHẠY 2026-07-08 (API-level, không có browser automation).** Phương pháp: đọc `player/src/api/httpClient.ts` + `player/src/service/*.ts` để lấy chính xác endpoint/param Aonsoku gọi, replay bằng curl lên dev server thật (binary build `netgo,sqlite_fts5`, `ND_DATAFOLDER`/`ND_MUSICFOLDER` ở scratchpad, `tests/fixtures` + 2 file DSD64 thật sẵn có tại `~/Music/Music/Top nhạc trẻ Lossless Update 2026/DSD Test Album/` — không cần tải 2L).
+
+### Bảng tính năng → endpoint → kết quả
+
+Client name Aonsoku gửi (`c=`): **`Trợ lý nhạc`** (hằng số `appName` tại `player/src/utils/appName.ts:3`). Auth mặc định: TOKEN (`u`,`t=md5(pass+salt)`,`s=salt`, salt cố định `player/src/utils/salt.ts:4` = `40n50kuPl4y3r`), `v=1.16.0`, `f=json` — dựng bởi `queryParams()`/`getUrl()` tại `player/src/api/httpClient.ts:37-70`.
+
+| Tính năng | Endpoint (`/rest/...`) | Param chính | File nguồn Aonsoku | Kết quả replay |
+|---|---|---|---|---|
+| Login/ping | `ping.view`, `getOpenSubsonicExtensions.view` | u,t,s,v,c,f | `service/ping.ts`, `api/queryServerInfo.ts`, `api/pingServer.ts` | OK (status ok, openSubsonic=true, 6 extensions) |
+| Home/album list | `getAlbumList2.view` | type,size,offset,fromYear,toYear,genre | `service/albums.ts:18-44` | OK (newest, random) |
+| Album detail | `getAlbum.view`, `getAlbumInfo2.view` | id | `service/albums.ts:46-66` | OK |
+| Artist list/detail | `getArtists.view`, `getArtist.view`, `getArtistInfo.view` | id | `service/artists.ts` | OK |
+| Top songs | `getTopSongs.view` | artist (tên, không phải id) | `service/songs.ts:44-53` | OK |
+| Random songs | `getRandomSongs.view` | size,genre,fromYear,toYear | `service/songs.ts:17-34` | OK |
+| Get song | `getSong.view` | id | `service/songs.ts:67-76` | OK |
+| Search | `search3.view` | query (Navidrome dùng `""` khi rỗng — `service/search.ts:26`),artistCount,albumCount,songCount + offsets | `service/search.ts` | OK |
+| Genres | `getGenres.view`, `getSongsByGenre.view` | genre,count,offset | `service/genres.ts` | OK |
+| Playlist đọc | `getPlaylists.view`, `getPlaylist.view` | id | `service/playlists.ts:11-31` | OK |
+| Playlist tạo | `createPlaylist.view` (GET, query string) | name,songId[] | `service/playlists.ts:42-58` | OK (tạo + có entry) |
+| Playlist sửa | `updatePlaylist.view` (GET) | playlistId,name,comment,public,songIdToAdd[],songIndexToRemove[] | `service/playlists.ts:60-96` | OK (rename, thêm bài) |
+| Playlist xoá | `deletePlaylist.view` (method DELETE nhưng cùng REST path) | id | `service/playlists.ts:33-40` | OK |
+| Star/unstar | `star.view`, `unstar.view` | id | `service/star.ts` | OK |
+| Favorites | `getStarred2.view` | — | `service/songs.ts:36-42` | OK |
+| Scrobble | `scrobble.view` | id,submission,time | `service/scrobble.ts` | OK (nowPlaying + submit) |
+| Radio | `getInternetRadioStations.view`, `createInternetRadioStation.view`, `updateInternetRadioStation.view`, `deleteInternetRadioStation.view` | streamUrl,name,homepageUrl | `service/radios.ts` | OK |
+| Lyrics (OpenSubsonic) | `getLyricsBySongId.view` | id | `service/lyrics.ts:54-62` | OK (extension `songLyrics` có sẵn — plugin nd-lyrics không bắt buộc để trả `ok`, nội dung rỗng vì fixture không có lyric) |
+| Lyrics (fallback legacy) | `getLyrics.view` | artist,title | `service/lyrics.ts:102-108` | OK |
+| Lyrics (fallback ngoài) | — | — | `service/lyrics.ts:134-204` gọi thẳng `https://lrclib.net/api/get`, không qua Navidrome | N/A — external, không phải gap của server |
+| Scan status | `getScanStatus.view`, `startScan.view` | — | `service/library.ts` | OK |
+| **Stream (play)** | `stream.view` | **chỉ `id` + `estimateContentLength=true`** — **KHÔNG gửi `format`, KHÔNG gửi `maxBitRate`** | `api/httpClient.ts:143-154`, gọi từ `app/components/player/player.tsx:241` (`getSongStreamUrl(song.id)`) | Xem mục DSD |
+| Download | `download.view` | id,maxBitRate=0,format=raw | `api/httpClient.ts:156-162` | Không test riêng (cùng cơ chế `Router.Download`, `format=raw` tường minh → luôn raw, không phụ thuộc player) |
+| Podcast | `/api/podcasts*`, `/api/episodes*` (KHÔNG phải `/rest`) | header `APP-USERNAME`/`APP-SERVER-URL`, base URL = `podcasts.serviceUrl` (mặc định rỗng, tính năng tắt mặc định) | `api/podcastClient.ts`, `service/podcasts.ts` | **Không áp dụng cho Navidrome** — xem Backlog |
+
+### Cơ chế transcode DSD của fork (tóm tắt + file:line)
+
+Fork có **2 đường quyết định transcode song song, không dùng chung logic client-capability**:
+
+1. **Đường mới (OpenSubsonic extension, chỉ react-admin dùng)**: `POST /rest/getTranscodeDecision.view` (body JSON `codecProfiles`/`directPlayProfiles`/`transcodingProfiles` do `ui/src/transcode/browserProfile.js:80-95` dựng, có clamp `audioSamplerate <= 96000` cho codec `flac`) → `GET /rest/getTranscodeStream.view?transcodeParams=<jwt>`. Xử lý tại `server/subsonic/transcode.go:237-347`. Cap 96kHz áp dụng qua `applyCodecLimitations` (`core/stream/decider.go:407-434`) dựa trên `clientInfo.CodecProfiles` — **field này chỉ được set khi client tự gửi**.
+2. **Đường cũ (legacy `/rest/stream`, Aonsoku + mọi Subsonic client khác dùng)**: `server/subsonic/stream.go:20-54` → `deciderService.ResolveRequest` (`core/stream/legacy_client.go:61-121`) → `buildLegacyClientInfo` (`core/stream/legacy_client.go:15-57`). Hàm này **không bao giờ set `ClientInfo.CodecProfiles`** — chỉ set `DirectPlayProfiles`/`TranscodingProfiles`/`MaxAudioBitrate` dựa trên 3 nguồn duy nhất: `format=` request param, `maxBitRate=` request param, và **`Player.MaxBitRate`** (server-side, do fix issue #5583). Vì Aonsoku không gửi `format`/`maxBitRate`, quyết định hoàn toàn phụ thuộc `Player.MaxBitRate` (và `Player.TranscodingId` qua `applyServerOverride`, `core/stream/decider.go:163-187`).
+3. **Player record tự tạo mỗi login**: `core/players.go:34-78` (`Register`) — mỗi user+client+userAgent mới sinh 1 row bảng `player` (client field = đúng `c=` gửi lên, vd `Trợ lý nhạc`). Không có row nào ⇒ `TranscodingId=""`, `MaxBitRate=0` ⇒ `buildLegacyClientInfo` trả `DirectPlayProfiles: [{Protocols:[http]}]` không ràng buộc container/codec ⇒ **direct play mọi định dạng, kể cả DSD thô**.
+
+### Kết quả stream DSF/DFF qua Aonsoku — trước/sau cấu hình
+
+File test: DSD64 thật, `ffprobe` xác nhận `sample_rate=352800` (probe convention, chuẩn hoá về `2822400Hz/1-bit` theo `caafa1fc`), `bitRate` lưu trong DB = 5645 kbps (dsf) / 5644 kbps (dff).
+
+- **TRƯỚC cấu hình** (player mới toanh, `MaxBitRate=0`, `TranscodingId=""`): `GET /rest/stream?id=<dsf>&estimateContentLength=true&c=Trợ lý nhạc...` → `200`, `Content-Type: audio/x-dsf`, `Content-Length` = đúng size file gốc, **byte-for-byte giống hệt file nguồn** (`cmp` xác nhận identical) → **raw DSD, browser không decode được `audio/x-dsf`**. DFF tương tự (`audio/x-dff`, không test cmp riêng nhưng cùng đường code).
+- **Nguyên nhân**: không phải bug decider — decider hoạt động đúng thiết kế "không ràng buộc gì ⇒ direct play" (đây chính là cơ chế giữ bit-perfect cho UAPP). Gap là **thiếu cấu hình Player record** cho client `Trợ lý nhạc`, đúng như anti-pattern guard đã cảnh báo trước.
+- **SAU khi set `Player.MaxBitRate=320`** (qua `PUT /api/player/<id>` — API react-admin dùng cho `PlayerEdit.jsx`) cho đúng row `client=Trợ lý nhạc`: replay **y hệt call trên, không đổi gì phía Aonsoku** → `200`, `Content-Type: audio/ogg`, `ffprobe` xác nhận `codec_name=opus, sample_rate=48000` (48kHz là **cứng theo codec**, `core/stream/codec.go:59-65 codecFixedOutputSampleRate("opus")=48000`, không phụ thuộc client gửi gì) — **browser phát được**. DFF cũng transcode ra `audio/ogg` opus 48kHz tương tự. Log server: `originalBitRate=5645 originalFormat=dsf ... format=opus transcoding=true`.
+- **Đối chứng UAPP không bị ảnh hưởng**: replay cùng call `stream.view` với `c=UAPP` (player mới, chưa cấu hình gì) → `200`, `audio/x-dsf`, `cmp` xác nhận **byte-for-byte identical với file gốc** — bit-perfect giữ nguyên vì cấu hình chỉ áp cho đúng 1 row Player (`client=Trợ lý nhạc`), không đụng client khác.
+- **Đối chứng react-admin (đường mới)**: `POST getTranscodeDecision` với `codecProfiles` clamp 96kHz (giả lập `browserProfile.js`) cho cùng file DSF → quyết định transcode FLAC, `audioSamplerate=96000` (đúng cap); `GET getTranscodeStream` với token trả về → `ffprobe` xác nhận `flac, sample_rate=96000`. Xác nhận đường react-admin hoạt động đúng thiết kế độc lập với đường legacy.
+
+### Cấu hình đúng cho prod (từng bước)
+
+1. Đăng nhập Aonsoku tại `/play` **ít nhất 1 lần** với tài khoản sẽ dùng thường xuyên — Navidrome tự tạo row Player `client="Trợ lý nhạc"` (không cần thao tác gì thêm, xảy ra ở lần gọi `/rest/*` đầu tiên).
+2. Vào react-admin `/app` → **Player** (resource `player`) → tìm row có cột Client = `Trợ lý nhạc` (Name sẽ là `Trợ lý nhạc [<user-agent>]`) → Edit.
+3. Set field **Max bit rate = 320** (hoặc bất kỳ giá trị trong `BITRATE_CHOICES`, `ui/src/consts.js:34-36`, nhỏ hơn bitrate danh nghĩa của nguồn DSD ~5644kbps) — **để trống Transcoding** (không chọn field Transcoding, giữ resettable/rỗng).
+   - Tương đương API: `PUT /api/player/<id>` body `{"maxBitRate":320,"transcodingId":"",...các field khác giữ nguyên...}`.
+4. KHÔNG gán `Transcoding = flac audio` trực tiếp cho player này — xem lý do ở mục "Đề xuất sửa code" (gây lỗi/response hỏng, xem dưới), dùng `MaxBitRate` để tận dụng `DefaultDownsamplingFormat=opus` (`consts/consts.go:149`) đã có cap sample-rate cứng.
+5. Verify: phát 1 bài DSD từ Aonsoku (`/play`) → nghe được, không lỗi; nếu cần verify API thuần: `curl` `stream.view` với đúng `id` bài DSD, kiểm tra `Content-Type: audio/ogg` và không phải `audio/x-dsf`.
+6. Áp dụng y hệt (không cần thêm) cho các client Subsonic thô khác nếu sau này thêm — mỗi client là 1 row Player riêng, không ảnh hưởng lẫn nhau.
+
+### Đề xuất sửa code (CHƯA áp dụng — cần orchestrator duyệt trước khi đổi file)
+
+Trong lúc test đường "gán `TranscodingId=flac` trực tiếp cho player" (một cách cấu hình hợp lệ khác nhưng KHÔNG dùng cho prod vì 2 lý do dưới), phát hiện 2 gap có thật ở tầng `core/stream`, độc lập với Aonsoku:
+
+1. **`codecMaxSampleRate` (`core/stream/codec.go:69-77`) thiếu case `"flac"`.** Chỉ có `mp3→48000`, `aac→96000`. Khi 1 player được gán thẳng `TranscodingId=flac` (không qua `MaxBitRate`), `applyServerOverride` (`core/stream/decider.go:163-187`) tạo `ClientInfo` không có `CodecProfiles` → không cap nào áp dụng → DSD transcode ra FLAC **352.8kHz/24bit** (verify bằng `ffprobe`, log server: `sampleRate=352800`) — đúng loại hi-res mà chính comment của fork (`ui/src/transcode/browserProfile.js:26-31`) nói browser không chơi được ổn định. Đề xuất tối thiểu: thêm `case "flac": return 96000` vào `codecMaxSampleRate`, áp dụng đồng nhất cho cả đường legacy lẫn đường mới, không đụng logic direct-play (chỉ áp khi đã quyết định transcode).
+2. **`computeBitrate` (`core/stream/decider.go:379-405`) để `ts.Bitrate=0` khi nguồn lossless + đích lossless** (nhánh `else` ở dòng ~389 không set `ts.Bitrate`, chỉ kiểm tra điều kiện reject). Kết hợp `estimateContentLength=true` (Aonsoku luôn gửi) → `Stream.EstimatedContentLength()` (`core/stream/media_streamer.go:149-151`) tính `duration * 0 / 8 * 1024 = 0` → header `Content-Length: 0` sai → ghi thật FLAC nhiều byte hơn → lỗi `http: wrote more than the declared Content-Length` (đã tái hiện, log server + response rỗng/treo). Đây là bug tổng quát cho **mọi** transcode lossless→lossless (không riêng DSD) khi có `estimateContentLength=true`, không phải riêng Aonsoku. Đề xuất tối thiểu: set `ts.Bitrate` trong nhánh lossless→lossless bằng ước lượng hợp lý (vd `src.Bitrate` hoặc bitrate FLAC điển hình theo sample rate/depth) thay vì để mặc định 0.
+
+Cả 2 đều **không nằm trên đường dẫn được khuyến nghị cho prod** (dùng `MaxBitRate`, không gán `TranscodingId=flac` cho player Aonsoku) nên KHÔNG chặn cutover Phase 5. Đề xuất ghi nhận làm backlog/fix riêng, chờ duyệt.
+
+### Backlog — tính năng Aonsoku không tương thích Navidrome
+
+- **Podcast**: Aonsoku gọi 1 backend riêng (`/api/podcasts*`, `/api/episodes*`, header `APP-USERNAME`/`APP-SERVER-URL`, base URL cấu hình qua `podcasts.serviceUrl`) — đây là companion service riêng của Aonsoku, **không phải Subsonic API, Navidrome không và sẽ không implement**. Tính năng mặc định `active:false` (`player/src/store/app.store.ts:67-74`) nên không ảnh hưởng UX mặc định; nếu cần bật, phải tự deploy backend podcast riêng ngoài Navidrome — ghi backlog, không làm.
+- **Lyrics LRCLib**: fallback lyric đồng bộ gọi thẳng `lrclib.net` từ trình duyệt (`player/src/service/lyrics.ts:134-204`), không qua Navidrome — hoạt động độc lập, không phải gap.
 
 **Verification checklist:**
-- [ ] Checklist smoke ở trên pass từng mục, ghi kết quả vào plan.
-- [ ] DSF phát được qua Aonsoku (hoặc quyết định + thực hiện fix server-side, có test).
+- [x] Checklist smoke ở trên pass từng mục, ghi kết quả vào plan (bảng trên).
+- [x] DSF/DFF phát được qua Aonsoku sau khi cấu hình `Player.MaxBitRate=320` cho client `Trợ lý nhạc` (không cần đổi code) — verify bằng ffprobe (`opus/48000`) + đối chứng UAPP không đổi.
 
-**Anti-pattern guards**: không sửa transcode decider nếu nguyên nhân là thiếu player profile — cấu hình player record đúng cách trước.
+**Anti-pattern guards**: đã tuân thủ — không sửa transcode decider; gap là thiếu cấu hình Player record, xác nhận bằng cách cấu hình đúng qua API/UI có sẵn rồi verify lại. 2 gap code thật phát hiện thêm (case flac thiếu trong `codecMaxSampleRate`, bitrate=0 cho lossless→lossless) được báo cáo làm đề xuất, KHÔNG tự sửa.
 
 ## Phase 5 — Deploy prod + cutover nhac.troly.me
 
