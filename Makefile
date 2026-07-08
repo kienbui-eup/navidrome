@@ -174,6 +174,7 @@ docker-buildplayer: ##@Build Build only player frontend using Docker
 
 player/dist/index.html: $(PLAYER_SRC_FILES)
 	@(cd ./player && pnpm install --frozen-lockfile --ignore-scripts && pnpm run build)
+	@touch player/dist/.gitkeep # vite empties dist/; keep the tracked placeholder (Docker context needs player/dist/ present)
 
 docker-platforms: ##@Cross_Compilation List supported platforms
 	@echo "Supported platforms:"
