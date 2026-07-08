@@ -67,7 +67,21 @@ func (s *maintenanceService) DeleteAllMissingFiles(ctx context.Context) error {
 	return s.deleteMissing(ctx, nil)
 }
 
+// requireAdmin is defense-in-depth: the HTTP routes are already inside the
+// admin-only group, but files are removed from disk before the repo-level
+// admin check in DeleteMissing would run, so re-check here to guarantee a
+// misrouted call can never unlink files.
+func requireAdmin(ctx context.Context) error {
+	if user, ok := request.UserFrom(ctx); !ok || !user.IsAdmin {
+		return model.ErrNotAuthorized
+	}
+	return nil
+}
+
 func (s *maintenanceService) DeleteMediaFiles(ctx context.Context, ids []string) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	if len(ids) == 0 {
 		return nil
 	}
@@ -79,6 +93,9 @@ func (s *maintenanceService) DeleteMediaFiles(ctx context.Context, ids []string)
 }
 
 func (s *maintenanceService) DeleteAlbum(ctx context.Context, albumID string) error {
+	if err := requireAdmin(ctx); err != nil {
+		return err
+	}
 	if albumID == "" {
 		return nil
 	}

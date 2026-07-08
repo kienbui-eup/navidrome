@@ -71,7 +71,7 @@ func setupLibraryFile(t *testing.T, mfRepo *tests.MockMediaFileRepo) (libDir str
 	if err := os.MkdirAll(filepath.Dir(abs), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(abs, []byte("old-mp3-content"), 0o644); err != nil {
+	if err := os.WriteFile(abs, []byte("old-mp3-content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	mf = model.MediaFile{
@@ -227,7 +227,7 @@ func TestUpgraderApproveReplacesFile(t *testing.T) {
 	if err := os.MkdirAll(filepath.Dir(backup), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(backup, []byte("earlier-same-day-backup"), 0o644); err != nil {
+	if err := os.WriteFile(backup, []byte("earlier-same-day-backup"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -705,7 +705,7 @@ func TestUpgraderReplaceRejectsCollisionWithUnrelatedFile(t *testing.T) {
 	stubHappyPipeline(u, "new-flac-content")
 
 	unrelated := filepath.Join(libDir, "Queen", "01 - Bohemian Rhapsody.flac")
-	if err := os.WriteFile(unrelated, []byte("unrelated-preexisting-flac"), 0o644); err != nil {
+	if err := os.WriteFile(unrelated, []byte("unrelated-preexisting-flac"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
