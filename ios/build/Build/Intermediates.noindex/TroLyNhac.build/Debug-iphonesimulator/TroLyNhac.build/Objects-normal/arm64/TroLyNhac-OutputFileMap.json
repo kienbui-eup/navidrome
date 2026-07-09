@@ -1,0 +1,169 @@
+{
+  "" : {
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhac-primary.dia",
+    "emit-module-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhac-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhac-primary-emit-module.dia",
+    "pch" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhac-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhac-primary.swiftdeps"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/AudioDecisionEngine.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDecisionEngine.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDecisionEngine.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDecisionEngine.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDecisionEngine.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDecisionEngine.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDecisionEngine.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDecisionEngine.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDecisionEngine~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/AudioDeviceHelper.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDeviceHelper.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDeviceHelper.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDeviceHelper.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDeviceHelper.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDeviceHelper.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDeviceHelper.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDeviceHelper.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AudioDeviceHelper~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/Models.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Models.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Models.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Models.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Models.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Models.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Models.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Models.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Models~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/PlayerManager.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/PlayerManager.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/PlayerManager.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/PlayerManager.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/PlayerManager.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/PlayerManager.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/PlayerManager.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/PlayerManager.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/PlayerManager~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/SubsonicRepository.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SubsonicRepository.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SubsonicRepository.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SubsonicRepository.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SubsonicRepository.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SubsonicRepository.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SubsonicRepository.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SubsonicRepository.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SubsonicRepository~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/Theme.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Theme.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Theme.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Theme.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Theme.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Theme.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Theme.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Theme.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/Theme~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/TroLyNhacApp.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhacApp.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhacApp.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhacApp.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhacApp.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhacApp.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhacApp.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhacApp.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/TroLyNhacApp~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/AppShellView.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AppShellView.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AppShellView.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AppShellView.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AppShellView.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AppShellView.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AppShellView.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AppShellView.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/AppShellView~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/DetailViews.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/DetailViews.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/DetailViews.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/DetailViews.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/DetailViews.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/DetailViews.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/DetailViews.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/DetailViews.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/DetailViews~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/HomeView.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/HomeView.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/HomeView.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/HomeView.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/HomeView.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/HomeView.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/HomeView.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/HomeView.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/HomeView~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/LibraryView.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LibraryView.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LibraryView.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LibraryView.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LibraryView.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LibraryView.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LibraryView.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LibraryView.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LibraryView~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/LoginView.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LoginView.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LoginView.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LoginView.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LoginView.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LoginView.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LoginView.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LoginView.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/LoginView~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/MiniPlayerView.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/MiniPlayerView.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/MiniPlayerView.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/MiniPlayerView.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/MiniPlayerView.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/MiniPlayerView.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/MiniPlayerView.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/MiniPlayerView.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/MiniPlayerView~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/NowPlayingView.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/NowPlayingView.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/NowPlayingView.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/NowPlayingView.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/NowPlayingView.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/NowPlayingView.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/NowPlayingView.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/NowPlayingView.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/NowPlayingView~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/SearchView.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SearchView.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SearchView.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SearchView.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SearchView.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SearchView.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SearchView.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SearchView.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SearchView~partial.swiftmodule"
+  },
+  "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/SettingsView.swift" : {
+    "const-values" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SettingsView.swiftconstvalues",
+    "dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SettingsView.d",
+    "diagnostics" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SettingsView.dia",
+    "index-unit-output-path" : "/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SettingsView.o",
+    "swift-dependencies" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SettingsView.swiftdeps",
+    "swiftmodule" : "/Users/kien/Project/navidrome/ios/build/Build/Intermediates.noindex/TroLyNhac.build/Debug-iphonesimulator/TroLyNhac.build/Objects-normal/arm64/SettingsView~partial.swiftmodule"
+  }
+}

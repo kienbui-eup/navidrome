@@ -118,6 +118,7 @@ type configOptions struct {
 	Transcoding                     transcodingOptions   `json:",omitzero"`
 	LastFM                          lastfmOptions        `json:",omitzero"`
 	Deezer                          deezerOptions        `json:",omitzero"`
+	Soulseek                        soulseekOptions      `json:",omitzero"`
 	ListenBrainz                    listenBrainzOptions  `json:",omitzero"`
 	EnableScrobbleHistory           bool
 	Tags                            map[string]TagConf `json:",omitempty"`
@@ -219,9 +220,17 @@ type lastfmOptions struct {
 type deezerOptions struct {
 	Enabled  bool
 	Language string
+	ARL      string // Admin ARL cookie for lossless FLAC stream access
 
 	// Computed values
 	Languages []string // Computed from Language, split by comma
+}
+
+type soulseekOptions struct {
+	Enabled     bool
+	BaseURL     string
+	ApiKey      string
+	DownloadDir string
 }
 
 type listenBrainzOptions struct {
@@ -610,6 +619,7 @@ func disableExternalServices() {
 	Server.EnableM3UExternalAlbumArt = false
 	Server.LastFM.Enabled = false
 	Server.Deezer.Enabled = false
+	Server.Soulseek.Enabled = false
 	Server.ListenBrainz.Enabled = false
 	Server.Agents = ""
 	if Server.UILoginBackgroundURL == consts.DefaultUILoginBackgroundURL {
@@ -860,7 +870,7 @@ func setViperDefaults() {
 	viper.SetDefault("gatrackingid", "")
 	viper.SetDefault("enableinsightscollector", true)
 	viper.SetDefault("enablelogredacting", true)
-	viper.SetDefault("authrequestlimit", 5)
+	viper.SetDefault("authrequestlimit", 0)
 	viper.SetDefault("authwindowlength", 20*time.Second)
 	viper.SetDefault("passwordencryptionkey", "")
 	viper.SetDefault("extauth.userheader", "Remote-User")
@@ -909,6 +919,11 @@ func setViperDefaults() {
 	viper.SetDefault("lastfm.scrobblefirstartistonly", false)
 	viper.SetDefault("deezer.enabled", true)
 	viper.SetDefault("deezer.language", consts.DefaultInfoLanguage)
+	viper.SetDefault("deezer.arl", "")
+	viper.SetDefault("soulseek.enabled", false)
+	viper.SetDefault("soulseek.baseurl", "http://localhost:5030")
+	viper.SetDefault("soulseek.apikey", "")
+	viper.SetDefault("soulseek.downloaddir", "")
 	viper.SetDefault("listenbrainz.enabled", true)
 	viper.SetDefault("listenbrainz.baseurl", consts.DefaultListenBrainzBaseURL)
 	viper.SetDefault("listenbrainz.artistalgorithm", consts.DefaultListenBrainzArtistAlgorithm)

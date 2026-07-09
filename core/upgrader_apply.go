@@ -14,8 +14,11 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/vi2play/vi2play/adapters/soulseek"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/vi2play/vi2play/conf"
@@ -919,6 +922,122 @@ func (imp *importer) stageDownload(ctx context.Context, c *model.UpgradeCandidat
 // returns the body and the sanitized filename to stage under.
 func (imp *importer) openCandidateStream(ctx context.Context, c *model.UpgradeCandidate) (io.ReadCloser, string, error) {
 	switch c.Source {
+	case UpgradeSourceSoulseek:
+		parts := strings.Split(c.SourceRef, "|")
+		if len(parts) != 3 {
+			return nil, "", fmt.Errorf("invalid soulseek source reference %q", c.SourceRef)
+		}
+		username := parts[0]
+		remoteFilename := parts[1]
+		sizeStr := parts[2]
+		size, _ := strconv.ParseInt(sizeStr, 10, 64)
+
+		client := soulseek.NewClient(conf.Server.Soulseek.BaseURL, conf.Server.Soulseek.ApiKey)
+		
+		// 1. Queue/trigger download
+		err := client.Download(ctx, username, remoteFilename, size)
+		if err != nil {
+			return nil, "", fmt.Errorf("soulseek trigger download: %w", err)
+		}
+
+		// 2. Poll progress and state until complete or timeout
+		var foundItem *soulseek.DownloadItem
+		var pollErr error
+		ticker := time.NewTicker(3 * time.Second)
+		defer ticker.Stop()
+
+		timeout := time.After(10 * time.Minute)
+		completed := false
+
+		for !completed {
+			select {
+			case <-ctx.Done():
+				return nil, "", ctx.Err()
+			case <-timeout:
+				return nil, "", fmt.Errorf("soulseek download timed out")
+			case <-ticker.C:
+				var downloads []soulseek.DownloadItem
+				downloads, pollErr = client.GetDownloads(ctx)
+				if pollErr != nil {
+					log.Warn(ctx, "Upgrader: could not fetch download status, retrying", pollErr)
+					continue
+				}
+
+				// Find our item
+				var match *soulseek.DownloadItem
+				for _, item := range downloads {
+					// Compare remoteFilename and size to find our specific file in transfers
+					if item.Username == username && (item.GetFilename() == remoteFilename || path.Base(item.GetFilename()) == path.Base(remoteFilename)) {
+						match = &item
+						break
+					}
+				}
+
+				if match != nil {
+					foundItem = match
+					state := strings.ToLower(match.GetState())
+					if state == "completed" || state == "succeeded" || match.Progress >= 1.0 {
+						completed = true
+					} else if state == "failed" || state == "cancelled" || state == "errored" {
+						return nil, "", fmt.Errorf("soulseek download failed on peer: state=%s", state)
+					}
+				}
+			}
+		}
+
+		if foundItem == nil {
+			return nil, "", fmt.Errorf("soulseek download succeeded but was not found in transfer list")
+		}
+
+		// 3. Locate the completed file on-disk in downloadDir
+		downloadDir := conf.Server.Soulseek.DownloadDir
+		if downloadDir == "" {
+			return nil, "", fmt.Errorf("soulseek download_dir config is empty")
+		}
+
+		// Let's first check the standard completed path:
+		// <downloadDir>/completed/<username>/<remoteFilename> or <downloadDir>/<username>/<remoteFilename>
+		possiblePaths := []string{
+			filepath.Join(downloadDir, "completed", username, remoteFilename),
+			filepath.Join(downloadDir, username, remoteFilename),
+			filepath.Join(downloadDir, "completed", remoteFilename),
+			filepath.Join(downloadDir, remoteFilename),
+		}
+
+		var localPath string
+		for _, p := range possiblePaths {
+			if _, err := os.Stat(p); err == nil {
+				localPath = p
+				break
+			}
+		}
+
+		// Fallback: search recursively inside downloadDir for the exact filename
+		if localPath == "" {
+			targetBase := path.Base(remoteFilename)
+			err = filepath.Walk(downloadDir, func(p string, info os.FileInfo, walkErr error) error {
+				if walkErr != nil {
+					return nil // keep walking
+				}
+				if !info.IsDir() && info.Name() == targetBase && info.Size() == size {
+					localPath = p
+					return filepath.SkipAll // found! stop walk
+				}
+				return nil
+			})
+			if localPath == "" {
+				return nil, "", fmt.Errorf("download completed but file could not be located in download_dir: %q", remoteFilename)
+			}
+		}
+
+		// Open local file and return it
+		f, err := os.Open(localPath)
+		if err != nil {
+			return nil, "", fmt.Errorf("opening downloaded soulseek file: %w", err)
+		}
+
+		return f, safeAudioFilename(path.Base(remoteFilename)), nil
+
 	case UpgradeSourceArchive:
 		identifier, filename, ok := strings.Cut(c.SourceRef, "/")
 		if !ok || identifier == "" || filename == "" {

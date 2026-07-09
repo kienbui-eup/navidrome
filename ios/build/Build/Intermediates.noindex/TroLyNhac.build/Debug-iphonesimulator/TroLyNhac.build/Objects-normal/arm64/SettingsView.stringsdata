@@ -1,0 +1,176 @@
+{
+  "source": "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/SettingsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Cài đặt",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "Đăng xuất",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 129
+        }
+      },
+      {
+        "comment": "",
+        "key": "Thông báo",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 138
+        }
+      },
+      {
+        "comment": "",
+        "key": "Thông tin kết nối",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 20
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bảng điều khiển Admin",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "Ứng dụng",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "Máy chủ",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tài khoản",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trạng thái kết nối",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quyền quản trị viên",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "Có",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 67
+        }
+      },
+      {
+        "comment": "",
+        "key": "Đang yêu cầu quét...",
+        "location": {
+          "startingColumn": 55,
+          "startingLine": 84
+        }
+      },
+      {
+        "comment": "",
+        "key": "Quét lại toàn bộ thư viện",
+        "location": {
+          "startingColumn": 85,
+          "startingLine": 84
+        }
+      },
+      {
+        "comment": "",
+        "key": "Phiên bản",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "1.0.0 (TroLyNhac)",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 102
+        }
+      },
+      {
+        "comment": "",
+        "key": "Đăng xuất / Ngắt kết nối",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 112
+        }
+      },
+      {
+        "comment": "",
+        "key": "Huỷ",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Xác nhận",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bạn có chắc chắn muốn ngắt kết nối khỏi máy chủ Navidrome hiện tại không? Mọi thông tin tài khoản sẽ bị xoá.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 136
+        }
+      },
+      {
+        "comment": "",
+        "key": "Đồng ý",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 139
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tiến trình quét lại nhạc đã được kích hoạt thành công trên máy chủ! Thư viện nhạc mới sẽ tự động cập nhật sau vài phút.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 141
+        }
+      }
+    ]
+  },
+  "version": 1
+}

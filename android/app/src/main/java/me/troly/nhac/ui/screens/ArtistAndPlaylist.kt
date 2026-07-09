@@ -86,7 +86,7 @@ fun ArtistDetailScreen(artistId: String, onBack: () -> Unit, onAlbum: (String) -
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(if (isTv) 180.dp else 150.dp),
-        contentPadding = PaddingValues(12.dp),
+        contentPadding = PaddingValues(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 88.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
         item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
@@ -209,7 +209,7 @@ fun PlaylistDetailScreen(playlistId: String, onBack: () -> Unit, onNowPlaying: (
     var confirmDelete by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    LazyColumn(Modifier.fillMaxSize()) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 88.dp)) {
         item {
             Row(Modifier.fillMaxWidth().statusBarsPadding().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) {

@@ -1,16 +1,18 @@
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
-import { Divider, makeStyles } from '@material-ui/core'
+import { Divider, makeStyles, Typography } from '@material-ui/core'
 import clsx from 'clsx'
-import { useTranslate, MenuItemLink, getResources } from 'react-admin'
+import { useTranslate, MenuItemLink, getResources, usePermissions } from 'react-admin'
 import ViewListIcon from '@material-ui/icons/ViewList'
 import AlbumIcon from '@material-ui/icons/Album'
+import DnsIcon from '@material-ui/icons/Dns'
 import SubMenu from './SubMenu'
 import { humanize, pluralize } from 'inflection'
 import albumLists from '../album/albumLists'
 import PlaylistsSubMenu from './PlaylistsSubMenu'
 import LibrarySelector from '../common/LibrarySelector'
 import config from '../config'
+import { MdCloudDownload, MdHighQuality } from 'react-icons/md'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -32,6 +34,21 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.text.primary,
     fontWeight: 'bold',
   },
+  sectionHeader: {
+    padding: theme.spacing(2, 2, 0.5, 2),
+    color: theme.palette.text.secondary,
+    fontWeight: 'bold',
+    fontSize: '0.72rem',
+    textTransform: 'uppercase',
+    letterSpacing: '1.2px',
+    display: 'block',
+    opacity: 0.8,
+  },
+  divider: {
+    margin: theme.spacing(1.5, 0),
+    backgroundColor: theme.palette.divider,
+    opacity: 0.5,
+  },
 }))
 
 const translatedResourceName = (resource, translate) =>
@@ -52,6 +69,7 @@ const Menu = ({ dense = false }) => {
   const queue = useSelector((state) => state.player?.queue)
   const classes = useStyles({ addPadding: queue.length > 0 })
   const resources = useSelector(getResources)
+  const { permissions } = usePermissions()
 
   // TODO State is not persisted in mobile when you close the sidebar menu. Move to redux?
   const [state, setState] = useState({
@@ -76,7 +94,13 @@ const Menu = ({ dense = false }) => {
         to={`/${resource.name}`}
         activeClassName={classes.active}
         primaryText={translatedResourceName(resource, translate)}
-        leftIcon={resource.icon || <ViewListIcon />}
+        leftIcon={
+          resource.icon
+            ? React.isValidElement(resource.icon)
+              ? resource.icon
+              : React.createElement(resource.icon)
+            : <ViewListIcon />
+        }
         sidebarIsOpen={open}
         dense={dense}
         {...(isArtist && {
@@ -147,15 +171,33 @@ const Menu = ({ dense = false }) => {
         isActive={isRoleActive}
         activeClassName={classes.active}
         primaryText={name}
-        leftIcon={resource.icon || <ViewListIcon />}
+        leftIcon={
+          resource.icon
+            ? React.isValidElement(resource.icon)
+              ? resource.icon
+              : React.createElement(resource.icon)
+            : <ViewListIcon />
+        }
         sidebarIsOpen={open}
         dense={dense}
       />
     )
   }
 
-  const subItems = (subMenu) => (resource) =>
-    resource.hasList && resource.options && resource.options.subMenu === subMenu
+  const libraryResourceNames = ['library', 'missing', 'share']
+  const systemResourceNames = ['user', 'player', 'transcoding', 'plugin']
+
+  const libraryResources = resources.filter(
+    (resource) =>
+      libraryResourceNames.includes(resource.name) &&
+      (resource.hasList || resource.name === 'share'),
+  )
+
+  const systemResources = resources.filter(
+    (resource) =>
+      systemResourceNames.includes(resource.name) &&
+      (resource.hasList || resource.name === 'plugin'),
+  )
 
   return (
     <div
@@ -164,42 +206,74 @@ const Menu = ({ dense = false }) => {
         [classes.closed]: !open,
       })}
     >
-      {open && <LibrarySelector />}
-      <SubMenu
-        handleToggle={() => handleToggle('menuAlbumList')}
-        isOpen={state.menuAlbumList}
-        sidebarIsOpen={open}
-        name="menu.albumList"
-        icon={<AlbumIcon />}
-        dense={dense}
-      >
-        {Object.keys(albumLists).map((type) =>
-          renderAlbumMenuItemLink(type, albumLists[type]),
-        )}
-      </SubMenu>
-      {resources.filter(subItems(undefined)).map((resource) => (
-        <React.Fragment key={resource.name}>
-          {renderResourceMenuItemLink(resource)}
-          {resource.name === 'artist' && (
+      {/* Group 1: Cài đặt Thư viện */}
+      {libraryResources.length > 0 && (
+        <>
+          {open && (
+            <Typography variant="caption" className={classes.sectionHeader}>
+              {translate('menu.librarySettings', { _: 'Cài đặt Thư viện' })}
+            </Typography>
+          )}
+          {libraryResources.map((resource) => (
+            <React.Fragment key={resource.name}>
+              {renderResourceMenuItemLink(resource)}
+            </React.Fragment>
+          ))}
+          {permissions === 'admin' && (
             <>
-              {renderArtistRoleMenuItemLink('composer')}
-              {renderArtistRoleMenuItemLink('conductor')}
+              <MenuItemLink
+                key="import"
+                to="/import"
+                activeClassName={classes.active}
+                primaryText={translate('menu.import', { _: 'Import Nhạc' })}
+                leftIcon={<MdCloudDownload size={24} />}
+                sidebarIsOpen={open}
+                dense={dense}
+              />
+              <MenuItemLink
+                key="upgrade"
+                to="/upgrade"
+                activeClassName={classes.active}
+                primaryText={translate('menu.upgradeQuality', { _: 'Nâng cấp Chất lượng' })}
+                leftIcon={<MdHighQuality size={24} />}
+                sidebarIsOpen={open}
+                dense={dense}
+              />
             </>
           )}
-        </React.Fragment>
-      ))}
-      {config.devSidebarPlaylists && open ? (
-        <>
-          <Divider />
-          <PlaylistsSubMenu
-            state={state}
-            setState={setState}
-            sidebarIsOpen={open}
-            dense={dense}
-          />
         </>
-      ) : (
-        resources.filter(subItems('playlist')).map(renderResourceMenuItemLink)
+      )}
+
+      {/* Phân cách giữa hai nhóm */}
+      {libraryResources.length > 0 && systemResources.length > 0 && (
+        <Divider className={classes.divider} />
+      )}
+
+      {/* Group 2: Quản trị Hệ thống */}
+      {systemResources.length > 0 && (
+        <>
+          {open && (
+            <Typography variant="caption" className={classes.sectionHeader}>
+              {translate('menu.systemAdmin', { _: 'Quản trị Hệ thống' })}
+            </Typography>
+          )}
+          {systemResources.map((resource) => (
+            <React.Fragment key={resource.name}>
+              {renderResourceMenuItemLink(resource)}
+            </React.Fragment>
+          ))}
+          {permissions === 'admin' && (
+            <MenuItemLink
+              key="server"
+              to="/server"
+              activeClassName={classes.active}
+              primaryText={translate('menu.serverStatus', { _: 'Theo dõi Server VM' })}
+              leftIcon={<DnsIcon />}
+              sidebarIsOpen={open}
+              dense={dense}
+            />
+          )}
+        </>
       )}
     </div>
   )

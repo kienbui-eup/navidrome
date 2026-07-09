@@ -1,0 +1,80 @@
+{
+  "source": "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/SearchView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Tìm kiếm",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 38
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bài hát, album, nghệ sĩ...",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 50
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bài hát",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 85
+        }
+      },
+      {
+        "comment": "",
+        "key": "Album",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Không tìm thấy kết quả",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 126
+        }
+      },
+      {
+        "comment": "",
+        "key": "Thử tìm kiếm với từ khoá khác hoặc kiểm tra chính tả.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 130
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tìm nhạc chất lượng cao",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 146
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nhập từ khóa phía trên để tìm kiếm các bản nhạc Lossless nguyên bản từ máy chủ của bạn.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 150
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hi-Res",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 243
+        }
+      }
+    ]
+  },
+  "version": 1
+}

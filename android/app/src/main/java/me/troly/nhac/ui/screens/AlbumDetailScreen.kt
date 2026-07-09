@@ -2,6 +2,7 @@ package me.troly.nhac.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -113,20 +114,12 @@ fun AlbumDetailScreen(albumId: String, onBack: () -> Unit, onNowPlaying: () -> U
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = if (selectionMode) 88.dp else 0.dp),
+            contentPadding = PaddingValues(bottom = if (selectionMode) 160.dp else 88.dp),
         ) {
             item {
                 Box(Modifier.fillMaxWidth()) {
-                    // Blurred backdrop
-                    AsyncImage(
-                        model = coverUrl, contentDescription = null, contentScale = ContentScale.Crop,
-                        modifier = Modifier.matchParentSize().blur(40.dp),
-                    )
-                    Box(
-                        Modifier.matchParentSize().background(
-                            Brush.verticalGradient(listOf(Color(0x990B0B0D), Color(0xF20B0B0D))),
-                        ),
-                    )
+                    // Ambient Fluid moving artwork background
+                    me.troly.nhac.ui.player.AnimatedAmbientBackground(artworkUri = coverUrl, modifier = Modifier.matchParentSize())
                     Column(Modifier.fillMaxWidth().statusBarsPadding().padding(bottom = 12.dp)) {
                         Row(
                             Modifier.fillMaxWidth(),
@@ -158,17 +151,53 @@ fun AlbumDetailScreen(albumId: String, onBack: () -> Unit, onNowPlaying: () -> U
                                 }
                             }
                         }
-                        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .shadow(16.dp, RoundedCornerShape(20.dp))
+                                .background(
+                                    color = Color.White.copy(alpha = 0.04f),
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.01f))
+                                    ),
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                                .border(
+                                    width = 0.5.dp,
+                                    color = Color.White.copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                                .padding(vertical = 20.dp, horizontal = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             CoverImage(
                                 url = coverUrl, contentDescription = a.name, corner = 16.dp,
                                 modifier = Modifier.size(216.dp).shadow(20.dp, RoundedCornerShape(16.dp)),
                             )
                             Text(a.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold,
-                                color = Color.White, modifier = Modifier.padding(top = 14.dp))
-                            Text(listOfNotNull(a.artist, a.year?.toString(),
-                                a.songCount?.let { "$it bài" }).joinToString(" • "),
-                                style = MaterialTheme.typography.bodyMedium, color = Color(0xFFC4BBA6))
+                                color = Color.White, modifier = Modifier.padding(top = 14.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                            val totalSecs = remember(a.song) { a.song.fold(0) { acc, s -> acc + (s.duration ?: 0) } }
+                            val durationText = remember(totalSecs) {
+                                val mins = totalSecs / 60
+                                val secs = totalSecs % 60
+                                "${mins} phút ${secs} giây"
+                            }
+                            Text(
+                                text = listOfNotNull(
+                                    a.artist,
+                                    a.year?.toString(),
+                                    if (a.song.isNotEmpty()) "${a.song.size} bài • $durationText" else a.songCount?.let { "$it bài" }
+                                ).joinToString(" • "),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color(0xFFC4BBA6),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
                             Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Button(
                                     onClick = { player.play(a.song, 0); onNowPlaying() },
@@ -179,7 +208,13 @@ fun AlbumDetailScreen(albumId: String, onBack: () -> Unit, onNowPlaying: () -> U
                                     Icon(Icons.Filled.PlayArrow, contentDescription = null)
                                     Text("Phát", modifier = Modifier.padding(start = 4.dp))
                                 }
-                                OutlinedButton(onClick = { player.play(a.song.shuffled(), 0); onNowPlaying() }) {
+                                OutlinedButton(
+                                    onClick = { player.play(a.song.shuffled(), 0); onNowPlaying() },
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = Color.White
+                                    ),
+                                    border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f))
+                                ) {
                                     Icon(Icons.Filled.Shuffle, contentDescription = null)
                                     Text("Ngẫu nhiên", modifier = Modifier.padding(start = 4.dp))
                                 }

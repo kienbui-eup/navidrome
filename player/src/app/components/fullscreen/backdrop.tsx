@@ -51,7 +51,7 @@ function OtherBackdrop() {
           filter: `blur(${bigPlayerBlur.value}px)`,
         }}
       />
-      <div className="bg-background/50 absolute inset-0 w-full h-full z-0 transition-colors duration-1000" />
+      <div className="bg-background/65 md:bg-background/50 absolute inset-0 w-full h-full z-0 transition-colors duration-1000" />
     </div>
   )
 }
@@ -85,7 +85,7 @@ function MacBackdrop() {
         )}
       </ImageLoader>
       <div
-        className="absolute bg-background/50 inset-0 z-10"
+        className="absolute bg-background/65 md:bg-background/50 inset-0 z-10"
         style={{
           WebkitBackdropFilter: `blur(${bigPlayerBlur.value}px)`,
           backdropFilter: `blur(${bigPlayerBlur.value}px)`,

@@ -1,0 +1,64 @@
+{
+  "source": "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/HomeView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Vi2Play",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 37
+        }
+      },
+      {
+        "comment": "",
+        "key": "Không tải được dữ liệu",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "Thử lại",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 155
+        }
+      },
+      {
+        "comment": "",
+        "key": "Feel Every Detail",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 221
+        }
+      },
+      {
+        "comment": "",
+        "key": "Experience\nThe Real Sound",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 227
+        }
+      },
+      {
+        "comment": "",
+        "key": "Âm nhạc chất lượng cao cho từng khoảnh khắc của bạn.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 232
+        }
+      },
+      {
+        "comment": "",
+        "key": "KHÁM PHÁ NGAY",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 238
+        }
+      }
+    ]
+  },
+  "version": 1
+}

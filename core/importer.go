@@ -24,6 +24,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/vi2play/vi2play/adapters/deezer"
+	"github.com/vi2play/vi2play/adapters/ytdlp"
 	"github.com/vi2play/vi2play/conf"
 	"github.com/vi2play/vi2play/log"
 	"github.com/vi2play/vi2play/model"
@@ -67,7 +69,7 @@ type Importer interface {
 	// TestRemoteServer pings a remote server to validate address/credentials.
 	TestRemoteServer(ctx context.Context, s RemoteServer) error
 	// RemoteSearch searches songs/albums/artists on a saved remote server.
-	RemoteSearch(ctx context.Context, serverID, query string) (*RemoteSearchResult, error)
+	RemoteSearch(ctx context.Context, serverID, query string, limit int) (*RemoteSearchResult, error)
 	// RemoteArtist lists the albums of an artist on a remote server.
 	RemoteArtist(ctx context.Context, serverID, artistID string) ([]RemoteAlbum, error)
 	// RemoteAlbum lists the songs of an album on a remote server.
@@ -78,7 +80,7 @@ type Importer interface {
 	StartRemoteImport(ctx context.Context, serverID, kind, refID string, libraryID int) (string, int, error)
 	// RemotePreview streams a song from a remote server for in-browser preview
 	// (Range supported). The caller must close the response body.
-	RemotePreview(ctx context.Context, serverID, songID, rangeHeader string) (*http.Response, error)
+	RemotePreview(ctx context.Context, serverID, songID, format, rangeHeader string) (*http.Response, error)
 	// StartImportJob runs a batch import in the background and returns its job id.
 	StartImportJob(ctx context.Context, items []ImportJobItem, libraryID int) (string, error)
 	// GetImportJob returns a snapshot of a running/finished job.
@@ -466,6 +468,10 @@ func (imp *importer) runJob(ctx context.Context, jobID string, items []ImportJob
 			res, err = imp.ImportDriveFile(ctx, it.ID, it.Name, libraryID)
 		case "remote":
 			res, err = imp.importRemoteItem(ctx, it, libraryID)
+		case "youtube":
+			res, err = imp.ImportYouTubeTrack(ctx, it.ID, it.Name, libraryID)
+		case "deezer":
+			res, err = imp.ImportDeezerTrack(ctx, it.ID, it.Name, libraryID)
 		default:
 			err = fmt.Errorf("unknown item type %q", it.Type)
 		}
@@ -922,6 +928,70 @@ func (imp *importer) ImportDriveFile(ctx context.Context, fileID, name string, l
 	log.Info(ctx, "Imported audio file from Google Drive", "name", res.SavedName, "bytes", res.Bytes, "duplicate", res.Duplicate, "id", fileID)
 	return res, nil
 }
+
+func (imp *importer) ImportYouTubeTrack(ctx context.Context, videoID, name string, libraryID int) (*ImportResult, error) {
+	videoID = strings.TrimSpace(videoID)
+	if videoID == "" {
+		return nil, fmt.Errorf("empty YouTube video id")
+	}
+
+	stream, ext, err := ytdlp.DownloadAudio(ctx, videoID)
+	if err != nil {
+		return nil, err
+	}
+	defer stream.Close()
+
+	if name == "" {
+		name = videoID
+	}
+	finalName := name
+	if !strings.HasSuffix(strings.ToLower(finalName), "."+ext) {
+		finalName = finalName + "." + ext
+	}
+
+	meta := importMeta{libraryID: libraryID, source: "youtube", ref: videoID}
+	res, err := imp.persist(ctx, stream, finalName, meta)
+	if err != nil {
+		return nil, err
+	}
+	log.Info(ctx, "Imported audio file from YouTube Music", "name", res.SavedName, "bytes", res.Bytes, "duplicate", res.Duplicate, "id", videoID)
+	return res, nil
+}
+
+func (imp *importer) ImportDeezerTrack(ctx context.Context, trackID, name string, libraryID int) (*ImportResult, error) {
+	trackID = strings.TrimSpace(trackID)
+	if trackID == "" {
+		return nil, fmt.Errorf("empty Deezer track id")
+	}
+
+	arl := conf.Server.Deezer.ARL
+	// Download with FLAC preferred (lossless FLAC if ARL present)
+	stream, title, ext, err := deezer.DownloadDecryptedTrack(ctx, trackID, arl, true)
+	if err != nil {
+		return nil, err
+	}
+	defer stream.(io.Closer).Close()
+
+	if name == "" {
+		name = title
+	}
+	if name == "" {
+		name = trackID
+	}
+	finalName := name
+	if !strings.HasSuffix(strings.ToLower(finalName), "."+ext) {
+		finalName = finalName + "." + ext
+	}
+
+	meta := importMeta{libraryID: libraryID, source: "deezer", ref: trackID}
+	res, err := imp.persist(ctx, stream, finalName, meta)
+	if err != nil {
+		return nil, err
+	}
+	log.Info(ctx, "Imported audio file from Deezer", "name", res.SavedName, "bytes", res.Bytes, "duplicate", res.Duplicate, "id", trackID)
+	return res, nil
+}
+
 
 // driveScrapeDownload downloads a public file without an API key, handling the
 // large-file confirmation interstitial. Returns a response whose Body is the

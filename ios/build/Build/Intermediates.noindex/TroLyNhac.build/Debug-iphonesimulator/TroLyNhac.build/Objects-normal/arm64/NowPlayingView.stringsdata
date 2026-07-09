@@ -1,0 +1,136 @@
+{
+  "source": "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/NowPlayingView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Đang phát",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 170
+        }
+      },
+      {
+        "comment": "",
+        "key": "•",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 268
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hàng chờ",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 398
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nghe thêm từ ca sĩ này",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 411
+        }
+      },
+      {
+        "comment": "",
+        "key": "Phát các bản nhạc tương tự",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 414
+        }
+      },
+      {
+        "comment": "",
+        "key": "Gợi ý",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 425
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld kbps",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 443
+        }
+      },
+      {
+        "comment": "",
+        "key": "Đóng",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 474
+        }
+      },
+      {
+        "comment": "",
+        "key": "Đường truyền tín hiệu (Signal Path)",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 466
+        }
+      },
+      {
+        "comment": "",
+        "key": "Phân tích luồng phát thời gian thực chuẩn Roon",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 469
+        }
+      },
+      {
+        "comment": "",
+        "key": "Đóng",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 628
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cấu hình DSP / HQPlayer Filters",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 620
+        }
+      },
+      {
+        "comment": "",
+        "key": "Giả lập nâng mẫu âm học và bộ điều chế SDM",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 623
+        }
+      },
+      {
+        "comment": "",
+        "key": "Danh sách hàng đợi",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 745
+        }
+      },
+      {
+        "comment": "",
+        "key": "Đóng",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 749
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hàng đợi trống",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 758
+        }
+      }
+    ]
+  },
+  "version": 1
+}

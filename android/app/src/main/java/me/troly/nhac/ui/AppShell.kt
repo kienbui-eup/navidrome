@@ -3,8 +3,16 @@ package me.troly.nhac.ui
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.EaseInQuart
+import androidx.compose.animation.core.EaseOutQuart
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +24,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -32,6 +41,7 @@ import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Hearing
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.PlayArrow
@@ -46,9 +56,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -62,6 +74,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -74,6 +87,7 @@ import me.troly.nhac.data.subsonic.coverArtUrl
 import me.troly.nhac.ui.components.DeletePlaylistDialog
 import me.troly.nhac.ui.player.MiniPlayer
 import me.troly.nhac.ui.player.NowPlayingScreen
+import me.troly.nhac.ui.player.WidescreenSidebar
 import me.troly.nhac.ui.screens.AlbumDetailScreen
 import me.troly.nhac.ui.screens.ArtistDetailScreen
 import me.troly.nhac.ui.screens.HomeScreen
@@ -92,6 +106,9 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 @Composable
 fun AppShell() {
     val isTv = LocalIsTv.current
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isWideScreen = !isTv && configuration.screenWidthDp >= 600
+    val showWidescreenSidebar = !isTv && configuration.screenWidthDp >= 920
     val repo = LocalRepo.current
     val player = LocalPlayer.current
     val scope = rememberCoroutineScope()
@@ -156,7 +173,7 @@ fun AppShell() {
             ) { targetTab ->
                 Box(Modifier.fillMaxSize()) {
                     when (targetTab) {
-                        Tab.HOME -> HomeScreen(onAlbum = { openAlbum(it.id) })
+                        Tab.HOME -> HomeScreen(onAlbum = { openAlbum(it.id) }, onNavigateToSettings = { tab = Tab.SETTINGS })
                         Tab.SEARCH -> SearchScreen(onAlbum = { openAlbum(it.id) }, onNowPlaying = openNow)
                         Tab.LIBRARY -> LibraryScreen(
                             onAlbum = openAlbum,
@@ -167,30 +184,115 @@ fun AppShell() {
                     }
                 }
             }
+
+            // Detail overlays (nested inside Scaffold content so they inherit the Scaffold bottom bar padding)
+            artistId?.let { id ->
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    ArtistDetailScreen(id, onBack = { artistId = null }, onAlbum = openAlbum)
+                }
+            }
+            playlistId?.let { id ->
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    PlaylistDetailScreen(id, onBack = { playlistId = null }, onNowPlaying = openNow)
+                }
+            }
+            albumId?.let { id ->
+                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    AlbumDetailScreen(id, onBack = { albumId = null }, onNowPlaying = openNow)
+                }
+            }
         }
     }
 
     Box(Modifier.fillMaxSize()) {
         Surface(color = MaterialTheme.colorScheme.background) {
-            if (isTv) {
-                Row(Modifier.fillMaxSize()) {
-                    NavigationRail {
-                        NavigationRailItem(
-                            selected = false, onClick = { quickPlay() },
-                            icon = { Icon(Icons.Filled.PlayArrow, contentDescription = "Nghe nhanh") },
-                            label = { Text("Nghe nhanh") },
-                        )
-                        Tab.entries.forEach { t ->
+            if (isTv || isWideScreen) {
+                Row(
+                    Modifier
+                        .fillMaxSize()
+                        .then(if (isTv) Modifier else Modifier.systemBarsPadding())
+                ) {
+                    NavigationRail(
+                        containerColor = Color(0xFF111014),
+                        header = {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(vertical = 24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Hearing,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    text = "DECENT",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                        }
+                    ) {
+                        if (isTv) {
                             NavigationRailItem(
-                                selected = tab == t, onClick = { tab = t },
+                                selected = false, onClick = { quickPlay() },
+                                icon = { Icon(Icons.Filled.PlayArrow, contentDescription = "Nghe nhanh") },
+                                label = { Text("Nghe nhanh", fontSize = 11.sp) },
+                                colors = NavigationRailItemDefaults.colors(
+                                    unselectedIconColor = Color(0xFFA79C86),
+                                    unselectedTextColor = Color(0xFFA79C86)
+                                )
+                            )
+                        } else {
+                            NavigationRailItem(
+                                selected = false, onClick = { showPlaylistPicker = true },
+                                icon = { Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = "Danh sách phát") },
+                                label = { Text("Playlist", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                                colors = NavigationRailItemDefaults.colors(
+                                    unselectedIconColor = Color(0xFFA79C86),
+                                    unselectedTextColor = Color(0xFFA79C86)
+                                )
+                            )
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        Tab.entries.forEach { t ->
+                            val selected = tab == t
+                            NavigationRailItem(
+                                selected = selected, onClick = { tab = t },
                                 icon = { Icon(t.icon, contentDescription = t.label) },
-                                label = { Text(t.label) },
+                                label = { Text(t.label, fontSize = 11.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
+                                colors = NavigationRailItemDefaults.colors(
+                                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                                    unselectedIconColor = Color(0xFFA79C86),
+                                    unselectedTextColor = Color(0xFFA79C86),
+                                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                )
                             )
                         }
                     }
-                    Column(Modifier.weight(1f)) {
-                        content(Modifier.weight(1f))
-                        MiniPlayer(onExpand = openNow)
+                    if (showWidescreenSidebar) {
+                        Column(Modifier.weight(1.25f)) {
+                            content(Modifier.weight(1f))
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .width(1.dp)
+                                .background(Color(0xFF26211C))
+                        )
+                        WidescreenSidebar(
+                            onShowSignalPath = openNow,
+                            modifier = Modifier.weight(0.75f)
+                        )
+                    } else {
+                        Column(Modifier.weight(1f)) {
+                            content(Modifier.weight(1f))
+                            MiniPlayer(onExpand = openNow)
+                        }
                     }
                 }
             } else {
@@ -199,34 +301,29 @@ fun AppShell() {
                     bottomBar = {
                         Column {
                             MiniPlayer(onExpand = openNow)
-                            CompactBottomBar(
-                                current = tab,
-                                onSelect = { tab = it },
-                                onOpenPlaylists = { showPlaylistPicker = true },
-                            )
+                            if (artistId == null && playlistId == null && albumId == null) {
+                                CompactBottomBar(
+                                    current = tab,
+                                    onSelect = { tab = it },
+                                    onOpenPlaylists = { showPlaylistPicker = true },
+                                )
+                            }
                         }
                     },
                 ) { padding -> content(Modifier.padding(padding)) }
             }
         }
-
-        // Overlays (later = higher in the stack)
-        artistId?.let { id ->
-            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                ArtistDetailScreen(id, onBack = { artistId = null }, onAlbum = openAlbum)
-            }
-        }
-        playlistId?.let { id ->
-            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                PlaylistDetailScreen(id, onBack = { playlistId = null }, onNowPlaying = openNow)
-            }
-        }
-        albumId?.let { id ->
-            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                AlbumDetailScreen(id, onBack = { albumId = null }, onNowPlaying = openNow)
-            }
-        }
-        if (showNowPlaying) {
+        AnimatedVisibility(
+            visible = showNowPlaying,
+            enter = slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = tween(450, easing = EaseOutQuart)
+            ) + fadeIn(animationSpec = tween(450)),
+            exit = slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(400, easing = EaseInQuart)
+            ) + fadeOut(animationSpec = tween(400))
+        ) {
             NowPlayingScreen(onClose = { showNowPlaying = false })
         }
         if (showPlaylistPicker) {
@@ -354,6 +451,9 @@ private fun PlaylistRow(pl: Playlist, onClick: () -> Unit, onDelete: () -> Unit)
  */
 @Composable
 private fun CompactBottomBar(current: Tab, onSelect: (Tab) -> Unit, onOpenPlaylists: () -> Unit) {
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isVeryNarrow = configuration.screenWidthDp < 340
+
     Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 3.dp) {
         // Edge-to-edge: lift the bar above the system navigation/gesture bar so items
         // aren't covered. The Surface tint still fills down to the screen edge.
@@ -361,14 +461,14 @@ private fun CompactBottomBar(current: Tab, onSelect: (Tab) -> Unit, onOpenPlayli
             Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
-                .height(58.dp),
+                .height(if (isVeryNarrow) 52.dp else 58.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BarItem(Tab.HOME, current, onSelect, Modifier.weight(1f))
-            BarItem(Tab.SEARCH, current, onSelect, Modifier.weight(1f))
+            BarItem(Tab.HOME, current, onSelect, isVeryNarrow, Modifier.weight(1f))
+            BarItem(Tab.SEARCH, current, onSelect, isVeryNarrow, Modifier.weight(1f))
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Box(
-                    Modifier.size(46.dp)
+                    Modifier.size(if (isVeryNarrow) 38.dp else 46.dp)
                         .shadow(6.dp, CircleShape)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
@@ -377,18 +477,18 @@ private fun CompactBottomBar(current: Tab, onSelect: (Tab) -> Unit, onOpenPlayli
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.QueueMusic, contentDescription = "Playlist",
-                        tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(28.dp),
+                        tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(if (isVeryNarrow) 22.dp else 28.dp),
                     )
                 }
             }
-            BarItem(Tab.LIBRARY, current, onSelect, Modifier.weight(1f))
-            BarItem(Tab.SETTINGS, current, onSelect, Modifier.weight(1f))
+            BarItem(Tab.LIBRARY, current, onSelect, isVeryNarrow, Modifier.weight(1f))
+            BarItem(Tab.SETTINGS, current, onSelect, isVeryNarrow, Modifier.weight(1f))
         }
     }
 }
 
 @Composable
-private fun BarItem(tab: Tab, current: Tab, onSelect: (Tab) -> Unit, modifier: Modifier) {
+private fun BarItem(tab: Tab, current: Tab, onSelect: (Tab) -> Unit, isVeryNarrow: Boolean, modifier: Modifier) {
     val selected = tab == current
     val tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
     val source = remember { MutableInteractionSource() }
@@ -400,10 +500,12 @@ private fun BarItem(tab: Tab, current: Tab, onSelect: (Tab) -> Unit, modifier: M
         verticalArrangement = Arrangement.Center,
     ) {
         Icon(tab.icon, contentDescription = tab.label, tint = tint, modifier = Modifier.size(22.dp))
-        Text(
-            tab.label, color = tint, fontSize = 10.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            modifier = Modifier.padding(top = 2.dp),
-        )
+        if (!isVeryNarrow) {
+            Text(
+                tab.label, color = tint, fontSize = 10.sp,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                modifier = Modifier.padding(top = 2.dp),
+            )
+        }
     }
 }

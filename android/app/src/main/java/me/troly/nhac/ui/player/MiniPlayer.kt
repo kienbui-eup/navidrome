@@ -34,6 +34,7 @@ import kotlinx.coroutines.delay
 import me.troly.nhac.ui.LocalPlayer
 import me.troly.nhac.ui.components.CoverImage
 import me.troly.nhac.playback.AudioDeviceHelper
+import me.troly.nhac.ui.components.swipeGestures
 
 @Composable
 fun MiniPlayer(onExpand: () -> Unit) {
@@ -47,22 +48,34 @@ fun MiniPlayer(onExpand: () -> Unit) {
     }
     val progress = if (state.durationMs > 0) state.positionMs.toFloat() / state.durationMs else 0f
 
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isVeryNarrow = configuration.screenWidthDp < 340
+
     Surface(color = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.fillMaxWidth().clickable(onClick = onExpand)) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .swipeGestures(
+                    onSwipeUp = onExpand,
+                    onSwipeLeft = { player.next() },
+                    onSwipeRight = { player.previous() }
+                )
+                .clickable(onClick = onExpand)
+        ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = if (isVeryNarrow) 6.dp else 8.dp),
             ) {
                 CoverImage(
                     url = meta?.artworkUri?.toString(),
                     contentDescription = null,
                     corner = 8.dp,
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(if (isVeryNarrow) 42.dp else 48.dp),
                 )
                 Column(Modifier.weight(1f).padding(horizontal = 10.dp)) {
                     Text(
                         meta?.title?.toString() ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = if (isVeryNarrow) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
@@ -94,25 +107,29 @@ fun MiniPlayer(onExpand: () -> Unit) {
                         }
                     }
                     
-                    val summaryText = remember(suffix, bitDepth, samplingRate, bitRate, activeDevice) {
+                    val summaryText = remember(suffix, bitDepth, samplingRate, bitRate, activeDevice, isVeryNarrow) {
                         val src = if (!suffix.isNullOrBlank()) {
                             val fmt = suffix.uppercase()
-                            val spec = if (bitDepth > 0 && samplingRate > 0) {
-                                "${bitDepth}b/${samplingRate / 1000}k"
-                            } else if (bitRate > 0) {
-                                "${bitRate}k"
-                            } else ""
-                            if (spec.isNotEmpty()) "$fmt $spec" else fmt
+                            if (isVeryNarrow) {
+                                fmt
+                            } else {
+                                val spec = if (bitDepth > 0 && samplingRate > 0) {
+                                    "${bitDepth}b/${samplingRate / 1000}k"
+                                } else if (bitRate > 0) {
+                                    "${bitRate}k"
+                                } else ""
+                                if (spec.isNotEmpty()) "$fmt $spec" else fmt
+                            }
                         } else "Audio"
                         
                         val isTranscoded = me.troly.nhac.data.subsonic.isServerTranscodeSuffix(suffix)
-                        val transcodeStr = if (isTranscoded) " ➔ FLAC" else ""
+                        val transcodeStr = if (isTranscoded && !isVeryNarrow) " ➔ FLAC" else ""
                         
                         val shortDeviceName = when {
                             activeDevice.typeLabel == "USB DAC" -> "DAC"
-                            activeDevice.name.contains("Buds2 Pro", ignoreCase = true) -> "Buds 2 Pro"
+                            activeDevice.name.contains("Buds2 Pro", ignoreCase = true) -> "Buds"
                             activeDevice.name.contains("UP5", ignoreCase = true) -> "UP5"
-                            else -> activeDevice.typeLabel
+                            else -> if (isVeryNarrow) activeDevice.typeLabel.take(6) else activeDevice.typeLabel
                         }
                         
                         "$src$transcodeStr ➔ $shortDeviceName"
@@ -143,9 +160,11 @@ fun MiniPlayer(onExpand: () -> Unit) {
                         contentDescription = "Phát/Dừng", tint = MaterialTheme.colorScheme.onBackground,
                     )
                 }
-                IconButton(onClick = { player.next() }) {
-                    Icon(Icons.Filled.SkipNext, contentDescription = "Bài sau",
-                        tint = MaterialTheme.colorScheme.onBackground)
+                if (!isVeryNarrow) {
+                    IconButton(onClick = { player.next() }) {
+                        Icon(Icons.Filled.SkipNext, contentDescription = "Bài sau",
+                            tint = MaterialTheme.colorScheme.onBackground)
+                    }
                 }
             }
             LinearProgressIndicator(

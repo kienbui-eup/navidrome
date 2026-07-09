@@ -1,0 +1,88 @@
+{
+  "source": "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/AppShellView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Khám phá",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 76
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tìm kiếm",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 86
+        }
+      },
+      {
+        "comment": "",
+        "key": "Thư viện",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 98
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cài đặt",
+        "location": {
+          "startingColumn": 23,
+          "startingLine": 106
+        }
+      },
+      {
+        "comment": "",
+        "key": "Vi2Play",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 165
+        }
+      },
+      {
+        "comment": "",
+        "key": "Khám phá",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tìm kiếm",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 139
+        }
+      },
+      {
+        "comment": "",
+        "key": "Thư viện",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 153
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cài đặt",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 161
+        }
+      },
+      {
+        "comment": "",
+        "key": "Đóng",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 214
+        }
+      }
+    ]
+  },
+  "version": 1
+}

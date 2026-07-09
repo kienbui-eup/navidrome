@@ -23,8 +23,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import me.troly.nhac.data.subsonic.Song
 import me.troly.nhac.ui.LocalIsTv
 import me.troly.nhac.ui.rememberInteractionSource
@@ -76,12 +82,21 @@ fun SongRow(
                 )
             }
         } else {
-            Text(
-                text = "${index + 1}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isCurrent) accent else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.width(28.dp),
-            )
+            if (isCurrent) {
+                Box(Modifier.width(28.dp), contentAlignment = Alignment.Center) {
+                    me.troly.nhac.ui.player.AudioVisualizer(
+                        isPlaying = true,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            } else {
+                Text(
+                    text = "${index + 1}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.width(28.dp),
+                )
+            }
         }
         Column(Modifier.weight(1f).padding(start = 8.dp)) {
             Text(
@@ -90,13 +105,57 @@ fun SongRow(
                 color = if (isCurrent) accent else MaterialTheme.colorScheme.onBackground,
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
-            song.artist?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis,
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(top = 2.dp)
+            ) {
+                song.artist?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                }
+                song.suffix?.uppercase()?.let { suffix ->
+                    val isHiRes = suffix in listOf("DSD", "DSF", "DIFF", "FLAC")
+                    val isLossless = suffix in listOf("WAV", "ALAC", "AIF", "AIFF", "APE")
+                    
+                    val (textColor, bgBrush, borderColor) = when {
+                        isHiRes -> Triple(
+                            Color(0xFFFFD700), // Royal Gold
+                            Brush.horizontalGradient(listOf(Color(0xFF2E240D), Color(0xFF423310))),
+                            Color(0xFFFFD700).copy(alpha = 0.35f)
+                        )
+                        isLossless -> Triple(
+                            Color(0xFF00E5FF), // Cyan Lossless
+                            Brush.horizontalGradient(listOf(Color(0xFF07272F), Color(0xFF0B3A44))),
+                            Color(0xFF00E5FF).copy(alpha = 0.35f)
+                        )
+                        else -> Triple(
+                            Color(0xFF9E9E9E), // Slate Grey
+                            Brush.horizontalGradient(listOf(Color(0xFF1D1B22), Color(0xFF25232B))),
+                            Color(0xFF9E9E9E).copy(alpha = 0.15f)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .padding(start = 6.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(bgBrush)
+                            .border(width = 0.5.dp, color = borderColor, shape = RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = suffix,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = textColor,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
             }
         }
         Text(

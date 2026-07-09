@@ -684,6 +684,7 @@
     "sharedPlaylists": "Shared Playlists",
     "about": "About",
     "upgradeQuality": "Quality Upgrader",
+    "serverStatus": "VM Server Status",
     "openPlayer": "Music Player"
   },
   "player": {

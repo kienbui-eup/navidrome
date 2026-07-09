@@ -1,7 +1,11 @@
 package me.troly.nhac.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -102,17 +106,34 @@ fun LoginScreen(onConnected: (ServerConfig) -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            Box(
+                modifier = Modifier
+                    .size(90.dp)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape)
+                    .border(BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = me.troly.nhac.R.drawable.brand_logo),
+                    contentDescription = "Brand Logo",
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                )
+            }
             Text(
-                "vi2play",
+                "Vi2Play",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(top = 12.dp)
             )
             Text(
-                "Kết nối máy chủ Navidrome",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
+                "VIP PLAY • VIỆT PLAYER",
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 4.dp, bottom = 24.dp)
             )
 
             Card(

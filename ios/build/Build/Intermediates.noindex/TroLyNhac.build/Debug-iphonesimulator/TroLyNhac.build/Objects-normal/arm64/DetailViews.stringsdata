@@ -1,0 +1,208 @@
+{
+  "source": "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/DetailViews.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Xoá Album",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Xoá bài hát",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "Lỗi: %@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "Thử lại",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "Huỷ",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "Xoá vĩnh viễn",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bạn có chắc chắn muốn xoá vĩnh viễn toàn bộ album này khỏi ổ đĩa máy chủ không? Hành động này không thể hoàn tác.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "Huỷ",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 65
+        }
+      },
+      {
+        "comment": "",
+        "key": "Xoá",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 66
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bạn có muốn xoá vĩnh viễn bài hát '%@' khỏi ổ đĩa máy chủ không?",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "•",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 110
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld bài hát",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 113
+        }
+      },
+      {
+        "comment": "",
+        "key": "Phát tất cả",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Trộn bài",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 148
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld kbps",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 198
+        }
+      },
+      {
+        "comment": "",
+        "key": "Hi-Res",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 205
+        }
+      },
+      {
+        "comment": "",
+        "key": "Xoá bài hát khỏi máy chủ",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 235
+        }
+      },
+      {
+        "comment": "",
+        "key": "Album",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 330
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld Album",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 404
+        }
+      },
+      {
+        "comment": "",
+        "key": "Xoá Playlist",
+        "location": {
+          "startingColumn": 16,
+          "startingLine": 472
+        }
+      },
+      {
+        "comment": "",
+        "key": "Huỷ",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 473
+        }
+      },
+      {
+        "comment": "",
+        "key": "Xoá",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 474
+        }
+      },
+      {
+        "comment": "",
+        "key": "Bạn có chắc chắn muốn xoá danh sách phát này không? Thao tác này chỉ xoá danh sách, KHÔNG ảnh hưởng đến các tệp nhạc gốc.",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 476
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld bài hát",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 504
+        }
+      },
+      {
+        "comment": "",
+        "key": "Phát tất cả",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 520
+        }
+      }
+    ]
+  },
+  "version": 1
+}

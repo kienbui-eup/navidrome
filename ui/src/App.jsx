@@ -19,11 +19,20 @@ import album from './album'
 import artist from './artist'
 import playlist from './playlist'
 import radio from './radio'
+import { Player } from './audioplayer'
 import share from './share'
 import library from './library'
 import plugin from './plugin'
-import { Player } from './audioplayer'
 import customRoutes from './routes'
+
+// Import Material UI Icons for admin navigation sidebar
+import LibraryMusicIcon from '@material-ui/icons/LibraryMusic'
+import PeopleIcon from '@material-ui/icons/People'
+import DevicesIcon from '@material-ui/icons/Devices'
+import TransformIcon from '@material-ui/icons/Transform'
+import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline'
+import ExtensionIcon from '@material-ui/icons/Extension'
+import ShareIcon from '@material-ui/icons/Share'
 import {
   libraryReducer,
   themeReducer,
@@ -133,48 +142,48 @@ const Admin = (props) => {
           name="radio"
           {...(permissions === 'admin' ? radio.admin : radio.all)}
         />,
-        config.enableSharing && <Resource name="share" {...share} />,
         <Resource
           name="playlist"
           {...playlist}
           options={{ subMenu: 'playlist' }}
         />,
-        <Resource name="user" {...user} options={{ subMenu: 'settings' }} />,
+        permissions === 'admin' ? (
+          <Resource
+            name="library"
+            icon={LibraryMusicIcon}
+            {...library}
+          />
+        ) : null,
+        <Resource name="user" icon={PeopleIcon} {...user} />,
         <Resource
           name="player"
+          icon={DevicesIcon}
           {...player}
-          options={{ subMenu: 'settings' }}
         />,
         permissions === 'admin' ? (
           <Resource
             name="transcoding"
+            icon={TransformIcon}
             {...transcoding}
-            options={{ subMenu: 'settings' }}
           />
         ) : (
           <Resource name="transcoding" />
         ),
         permissions === 'admin' ? (
           <Resource
-            name="library"
-            {...library}
-            options={{ subMenu: 'settings' }}
-          />
-        ) : null,
-        permissions === 'admin' ? (
-          <Resource
             name="missing"
+            icon={ErrorOutlineIcon}
             {...missing}
-            options={{ subMenu: 'settings' }}
           />
         ) : null,
         permissions === 'admin' && config.pluginsEnabled ? (
           <Resource
             name="plugin"
+            icon={ExtensionIcon}
             {...plugin}
-            options={{ subMenu: 'settings' }}
           />
         ) : null,
+        config.enableSharing && <Resource name="share" icon={ShareIcon} {...share} />,
 
         <Resource name="translation" />,
         <Resource name="genre" />,

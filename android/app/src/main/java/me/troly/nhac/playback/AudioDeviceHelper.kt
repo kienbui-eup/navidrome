@@ -148,14 +148,37 @@ object AudioDeviceHelper {
             it.type == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE 
         }
         if (speakerDevice != null) {
+            val model = Build.MODEL ?: ""
+            val product = Build.PRODUCT ?: ""
+            val manufacturer = Build.MANUFACTURER ?: ""
+            val isSamsungFold = model.contains("fold", ignoreCase = true) || 
+                    product.contains("fold", ignoreCase = true) || 
+                    (manufacturer.contains("samsung", ignoreCase = true) && Build.DEVICE?.contains("fold", ignoreCase = true) == true)
+            
+            val name = if (isSamsungFold) {
+                "Loa kép Stereo Galaxy Z Fold (AKG Tuned)"
+            } else {
+                "Loa thiết bị (Built-in Speaker)"
+            }
+            val techLabel = if (isSamsungFold) {
+                "Hệ thống loa kép Stereo cân bằng tinh chỉnh bởi AKG"
+            } else {
+                "Loa tích hợp trên thiết bị"
+            }
+            val desc = if (isSamsungFold) {
+                "Đang phát qua hệ thống loa kép Stereo cao cấp của Samsung Galaxy Z Fold được tinh chỉnh kỹ lưỡng bởi AKG với công nghệ Dolby Atmos, mang lại trường âm thanh sống động, dải âm trung rõ nét và âm cao trong trẻo vượt trội khi mở màn hình chính."
+            } else {
+                "Phát qua loa ngoài tích hợp của điện thoại. Phù hợp nghe tạm thời, bị giới hạn về dải tần số, độ tách bạch âm thanh nổi (stereo width) và chất lượng dải trầm."
+            }
+            
             return ActiveDeviceDetails(
-                name = "Loa thiết bị (Built-in Speaker)",
+                name = name,
                 type = speakerDevice.type,
                 typeLabel = "Loa ngoài",
-                techLabel = "Loa tích hợp trên thiết bị",
+                techLabel = techLabel,
                 maxQualityForecast = "16-bit / 48kHz (Standard Audio)",
-                description = "Phát qua loa ngoài tích hợp của điện thoại. Phù hợp nghe tạm thời, bị giới hạn về dải tần số, độ tách bạch âm thanh nổi (stereo width) và chất lượng dải trầm.",
-                isHiResCapable = false,
+                description = desc,
+                isHiResCapable = isSamsungFold,
                 isLossless = true
             )
         }

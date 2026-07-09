@@ -3,6 +3,7 @@ import { Route } from 'react-router-dom'
 import Personal from './personal/Personal'
 import ImportMusic from './import/ImportMusic'
 import UpgradeQuality from './upgrade/UpgradeQuality'
+import ServerStatus from './server/ServerStatus'
 
 const routes = [
   <Route exact path="/personal" render={() => <Personal />} key={'personal'} />,
@@ -13,6 +14,7 @@ const routes = [
     render={() => <UpgradeQuality />}
     key={'upgrade'}
   />,
+  <Route exact path="/server" render={() => <ServerStatus />} key={'server'} />,
 ]
 
 export default routes

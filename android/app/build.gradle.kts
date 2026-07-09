@@ -30,14 +30,14 @@ android {
         // libFLAC's CMake disables fseeko on 32-bit Android, so 32-bit is excluded.
     }
 
-    // One APK per ABI (no fat universal APK) — arm64-v8a for phones/TV box,
-    // x86_64 for the emulator. installDebug auto-picks the device's ABI.
+    // Hỗ trợ cả arm64-v8a, x86_64 và armeabi-v7a (cho các box chạy Android 32-bit).
+    // Bật isUniversalApk để xuất thêm bản cài đặt vạn năng (Universal) tương thích mọi thiết bị.
     splits {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a", "x86_64")
-            isUniversalApk = false
+            include("arm64-v8a", "armeabi-v7a", "x86_64")
+            isUniversalApk = true
         }
     }
 

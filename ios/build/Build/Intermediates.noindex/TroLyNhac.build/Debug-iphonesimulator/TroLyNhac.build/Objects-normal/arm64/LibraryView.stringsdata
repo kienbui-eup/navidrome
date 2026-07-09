@@ -1,0 +1,104 @@
+{
+  "source": "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/LibraryView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Thư viện",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 44
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tạo Danh sách phát",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 57
+        }
+      },
+      {
+        "comment": "",
+        "key": "Thư viện",
+        "location": {
+          "startingColumn": 28,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Yêu thích",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Danh sách phát",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 27
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nghệ sĩ",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tên danh sách phát",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Huỷ",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 59
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tạo",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Nhập tên danh sách phát mới muốn tạo trên máy chủ Navidrome.",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 62
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld bài hát",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 263
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld album",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 306
+        }
+      }
+    ]
+  },
+  "version": 1
+}

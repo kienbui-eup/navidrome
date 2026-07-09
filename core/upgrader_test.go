@@ -3,6 +3,8 @@ package core
 import (
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -340,5 +342,78 @@ func TestUpgraderCancelScan(t *testing.T) {
 	_, scanned, total, _ := u.ScanStatus()
 	if scanned >= total {
 		t.Errorf("scanned/total = %d/%d, expected the scan to stop early after cancellation", scanned, total)
+	}
+}
+
+func TestUpgraderSoulseekScan(t *testing.T) {
+	withTestUpgradeConfig(t)
+	conf.Server.Upgrade.Sources = "soulseek"
+	conf.Server.Soulseek.Enabled = true
+
+	// Set up mock Soulseek REST server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if r.Method == "POST" && r.URL.Path == "/api/v0/searches" {
+			w.Write([]byte(`{"id":"soulseek-search-uuid"}`))
+			return
+		}
+		if r.Method == "GET" && r.URL.Path == "/api/v0/searches/soulseek-search-uuid" {
+			w.Write([]byte(`{
+				"id": "soulseek-search-uuid",
+				"searchText": "Queen Bohemian Rhapsody",
+				"results": [
+					{
+						"username": "flac_collector",
+						"files": [
+							{
+								"filename": "Queen/A Night at the Opera/Bohemian Rhapsody.flac",
+								"size": 45000000,
+								"bitRate": 1411,
+								"extension": "flac",
+								"length": 355
+							}
+						]
+					}
+				]
+			}`))
+			return
+		}
+	}))
+	defer server.Close()
+
+	conf.Server.Soulseek.BaseURL = server.URL
+
+	ds, mfRepo, candRepo := newTestUpgradeDS()
+	mfRepo.SetData(model.MediaFiles{
+		{ID: "mf1", LibraryID: 1, Artist: "Queen", Title: "Bohemian Rhapsody", Suffix: "mp3", BitRate: 128, Duration: 355},
+	})
+
+	u := NewUpgrader(ds, nil, nil)
+
+	if err := u.StartScan(context.Background(), 0, nil); err != nil {
+		t.Fatalf("StartScan() error = %v", err)
+	}
+	waitScanDone(t, u, 2*time.Second)
+
+	_, scanned, total, found := u.ScanStatus()
+	if total != 1 || scanned != 1 || found != 1 {
+		t.Errorf("ScanStatus() total/scanned/found = %d/%d/%d, want 1/1/1", total, scanned, found)
+	}
+
+	all, err := candRepo.GetAll()
+	if err != nil {
+		t.Fatalf("GetAll() error = %v", err)
+	}
+	if len(all) != 1 {
+		t.Fatalf("len(candidates) = %d, want 1", len(all))
+	}
+
+	c := all[0]
+	if c.MediaFileID != "mf1" || c.Source != "soulseek" || c.SourceRef != "flac_collector|Queen/A Night at the Opera/Bohemian Rhapsody.flac|45000000" {
+		t.Errorf("unexpected candidate: %+v", c)
+	}
+	if c.Format != "flac" {
+		t.Errorf("candidate format = %q, want flac", c.Format)
 	}
 }

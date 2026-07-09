@@ -17,7 +17,41 @@ import {
   useTranslate,
   useVersion,
 } from 'react-admin'
-import Logo from '../icons/android-icon-192x192.png'
+const Vi2PlayLogo = ({ size = 110 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 100 100"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ filter: 'drop-shadow(0px 6px 15px rgba(197, 168, 128, 0.45))' }}
+  >
+    <defs>
+      <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#F1E5AC" />
+        <stop offset="50%" stopColor="#C5A880" />
+        <stop offset="100%" stopColor="#8A6F48" />
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="44" stroke="url(#goldGrad)" strokeWidth="3" fill="rgba(10, 10, 10, 0.85)" />
+    <circle cx="50" cy="50" r="38" stroke="url(#goldGrad)" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
+    <circle cx="50" cy="50" r="32" stroke="url(#goldGrad)" strokeWidth="0.5" opacity="0.3" />
+    
+    <path
+      d="M28 35 C28 35, 34 68, 48 78 C49 79, 51 79, 52 78 C66 68, 72 35, 72 35"
+      stroke="url(#goldGrad)"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      opacity="0.8"
+    />
+    <path
+      d="M44 38 L62 50 L44 62 Z"
+      fill="url(#goldGrad)"
+      style={{ filter: 'drop-shadow(0px 2px 5px rgba(0,0,0,0.5))' }}
+    />
+  </svg>
+)
+
 
 import Notification from './Notification'
 import useCurrentTheme from '../themes/useCurrentTheme'
@@ -134,16 +168,23 @@ const FormLogin = ({ loading, handleSubmit, validate }) => {
           <div className={classes.main}>
             <Card className={classes.card}>
               <div className={classes.avatar}>
-                <img src={Logo} className={classes.icon} alt={'logo'} />
+                <Vi2PlayLogo />
               </div>
-              <div className={classes.systemName}>
+              <div className={classes.systemName} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '1.2em' }}>
                 <a
                   href="https://www.vi2play.org"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={classes.systemNameLink}
+                  style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
                 >
-                  {APP_NAME}
+                  <div style={{ fontSize: '2.1rem', fontWeight: '900', fontFamily: "'Outfit', 'Inter', sans-serif", letterSpacing: '2px', display: 'inline-block', lineHeight: 1 }}>
+                    <span style={{ background: 'linear-gradient(135deg, #F1E5AC 0%, #C5A880 50%, #8A6F48 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Vi2</span>
+                    <span style={{ color: '#FFFFFF' }}>Play</span>
+                  </div>
+                  <span style={{ fontSize: '9px', tracking: '0.25em', letterSpacing: '3px', color: '#C5A880', fontWeight: 'bold', marginTop: '8px', textTransform: 'uppercase', opacity: 0.85 }}>
+                    VIP PLAY • VIỆT PLAYER
+                  </span>
                 </a>
               </div>
               {config.welcomeMessage && (
@@ -266,7 +307,16 @@ const FormSignUp = ({ loading, handleSubmit, validate }) => {
           <div className={classes.main}>
             <Card className={classes.card}>
               <div className={classes.avatar}>
-                <img src={Logo} className={classes.icon} alt={'logo'} />
+                <Vi2PlayLogo />
+              </div>
+              <div className={classes.systemName} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '1.2em' }}>
+                <div style={{ fontSize: '2.1rem', fontWeight: '900', fontFamily: "'Outfit', 'Inter', sans-serif", letterSpacing: '2px', display: 'inline-block', lineHeight: 1 }}>
+                  <span style={{ background: 'linear-gradient(135deg, #F1E5AC 0%, #C5A880 50%, #8A6F48 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Vi2</span>
+                  <span style={{ color: '#FFFFFF' }}>Play</span>
+                </div>
+                <span style={{ fontSize: '9px', tracking: '0.25em', letterSpacing: '3px', color: '#C5A880', fontWeight: 'bold', marginTop: '8px', textTransform: 'uppercase', opacity: 0.85 }}>
+                  VIP PLAY • VIỆT PLAYER
+                </span>
               </div>
               <div className={classes.welcome}>
                 {translate('ra.auth.welcome1')}

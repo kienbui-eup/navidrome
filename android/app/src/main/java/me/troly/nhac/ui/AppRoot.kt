@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.LocalContext
 import me.troly.nhac.data.subsonic.ServerConfig
 import me.troly.nhac.data.subsonic.SubsonicRepository
 import me.troly.nhac.playback.PlayerConnection
+import me.troly.nhac.playback.RecommendationManager
 import me.troly.nhac.ui.tv.TvApp
 
 /**
@@ -24,10 +25,11 @@ fun AppRoot(config: ServerConfig) {
     }
     val repo = remember(config) { SubsonicRepository(config) }
     val player = remember(config) { PlayerConnection(context.applicationContext, config) }
+    val recManager = remember { RecommendationManager(context.applicationContext) }
 
     DisposableEffect(player) { onDispose { player.release() } }
 
-    ProvideAppEnv(isTv = isTv, player = player, repo = repo) {
+    ProvideAppEnv(isTv = isTv, player = player, repo = repo, recManager = recManager) {
         if (isTv) TvApp() else AppShell()
     }
 }

@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/vi2play/vi2play/adapters/soulseek"
 	"github.com/vi2play/vi2play/conf"
 	"github.com/vi2play/vi2play/core/ffmpeg"
 	"github.com/vi2play/vi2play/log"
@@ -19,15 +21,17 @@ import (
 // Upgrade candidate sources, per the "Matching" table in
 // docs/superpowers/specs/2026-07-06-quality-upgrader-design.md.
 const (
-	UpgradeSourceArchive = "archive"
-	UpgradeSourceDrive   = "drive"
-	UpgradeSourceRSS     = "rss"
+	UpgradeSourceArchive  = "archive"
+	UpgradeSourceDrive    = "drive"
+	UpgradeSourceRSS      = "rss"
+	UpgradeSourceSoulseek = "soulseek"
 )
 
 var knownUpgradeSources = map[string]bool{
-	UpgradeSourceArchive: true,
-	UpgradeSourceDrive:   true,
-	UpgradeSourceRSS:     true,
+	UpgradeSourceArchive:  true,
+	UpgradeSourceDrive:    true,
+	UpgradeSourceRSS:      true,
+	UpgradeSourceSoulseek: true,
 }
 
 // upgradeSearchDelay is the pause observed between remote search calls to a
@@ -393,6 +397,8 @@ func (u *upgrader) searchSource(ctx context.Context, source string, mf model.Med
 		return u.searchDrive(ctx, mf)
 	case UpgradeSourceRSS:
 		return u.searchRSS(ctx, mf)
+	case UpgradeSourceSoulseek:
+		return u.searchSoulseek(ctx, mf)
 	default:
 		return nil, fmt.Errorf("unknown upgrade source %q", source)
 	}
@@ -446,6 +452,95 @@ func (u *upgrader) searchArchive(ctx context.Context, mf model.MediaFile) ([]upg
 			})
 		}
 	}
+	return matches, nil
+}
+
+func (u *upgrader) searchSoulseek(ctx context.Context, mf model.MediaFile) ([]upgradeMatch, error) {
+	if !conf.Server.Soulseek.Enabled {
+		return nil, nil
+	}
+
+	query := strings.TrimSpace(mf.Artist + " " + mf.Title)
+	if query == "" {
+		return nil, nil
+	}
+
+	client := soulseek.NewClient(conf.Server.Soulseek.BaseURL, conf.Server.Soulseek.ApiKey)
+	searchID, err := client.Search(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("soulseek search trigger: %w", err)
+	}
+
+	var resp *soulseek.SearchResponse
+	// Poll for results up to 5 times (total of ~7.5 seconds) since Soulseek results are asynchronous
+	for i := 0; i < 5; i++ {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(1500 * time.Millisecond):
+		}
+
+		resp, err = client.GetResults(ctx, searchID)
+		if err != nil {
+			log.Warn(ctx, "Upgrader: could not poll Soulseek search results, retrying", "searchID", searchID, err)
+			continue
+		}
+		if len(resp.Results) > 0 {
+			break
+		}
+	}
+
+	if resp == nil || len(resp.Results) == 0 {
+		return nil, nil
+	}
+
+	original := originalQuality(mf)
+	var matches []upgradeMatch
+
+	for _, res := range resp.Results {
+		if ctx.Err() != nil {
+			return matches, ctx.Err()
+		}
+		for _, f := range res.Files {
+			if strings.ToLower(f.Extension) != "flac" {
+				continue
+			}
+
+			hasDur := f.Length > 0
+			var deltaSec float64
+			if hasDur {
+				deltaSec = float64(f.Length) - float64(mf.Duration)
+			}
+
+			// We fuzzy match the base file name (excluding folders)
+			baseName := path.Base(f.Filename)
+			score := matchScore(mf.Artist, mf.Title, baseName, hasDur, deltaSec)
+			if score < conf.Server.Upgrade.MinMatchScore {
+				continue
+			}
+
+			q := qualityTier{
+				Lossless:    true,
+				BitRateKbps: 1000,
+			}
+			if !candidateWins(original, q) {
+				continue
+			}
+
+			// Encode peer username, remote filename and size into sourceRef separated by "|"
+			ref := fmt.Sprintf("%s|%s|%d", res.Username, f.Filename, f.Size)
+
+			matches = append(matches, upgradeMatch{
+				source:     UpgradeSourceSoulseek,
+				sourceRef:  ref,
+				title:      baseName,
+				format:     "flac",
+				estBitRate: 1000,
+				matchScore: score,
+			})
+		}
+	}
+
 	return matches, nil
 }
 

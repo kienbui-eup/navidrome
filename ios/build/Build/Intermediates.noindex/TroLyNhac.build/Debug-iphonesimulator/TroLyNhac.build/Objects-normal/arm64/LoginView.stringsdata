@@ -1,0 +1,88 @@
+{
+  "source": "/Users/kien/Project/navidrome/ios/TroLyNhac/Views/LoginView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Vi2Play",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "VIP PLAY • VIỆT PLAYER",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 69
+        }
+      },
+      {
+        "comment": "",
+        "key": "ĐỊA CHỈ MÁY CHỦ",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 78
+        }
+      },
+      {
+        "comment": "",
+        "key": "https://example.com",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 88
+        }
+      },
+      {
+        "comment": "",
+        "key": "TÊN ĐĂNG NHẬP",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 105
+        }
+      },
+      {
+        "comment": "",
+        "key": "Tài khoản",
+        "location": {
+          "startingColumn": 43,
+          "startingLine": 115
+        }
+      },
+      {
+        "comment": "",
+        "key": "MẬT KHẨU",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 131
+        }
+      },
+      {
+        "comment": "",
+        "key": "Mật khẩu",
+        "location": {
+          "startingColumn": 45,
+          "startingLine": 141
+        }
+      },
+      {
+        "comment": "",
+        "key": "Đang kết nối...",
+        "location": {
+          "startingColumn": 46,
+          "startingLine": 197
+        }
+      },
+      {
+        "comment": "",
+        "key": "Kết nối máy chủ",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 197
+        }
+      }
+    ]
+  },
+  "version": 1
+}

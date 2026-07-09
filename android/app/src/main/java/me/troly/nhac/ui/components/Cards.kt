@@ -29,6 +29,10 @@ import me.troly.nhac.ui.LocalRepo
 import me.troly.nhac.ui.rememberInteractionSource
 import me.troly.nhac.ui.tvFocusable
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+
 @Composable
 fun AlbumCard(album: Album, repo: SubsonicRepository, onClick: () -> Unit) {
     val isTv = LocalIsTv.current
@@ -46,14 +50,21 @@ fun AlbumCard(album: Album, repo: SubsonicRepository, onClick: () -> Unit) {
         CoverImage(
             url = repo.config.coverArtUrl(album.coverArt, 400),
             contentDescription = album.name,
-            corner = 12.dp,
-            modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+            corner = 14.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .border(
+                    width = 0.5.dp,
+                    color = Color.White.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(14.dp)
+                ),
         )
         Text(
             album.name,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = Color.White,
             maxLines = 1, overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = 8.dp),
         )
@@ -61,7 +72,7 @@ fun AlbumCard(album: Album, repo: SubsonicRepository, onClick: () -> Unit) {
             Text(
                 it,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Color(0xFFB0A695), // Premium gold-tinted grey for warm contrast
                 maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }

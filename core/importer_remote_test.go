@@ -209,7 +209,7 @@ func TestRemoteSearchAndBrowse(t *testing.T) {
 	srv := fakeSubsonic(t, "admin", "secret")
 	s := saveTestServer(t, imp, ctx, srv.URL)
 
-	res, err := imp.RemoteSearch(ctx, s.ID, "song")
+	res, err := imp.RemoteSearch(ctx, s.ID, "song", 50)
 	if err != nil {
 		t.Fatalf("RemoteSearch: %v", err)
 	}
@@ -229,7 +229,7 @@ func TestRemoteSearchAndBrowse(t *testing.T) {
 		t.Fatalf("RemoteAlbum = %+v, %v", songs, err)
 	}
 
-	resEmpty, err := imp.RemoteSearch(ctx, s.ID, "  ")
+	resEmpty, err := imp.RemoteSearch(ctx, s.ID, "  ", 50)
 	if err != nil {
 		t.Fatalf("empty query RemoteSearch failed: %v", err)
 	}
@@ -237,7 +237,7 @@ func TestRemoteSearchAndBrowse(t *testing.T) {
 		t.Fatalf("empty query RemoteSearch should auto-populate and return songs")
 	}
 
-	if _, err := imp.RemoteSearch(ctx, "missing-id", "x"); err == nil {
+	if _, err := imp.RemoteSearch(ctx, "missing-id", "x", 50); err == nil {
 		t.Fatal("unknown server id should fail")
 	}
 }
@@ -352,7 +352,7 @@ func TestRemotePreview(t *testing.T) {
 	srv := fakeSubsonic(t, "admin", "secret")
 	s := saveTestServer(t, imp, ctx, srv.URL)
 
-	resp, err := imp.RemotePreview(ctx, s.ID, "s1", "")
+	resp, err := imp.RemotePreview(ctx, s.ID, "s1", "", "")
 	if err != nil {
 		t.Fatalf("RemotePreview: %v", err)
 	}
@@ -378,3 +378,46 @@ func TestRemoteServersRoundTripPassword(t *testing.T) {
 		t.Fatalf("password lost in round-trip: %+v", back[0])
 	}
 }
+
+func TestJSONArrayUnmarshal(t *testing.T) {
+	type Dummy struct {
+		Value string `json:"value"`
+	}
+
+	// 1. Standard JSON Array with multiple elements
+	var arr1 JSONArray[Dummy]
+	if err := json.Unmarshal([]byte(`[{"value":"one"},{"value":"two"}]`), &arr1); err != nil {
+		t.Fatalf("failed to unmarshal array: %v", err)
+	}
+	if len(arr1) != 2 || arr1[0].Value != "one" || arr1[1].Value != "two" {
+		t.Fatalf("unexpected array results: %+v", arr1)
+	}
+
+	// 2. Single JSON Object (flexible fallback)
+	var arr2 JSONArray[Dummy]
+	if err := json.Unmarshal([]byte(`{"value":"alone"}`), &arr2); err != nil {
+		t.Fatalf("failed to unmarshal single object: %v", err)
+	}
+	if len(arr2) != 1 || arr2[0].Value != "alone" {
+		t.Fatalf("unexpected single object results: %+v", arr2)
+	}
+
+	// 3. Empty string
+	var arr3 JSONArray[Dummy]
+	if err := json.Unmarshal([]byte(`""`), &arr3); err != nil {
+		t.Fatalf("failed to unmarshal empty string: %v", err)
+	}
+	if len(arr3) != 0 {
+		t.Fatalf("expected empty array, got %+v", arr3)
+	}
+
+	// 4. Null value
+	var arr4 JSONArray[Dummy]
+	if err := json.Unmarshal([]byte(`null`), &arr4); err != nil {
+		t.Fatalf("failed to unmarshal null: %v", err)
+	}
+	if len(arr4) != 0 {
+		t.Fatalf("expected empty array, got %+v", arr4)
+	}
+}
+

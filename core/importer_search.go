@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +16,8 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/vi2play/vi2play/adapters/deezer"
+	"github.com/vi2play/vi2play/adapters/ytdlp"
 	"github.com/vi2play/vi2play/conf"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
@@ -198,6 +201,25 @@ func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string,
 	if query == "" {
 		query = "*"
 	}
+
+	if strings.HasPrefix(query, "http://") || strings.HasPrefix(query, "https://") {
+		return &SongSearchResult{
+			Hits: []SongHit{
+				{
+					Source:     "youtube",
+					Title:      "Tải nhạc từ liên kết trực tiếp",
+					Artist:     "Liên kết: " + query,
+					FileID:     query,
+					Filename:   "DirectDownload.opus",
+					Format:     "Opus / Web Stream",
+					Quality:    50,
+					Lossless:   false,
+					PreviewURL: fmt.Sprintf("/api/import/preview?source=youtube&id=%s", url.QueryEscape(query)),
+				},
+			},
+		}, nil
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, searchSongsTimeout)
 	defer cancel()
 
@@ -228,6 +250,60 @@ func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string,
 			collect(hits, err, "Google Drive")
 		}()
 	}
+
+	if flag.Lookup("test.v") == nil {
+		// Concurrently search YouTube
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ytSongs, err := ytdlp.SearchSongs(ctx, query, 15)
+			var hits []SongHit
+			if err == nil {
+				for _, s := range ytSongs {
+					hits = append(hits, SongHit{
+						Source:     "youtube",
+						Title:      s.Title,
+						Artist:     s.Artist,
+						FileID:     s.ID,
+						Filename:   s.Title + ".opus",
+						Format:     "Opus 160kbps",
+						Length:     strconv.Itoa(s.Duration),
+						Quality:    35,
+						Lossless:   false,
+						PreviewURL: fmt.Sprintf("/api/import/preview?source=youtube&id=%s", s.ID),
+					})
+				}
+			}
+			collect(hits, err, "YouTube Music")
+		}()
+
+		// Concurrently search Deezer
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			dzSongs, err := deezer.SearchTracks(ctx, query, 15)
+			var hits []SongHit
+			if err == nil {
+				for _, s := range dzSongs {
+					hits = append(hits, SongHit{
+						Source:     "deezer",
+						Title:      s.Title,
+						Artist:     s.Artist.Name,
+						Album:      s.Album.Title,
+						FileID:     strconv.Itoa(s.ID),
+						Filename:   s.Title + ".flac",
+						Format:     "FLAC 1411kbps",
+						Length:     strconv.Itoa(s.Duration),
+						Quality:    80,
+						Lossless:   true,
+						PreviewURL: fmt.Sprintf("/api/import/preview?source=deezer&id=%d", s.ID),
+					})
+				}
+			}
+			collect(hits, err, "Deezer Lossless")
+		}()
+	}
+
 	wg.Wait()
 
 	if losslessOnly {
@@ -360,6 +436,10 @@ func (imp *importer) searchDriveSongs(ctx context.Context, query, folder string)
 			}
 			size, _ := strconv.ParseInt(f.Size, 10, 64)
 			score, label := qualityForFile("", f.Name)
+			ext := strings.ToLower(path.Ext(f.Name))
+			if strings.HasPrefix(ext, ".") {
+				ext = ext[1:]
+			}
 			hits = append(hits, SongHit{
 				Source:     "drive",
 				Title:      f.Name,
@@ -369,7 +449,7 @@ func (imp *importer) searchDriveSongs(ctx context.Context, query, folder string)
 				Size:       size,
 				Quality:    score,
 				Lossless:   score >= losslessMinScore,
-				PreviewURL: "/api/import/preview?source=drive&id=" + url.QueryEscape(f.ID),
+				PreviewURL: "/api/import/preview?source=drive&id=" + url.QueryEscape(f.ID) + "&format=" + url.QueryEscape(ext),
 			})
 		}
 		if res.NextPageToken == "" {

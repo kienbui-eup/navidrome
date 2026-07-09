@@ -30,6 +30,17 @@ import me.troly.nhac.ui.screens.LibraryScreen
 import me.troly.nhac.ui.screens.PlaylistDetailScreen
 import me.troly.nhac.ui.screens.SearchScreen
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Hearing
+import androidx.compose.material3.NavigationRailItemDefaults
+
 private data class TvTabItem(val label: String, val icon: ImageVector)
 
 /**
@@ -58,22 +69,43 @@ fun TvApp() {
             Row(Modifier.fillMaxSize()) {
                 // Left NavigationRail for easy TV D-pad navigation
                 NavigationRail(
-                    containerColor = MaterialTheme.colorScheme.background,
+                    containerColor = Color(0xFF111014),
                     header = {
-                        Text(
-                            text = "vi2play",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.primary,
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.padding(vertical = 24.dp, horizontal = 8.dp)
-                        )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Hearing,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                text = "DECENT",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                letterSpacing = 1.sp
+                            )
+                        }
                     }
                 ) {
                     tabs.forEachIndexed { i, t ->
+                        val selected = tab == i
                         NavigationRailItem(
-                            selected = tab == i,
+                            selected = selected,
                             onClick = { tab = i },
                             icon = { Icon(t.icon, contentDescription = t.label) },
-                            label = { Text(t.label) }
+                            label = { Text(t.label, fontSize = 11.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
+                            colors = NavigationRailItemDefaults.colors(
+                                selectedIconColor = MaterialTheme.colorScheme.primary,
+                                selectedTextColor = MaterialTheme.colorScheme.primary,
+                                unselectedIconColor = Color(0xFFA79C86),
+                                unselectedTextColor = Color(0xFFA79C86),
+                                indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                            )
                         )
                     }
                 }

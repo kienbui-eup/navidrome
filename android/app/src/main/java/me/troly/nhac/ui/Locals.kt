@@ -18,21 +18,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import me.troly.nhac.data.subsonic.SubsonicRepository
 import me.troly.nhac.playback.PlayerConnection
+import me.troly.nhac.playback.RecommendationManager
 
 val LocalIsTv = staticCompositionLocalOf { false }
 val LocalPlayer = staticCompositionLocalOf<PlayerConnection> { error("PlayerConnection not provided") }
 val LocalRepo = staticCompositionLocalOf<SubsonicRepository> { error("Repository not provided") }
+val LocalRecManager = staticCompositionLocalOf<RecommendationManager> { error("RecommendationManager not provided") }
 
 @Composable
 fun ProvideAppEnv(
     isTv: Boolean,
     player: PlayerConnection,
     repo: SubsonicRepository,
+    recManager: RecommendationManager,
     content: @Composable () -> Unit,
 ) = CompositionLocalProvider(
     LocalIsTv provides isTv,
     LocalPlayer provides player,
     LocalRepo provides repo,
+    LocalRecManager provides recManager,
     content = content,
 )
 

@@ -29,29 +29,6 @@
   }
 
   .dark {
-    --background: 224 71.4% 8.1%;
-    --background-foreground: 222 47% 11%;
-    --foreground: 210 20% 95%;
-    --card: 224 71.4% 8.1%;
-    --card-foreground: 210 20% 95%;
-    --popover: 224 71.4% 8.1%;
-    --popover-foreground: 210 20% 95%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 210 20% 95%;
-    --secondary: 215 27.9% 19.9%;
-    --secondary-foreground: 210 20% 95%;
-    --muted: 215 27.9% 14.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 19.9%;
-    --accent-foreground: 210 20% 95%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 95%;
-    --border: 215 27.9% 19.9%;
-    --input: 215 27.9% 19.9%;
-    --ring: 160 84% 39%;
-  }
-
-  .black {
     --background: 240 10% 3.9%;
     --background-foreground: 240 5.9% 10%;
     --foreground: 0 0% 98%;
@@ -59,19 +36,42 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    --primary: 43 65% 55%;
+    --primary-foreground: 240 10% 3.9%;
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
+    --muted: 240 3.7% 12%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 43 40% 12%;
+    --accent-foreground: 43 65% 85%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --ring: 43 65% 55%;
+  }
+
+  .black {
+    --background: 0 0% 2%;
+    --background-foreground: 240 5.9% 8%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 2%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 2%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 43 65% 55%;
+    --primary-foreground: 0 0% 2%;
+    --secondary: 240 3.7% 14%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 10%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 43 40% 10%;
+    --accent-foreground: 43 65% 85%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 14%;
+    --input: 240 3.7% 14%;
+    --ring: 43 65% 55%;
   }
 
   .one-dark {
@@ -465,3 +465,9 @@
     --ring: 43 59% 81%;
   }
 }
+
+body {
+  background-image: radial-gradient(circle at 100% 100%, rgba(197, 168, 128, 0.04) 0%, transparent 55%), radial-gradient(circle at 0% 0%, rgba(197, 168, 128, 0.02) 0%, transparent 45%) !important;
+  background-attachment: fixed !important;
+}
+
