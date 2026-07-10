@@ -78,8 +78,269 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.border
+
+
+@Composable
+fun InteractiveDspSelectors(
+    activeFilter: String,
+    activeDither: String,
+    activeModulator: String,
+    onFilterSelected: (String) -> Unit,
+    onDitherSelected: (String) -> Unit,
+    onModulatorSelected: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0x0AFFFFFF))
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // 1. Resampler Filter Option
+        Column {
+            Text(
+                "Filter (Bộ lọc nội suy):",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.5f),
+                fontWeight = FontWeight.Bold,
+                fontSize = 9.sp
+            )
+            Spacer(Modifier.height(3.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                val filterOptions = listOf("Bypass", "poly-sinc-xtr-lp", "Closed-Form-M", "sinc-L")
+                filterOptions.forEach { option ->
+                    val isSelected = activeFilter == option
+                    val bgCol = if (isSelected) MaterialTheme.colorScheme.primary else Color(0x11FFFFFF)
+                    val textCol = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color(0xFFC4BBA6)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(bgCol)
+                            .clickable { onFilterSelected(option) }
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = option.split("-").last(),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = textCol,
+                            fontSize = 9.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // 2. Dither Option
+        Column {
+            Text(
+                "Dither (Bộ phân dither):",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.5f),
+                fontWeight = FontWeight.Bold,
+                fontSize = 9.sp
+            )
+            Spacer(Modifier.height(3.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                val ditherOptions = listOf("None", "Gauss dither", "NS9 (Shaper)", "LNS15")
+                ditherOptions.forEach { option ->
+                    val isSelected = activeDither == option
+                    val bgCol = if (isSelected) MaterialTheme.colorScheme.primary else Color(0x11FFFFFF)
+                    val textCol = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color(0xFFC4BBA6)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(bgCol)
+                            .clickable { onDitherSelected(option) }
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = option.split(" ")[0],
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = textCol,
+                            fontSize = 9.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // 3. Modulator Option
+        Column {
+            Text(
+                "Modulator (Bộ điều chế SDM):",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White.copy(alpha = 0.5f),
+                fontWeight = FontWeight.Bold,
+                fontSize = 9.sp
+            )
+            Spacer(Modifier.height(3.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                val modulatorOptions = listOf("PCM (Bit-Perfect)", "DSD64 (Sigma-Delta)", "DSD512 (HQ-grade)")
+                modulatorOptions.forEach { option ->
+                    val isSelected = activeModulator == option
+                    val bgCol = if (isSelected) MaterialTheme.colorScheme.primary else Color(0x11FFFFFF)
+                    val textCol = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color(0xFFC4BBA6)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(bgCol)
+                            .clickable { onModulatorSelected(option) }
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = option.split(" ")[0],
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = textCol,
+                            fontSize = 9.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HiResSignalCapsule(
+    isPlaying: Boolean,
+    suffix: String?,
+    bitRate: Int,
+    bitDepth: Int,
+    samplingRate: Int,
+    activeDevice: me.troly.nhac.playback.ActiveDeviceDetails,
+    ledColor: Color
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        // Row 1: Badges group (Format, Specs)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AudioVisualizer(isPlaying = isPlaying, modifier = Modifier.padding(end = 4.dp))
+
+            if (!suffix.isNullOrBlank()) {
+                val isDsd = suffix.lowercase() in setOf("dsf", "dff", "dsd")
+                val isFlac = suffix.lowercase() == "flac"
+                val badgeBgColor = when {
+                    isDsd -> Color(0xFFFFB300).copy(alpha = 0.2f)
+                    isFlac -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                    else -> Color(0x22FFFFFF)
+                }
+                val badgeTextColor = when {
+                    isDsd -> Color(0xFFFFB300)
+                    isFlac -> MaterialTheme.colorScheme.primary
+                    else -> Color.White
+                }
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(badgeBgColor)
+                        .border(0.5.dp, badgeTextColor.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = suffix.uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = badgeTextColor
+                    )
+                }
+            }
+
+            val qualityText = remember(suffix, bitRate, bitDepth, samplingRate) {
+                if (bitDepth > 0 && samplingRate > 0) {
+                    "${bitDepth}-bit / ${samplingRate / 1000.0} kHz"
+                } else if (bitRate > 0) {
+                    "${bitRate} kbps"
+                } else {
+                    ""
+                }
+            }
+
+            if (qualityText.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0x11FFFFFF))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Filled.Audiotrack,
+                            contentDescription = null,
+                            tint = Color(0xFFC4BBA6),
+                            modifier = Modifier.size(10.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = qualityText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFE5DECD)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Row 2: Target Path & LED
+        val outputLabel = remember(activeDevice) {
+            when {
+                activeDevice.typeLabel == "USB DAC" -> "Direct USB DAC"
+                activeDevice.name.contains("Buds2 Pro", ignoreCase = true) -> "Buds 2 Pro (SSC)"
+                activeDevice.name.contains("UP5", ignoreCase = true) -> "UP5 (LDAC)"
+                else -> activeDevice.typeLabel
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(20.dp))
+                .background(Color(0x0EFFFFFF))
+                .border(0.5.dp, ledColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(ledColor)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "➔ $outputLabel",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = ledColor
+            )
+        }
+    }
+}
 
 
 /**
@@ -585,7 +846,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     .padding(24.dp),
                 horizontalArrangement = Arrangement.spacedBy(28.dp)
             ) {
-                // COL 1: Left panel (Artwork, Controls, Signal Path)
+                // COL 1: Left panel (Artwork, Controls, Signal Path, Hardware notes, Review card)
                 Column(
                     modifier = Modifier
                         .weight(1.1f)
@@ -616,7 +877,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                                     .tvFocusable(ssSource)
                             ) {
                                 Icon(
-                                    imageVector = androidx.compose.material.icons.Icons.Default.Radio, // using Radio as standard TV-like visual, or we can use another available icon
+                                    imageVector = androidx.compose.material.icons.Icons.Default.Radio,
                                     contentDescription = "Màn hình chờ",
                                     tint = Color(0xFFC4BBA6),
                                     modifier = Modifier.size(24.dp)
@@ -676,78 +937,17 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
                     Spacer(Modifier.height(12.dp))
 
-                    // Quality LED Badge
+                    // Hi-Res Signal Capsule Badge (Widescreen)
                     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0x11FFFFFF))
-                                .padding(horizontal = 14.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            AudioVisualizer(isPlaying = state.isPlaying, modifier = Modifier.padding(end = 12.dp))
-                            
-                            if (!suffix.isNullOrBlank()) {
-                                Box(
-                                    modifier = Modifier
-                                        .padding(end = 8.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Color(0x22FFFFFF))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = suffix.uppercase(),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-                            
-                            val qualityText = remember(suffix, bitRate, bitDepth, samplingRate) {
-                                if (bitDepth > 0 && samplingRate > 0) {
-                                    "${bitDepth}-bit / ${samplingRate / 1000.0} kHz"
-                                } else if (bitRate > 0) {
-                                    "${bitRate} kbps"
-                                } else {
-                                    ""
-                                }
-                            }
-                            
-                            if (qualityText.isNotEmpty()) {
-                                Text(
-                                    text = qualityText,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFFC4BBA6),
-                                    modifier = Modifier.padding(end = 8.dp)
-                                )
-                            }
-                            
-                            val outputLabel = remember(activeDevice) {
-                                when {
-                                    activeDevice.typeLabel == "USB DAC" -> "Direct USB DAC"
-                                    activeDevice.name.contains("Buds2 Pro", ignoreCase = true) -> "Buds 2 Pro (SSC)"
-                                    activeDevice.name.contains("UP5", ignoreCase = true) -> "UP5 (LDAC)"
-                                    else -> activeDevice.typeLabel
-                                }
-                            }
-                            
-                            Text(
-                                text = "➔ $outputLabel",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = ledColor
-                            )
-                            
-                            Box(
-                                modifier = Modifier
-                                    .padding(start = 8.dp)
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(ledColor)
-                            )
-                        }
+                        HiResSignalCapsule(
+                            isPlaying = state.isPlaying,
+                            suffix = suffix,
+                            bitRate = bitRate,
+                            bitDepth = bitDepth,
+                            samplingRate = samplingRate,
+                            activeDevice = activeDevice,
+                            ledColor = ledColor
+                        )
                     }
 
                     WaveformSeekbar(
@@ -821,20 +1021,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         }
                     }
 
-                    AudiophileReviewPanel(
-                        songId = currentSongId ?: "",
-                        songDetails = songDetails,
-                        onSongDetailsChanged = { songDetails = it },
-                        reviewNote = reviewNote,
-                        onReviewNoteChanged = { note ->
-                            reviewNote = note
-                            currentSongId?.let { id ->
-                                sharedPrefs.edit().putString(id, note).apply()
-                            }
-                        }
-                    )
-
-                    Spacer(Modifier.height(24.dp))
+                    Spacer(Modifier.height(16.dp))
 
                     // Embedded Signal Path Steps inside Left Column scroll
                     Text(
@@ -879,7 +1066,17 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             title = "3. BỘ GIẢI MÃ SỐ (AUDIO ENGINE / DSP)",
                             value = engineValue,
                             subValue = audioReport.dspEngineStatus,
-                            color = ledColor
+                            color = ledColor,
+                            content = {
+                                InteractiveDspSelectors(
+                                    activeFilter = activeFilter,
+                                    activeDither = activeDither,
+                                    activeModulator = activeModulator,
+                                    onFilterSelected = { player.setFilter(it) },
+                                    onDitherSelected = { player.setDither(it) },
+                                    onModulatorSelected = { player.setModulator(it) }
+                                )
+                            }
                         )
 
                         val deviceDetails = "${activeDevice.techLabel} • Định dạng thực tế: ${audioReport.actualOutputFormat}\n${activeDevice.description}"
@@ -898,9 +1095,44 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             color = ledColor
                         )
                     }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // Dynamic Hardware Specs matching note
+                    val hardwareNote = activeDevice.hardwareNote
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0x08FFFFFF))
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = hardwareNote,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFC4BBA6),
+                            lineHeight = 16.sp
+                        )
+                    }
+
+                    Spacer(Modifier.height(24.dp))
+
+                    // Reordered Review Panel placed at the very bottom
+                    AudiophileReviewPanel(
+                        songId = currentSongId ?: "",
+                        songDetails = songDetails,
+                        onSongDetailsChanged = { songDetails = it },
+                        reviewNote = reviewNote,
+                        onReviewNoteChanged = { note ->
+                            reviewNote = note
+                            currentSongId?.let { id ->
+                                sharedPrefs.edit().putString(id, note).apply()
+                            }
+                        }
+                    )
                 }
 
-                // COL 2: Right panel (Queue, Radio Recommendations, DSP Card)
+                // COL 2: Right panel (Queue, Radio Recommendations - DSP card removed as it is integrated)
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
@@ -1080,183 +1312,22 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             }
                         }
                     }
-
-                    // HQPlayer DSP Controls
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0x0EFFFFFF))
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            Text("BỘ LỌC CHUYÊN DỤNG (HQPLAYER DSP)", style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Bold)
-
-                            // 1. Resampler filter
-                            Column {
-                                Text("1. Resampler Filter (Bộ lọc nội suy)", style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.Bold)
-                                Text("Lựa chọn thuật toán tăng tần số lấy mẫu", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
-                                Spacer(Modifier.height(8.dp))
-                                
-                                val filterOptions = listOf("Bypass", "poly-sinc-xtr-lp", "Closed-Form-M", "sinc-L")
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    filterOptions.forEach { option ->
-                                        val isSelected = activeFilter == option
-                                        val bgAnimatedColor by animateColorAsState(
-                                            targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(0x0EFFFFFF),
-                                            animationSpec = tween(durationMillis = 200), label = "filterBg"
-                                        )
-                                        val textAnimatedColor by animateColorAsState(
-                                            targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color(0xFFE5DECD),
-                                            animationSpec = tween(durationMillis = 200), label = "filterText"
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .clip(RoundedCornerShape(6.dp))
-                                                .background(bgAnimatedColor)
-                                                .clickable { player.setFilter(option) }
-                                                .padding(vertical = 8.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = option.split("-").last(),
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Bold,
-                                                color = textAnimatedColor
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            // 2. Dither option
-                            Column {
-                                Text("2. Dither & Noise Shaper (Bộ phân dither)", style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.Bold)
-                                Text("Chuyển dịch nhiễu lượng tử cơ học ra dải siêu cao tần", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
-                                Spacer(Modifier.height(8.dp))
-                                
-                                val ditherOptions = listOf("None", "Gauss dither", "NS9 (Shaper)", "LNS15")
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    ditherOptions.forEach { option ->
-                                        val isSelected = activeDither == option
-                                        val bgAnimatedColor by animateColorAsState(
-                                            targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(0x0EFFFFFF),
-                                            animationSpec = tween(durationMillis = 200), label = "ditherBg"
-                                        )
-                                        val textAnimatedColor by animateColorAsState(
-                                            targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color(0xFFE5DECD),
-                                            animationSpec = tween(durationMillis = 200), label = "ditherText"
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .clip(RoundedCornerShape(6.dp))
-                                                .background(bgAnimatedColor)
-                                                .clickable { player.setDither(option) }
-                                                .padding(vertical = 8.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = option.split(" ")[0],
-                                                style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Bold,
-                                                color = textAnimatedColor
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            // 3. Modulator Option
-                            Column {
-                                Text("3. Modulator / Upsampler (Bộ điều chế SDM)", style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.Bold)
-                                Text("Cấu hình dồn mẫu Sigma-Delta lên dòng siêu cao tần 1-bit", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
-                                Spacer(Modifier.height(8.dp))
-                                
-                                val modulatorOptions = listOf("PCM (Bit-Perfect)", "DSD64 (Sigma-Delta)", "DSD512 (HQ-grade)")
-                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    modulatorOptions.forEach { option ->
-                                        val isSelected = activeModulator == option
-                                        val bgAnimatedColor by animateColorAsState(
-                                            targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(0x0EFFFFFF),
-                                            animationSpec = tween(durationMillis = 200), label = "modBg"
-                                        )
-                                        val textAnimatedColor by animateColorAsState(
-                                            targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color(0xFFE5DECD),
-                                            animationSpec = tween(durationMillis = 200), label = "modText"
-                                        )
-                                        val indicatorColor by animateColorAsState(
-                                            targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color(0xFF00E676),
-                                            animationSpec = tween(durationMillis = 200), label = "modIndicator"
-                                        )
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(RoundedCornerShape(6.dp))
-                                                .background(bgAnimatedColor)
-                                                .clickable { player.setModulator(option) }
-                                                .padding(vertical = 10.dp, horizontal = 16.dp),
-                                            contentAlignment = Alignment.CenterStart
-                                        ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(6.dp)
-                                                        .clip(CircleShape)
-                                                        .background(indicatorColor)
-                                                )
-                                                Spacer(Modifier.width(10.dp))
-                                                Text(
-                                                    text = option,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = textAnimatedColor
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Dynamic Hardware Specs matching note
-                            val hardwareNote = activeDevice.hardwareNote
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0x08FFFFFF))
-                                    .padding(12.dp)
-                            ) {
-                                Text(
-                                    text = hardwareNote,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFFC4BBA6),
-                                    lineHeight = 16.sp
-                                )
-                            }
-                        }
-                    }
                 }
             }
         } else {
-            // ── NARROW PORTRAIT UNIFIED SCROLL FEED (MOBILE COVER SCREEN) ──────────
-            LazyColumn(
+            // ── NARROW PORTRAIT STRUCTURAL LAYOUT (MOBILE COVER SCREEN) ──────────
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .systemBarsPadding()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
             ) {
-                // Pin header
-                item {
+                // PART 1: STICKY CONTROL CONSOLE (STATIONARY AT THE TOP)
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Header row (Back / close button)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -1273,14 +1344,12 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
-                }
 
-                // Album Art
-                item {
+                    // Album Art - beautifully compacted to fit all screens including Fold cover
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(1f)
+                            .height(180.dp)
                             .swipeGestures(
                                 onSwipeDown = onClose,
                                 onSwipeLeft = { player.next() },
@@ -1291,7 +1360,8 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         AsyncImage(
                             model = art, contentDescription = null, contentScale = ContentScale.Crop,
                             modifier = Modifier
-                                .fillMaxSize(0.85f)
+                                .fillMaxHeight()
+                                .aspectRatio(1f)
                                 .graphicsLayer {
                                     scaleX = artScale
                                     scaleY = artScale
@@ -1307,133 +1377,69 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                                 .background(MaterialTheme.colorScheme.surfaceVariant),
                         )
                     }
-                }
 
-                // Meta details
-                item {
-                    Text(
-                        meta?.title?.toString() ?: "",
-                        style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
-                        color = Color.White, textAlign = TextAlign.Center, maxLines = 1,
-                        modifier = Modifier.fillMaxWidth().basicMarquee(),
-                    )
-                    Text(
-                        meta?.artist?.toString() ?: "",
-                        style = MaterialTheme.typography.bodyLarge, color = Color(0xFFC4BBA6),
-                        textAlign = TextAlign.Center, maxLines = 1,
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    )
-                }
-
-                // LED interactive Quality Badge
-                item {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0x11FFFFFF))
-                                .padding(horizontal = 14.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            AudioVisualizer(isPlaying = state.isPlaying, modifier = Modifier.padding(end = 12.dp))
-                            
-                            if (!suffix.isNullOrBlank()) {
-                                Box(
-                                    modifier = Modifier
-                                        .padding(end = 8.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Color(0x22FFFFFF))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = suffix.uppercase(),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-                            
-                            val qualityText = remember(suffix, bitRate, bitDepth, samplingRate) {
-                                if (bitDepth > 0 && samplingRate > 0) {
-                                    "${bitDepth}-bit / ${samplingRate / 1000.0} kHz"
-                                } else if (bitRate > 0) {
-                                    "${bitRate} kbps"
-                                } else {
-                                    ""
-                                }
-                            }
-                            
-                            if (qualityText.isNotEmpty()) {
-                                Text(
-                                    text = qualityText,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFFC4BBA6),
-                                    modifier = Modifier.padding(end = 8.dp)
-                                )
-                            }
-                            
-                            val outputLabel = remember(activeDevice) {
-                                when {
-                                    activeDevice.typeLabel == "USB DAC" -> "Direct USB DAC"
-                                    activeDevice.name.contains("Buds2 Pro", ignoreCase = true) -> "Buds 2 Pro (SSC)"
-                                    activeDevice.name.contains("UP5", ignoreCase = true) -> "UP5 (LDAC)"
-                                    else -> activeDevice.typeLabel
-                                }
-                            }
-                            
-                            Text(
-                                text = "➔ $outputLabel",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = ledColor
-                            )
-                            
-                            Box(
-                                modifier = Modifier
-                                    .padding(start = 8.dp)
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(ledColor)
-                            )
-                        }
+                    // Meta details (Title & Artist)
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            meta?.title?.toString() ?: "",
+                            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                            color = Color.White, textAlign = TextAlign.Center, maxLines = 1,
+                            modifier = Modifier.fillMaxWidth().basicMarquee(),
+                        )
+                        Text(
+                            meta?.artist?.toString() ?: "",
+                            style = MaterialTheme.typography.bodyMedium, color = Color(0xFFC4BBA6),
+                            textAlign = TextAlign.Center, maxLines = 1,
+                            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                        )
                     }
-                }
 
-                // Progress SeekBar
-                item {
+                    // Redesigned Hi-Res Signal Capsule Badge (Responsive, wrap-resistant, technical density)
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        HiResSignalCapsule(
+                            isPlaying = state.isPlaying,
+                            suffix = suffix,
+                            bitRate = bitRate,
+                            bitDepth = bitDepth,
+                            samplingRate = samplingRate,
+                            activeDevice = activeDevice,
+                            ledColor = ledColor
+                        )
+                    }
+
+                    // Progress WaveformSeekbar & times
                     Column {
                         WaveformSeekbar(
                             songId = currentSongId ?: "",
                             progress = progress.coerceIn(0f, 1f),
                             onSeek = { player.seekTo((it * duration).toLong()) },
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         )
                         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(formatMs(state.positionMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
                             Text(formatMs(state.durationMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
                         }
                     }
-                }
 
-                // Playback Buttons
-                item {
+                    // Playback Buttons
                     Row(
-                        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        Modifier.fillMaxWidth().padding(vertical = 2.dp),
                         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        IconButton(onClick = { player.previous() }, modifier = Modifier.size(56.dp)) {
-                            Icon(Icons.Filled.SkipPrevious, "Bài trước", modifier = Modifier.size(36.dp), tint = Color.White)
+                        IconButton(onClick = { player.previous() }, modifier = Modifier.size(48.dp)) {
+                            Icon(Icons.Filled.SkipPrevious, "Bài trước", modifier = Modifier.size(32.dp), tint = Color.White)
                         }
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.padding(horizontal = 16.dp).size(80.dp)
+                            modifier = Modifier.padding(horizontal = 12.dp).size(68.dp)
                         ) {
                             if (state.isPlaying) {
                                 Box(
                                     modifier = Modifier
-                                        .size(64.dp)
+                                        .size(56.dp)
                                         .graphicsLayer {
                                             scaleX = haloScale
                                             scaleY = haloScale
@@ -1443,76 +1449,186 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                                 )
                             }
                             Box(
-                                Modifier.size(64.dp)
+                                Modifier.size(56.dp)
                                     .clip(CircleShape).background(MaterialTheme.colorScheme.primary)
                                     .clickable { player.togglePlay() },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
                                     if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                    contentDescription = "Phát/Dừng", modifier = Modifier.size(36.dp),
+                                    contentDescription = "Phát/Dừng", modifier = Modifier.size(32.dp),
                                     tint = MaterialTheme.colorScheme.onPrimary,
                                 )
                             }
                         }
-                        IconButton(onClick = { player.next() }, modifier = Modifier.size(56.dp)) {
-                            Icon(Icons.Filled.SkipNext, "Bài sau", modifier = Modifier.size(36.dp), tint = Color.White)
+                        IconButton(onClick = { player.next() }, modifier = Modifier.size(48.dp)) {
+                            Icon(Icons.Filled.SkipNext, "Bài sau", modifier = Modifier.size(32.dp), tint = Color.White)
                         }
                     }
                 }
 
-                // ── PORTRAIT INLINE PLAYLIST QUEUE ─────────────────────────────────────
-                item {
-                    Text(
-                        text = "DANH SÁCH PHÁT TIẾP THEO (QUEUE)",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = Color(0xFF231F27))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                if (queueItems.isEmpty()) {
+                // PART 2: SCROLLABLE SHEET FOR ALL OTHER SUPPEMENTARY VIEWS
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // ── PORTRAIT INLINE PLAYLIST QUEUE ─────────────────────────────────────
                     item {
-                        Text("Hàng đợi trống", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        Text(
+                            text = "DANH SÁCH PHÁT TIẾP THEO (QUEUE)",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
                     }
-                } else {
-                    val upcomingItems = queueItems.drop(currentIndex + 1)
-                    if (upcomingItems.isEmpty()) {
+
+                    if (queueItems.isEmpty()) {
                         item {
-                            Text("Không có bài hát tiếp theo", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Text("Hàng đợi trống", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                     } else {
-                        itemsIndexed(upcomingItems) { relativeIdx, item ->
-                            val idx = currentIndex + 1 + relativeIdx
+                        val upcomingItems = queueItems.drop(currentIndex + 1)
+                        if (upcomingItems.isEmpty()) {
+                            item {
+                                Text("Không có bài hát tiếp theo", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            }
+                        } else {
+                            itemsIndexed(upcomingItems) { relativeIdx, item ->
+                                val idx = currentIndex + 1 + relativeIdx
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { player.skipToQueueItem(idx) }
+                                        .padding(vertical = 6.dp, horizontal = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(Color(0x18FFFFFF)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text("${relativeIdx + 1}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                    }
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            item.title?.toString() ?: "Unknown",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            item.artist?.toString() ?: "Unknown Artist",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color(0xFFC4BBA6),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            player.removeQueueItem(idx)
+                                            queueItems = player.getQueue()
+                                            currentIndex = player.getCurrentIndex()
+                                        }
+                                    ) {
+                                        Icon(Icons.Filled.Delete, "Xoá", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Autoplay Radio Card in scroll feed
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0x11FFFFFF))
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Filled.Radio, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("Nhạc Radio tự động (Autoplay)", style = MaterialTheme.typography.bodyMedium, color = Color.White, fontWeight = FontWeight.Bold)
+                                Text("Tự động tìm phát nhạc tương tự khi hết hàng đợi", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
+                            }
+                            Switch(
+                                checked = autoRadioEnabled,
+                                onCheckedChange = { recManager.setAutoRadioEnabled(it) }
+                            )
+                        }
+                    }
+
+                    // ── PORTRAIT INLINE RECOMMENDATIONS ────────────────────────────────────
+                    item {
+                        Text(
+                            text = "GỢI Ý BÀI HÁT TƯƠNG TỰ (RADIO)",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+
+                    if (isRecLoading) {
+                        item {
+                            Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                    } else if (recSongs.isEmpty()) {
+                        item {
+                            Text("Không có gợi ý tương tự", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        }
+                    } else {
+                        itemsIndexed(recSongs) { index, song ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(8.dp))
-                                    .clickable { player.skipToQueueItem(idx) }
+                                    .clickable {
+                                        player.appendSong(song)
+                                        queueItems = player.getQueue()
+                                        currentIndex = player.getCurrentIndex()
+                                        player.skipToQueueItem(player.getQueue().size - 1)
+                                    }
                                     .padding(vertical = 6.dp, horizontal = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(
+                                AsyncImage(
+                                    model = repo.config.coverArtUrl(song.coverArt, 120),
+                                    contentDescription = null,
                                     modifier = Modifier
-                                        .size(28.dp)
+                                        .size(36.dp)
                                         .clip(RoundedCornerShape(4.dp))
-                                        .background(Color(0x18FFFFFF)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("${relativeIdx + 1}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                                }
+                                        .background(Color(0xFF231F27)),
+                                    contentScale = ContentScale.Crop
+                                )
                                 Spacer(Modifier.width(12.dp))
                                 Column(Modifier.weight(1f)) {
                                     Text(
-                                        item.title?.toString() ?: "Unknown",
+                                        song.title,
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = Color.White,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        item.artist?.toString() ?: "Unknown Artist",
+                                        song.artist ?: "Unknown Artist",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = Color(0xFFC4BBA6),
                                         maxLines = 1,
@@ -1521,213 +1637,127 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                                 }
                                 IconButton(
                                     onClick = {
-                                        player.removeQueueItem(idx)
+                                        player.appendSong(song)
                                         queueItems = player.getQueue()
                                         currentIndex = player.getCurrentIndex()
+                                        Toast.makeText(context, "Đã thêm vào cuối hàng đợi", Toast.LENGTH_SHORT).show()
                                     }
                                 ) {
-                                    Icon(Icons.Filled.Delete, "Xoá", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Filled.PlayArrow, "Thêm", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                                 }
                             }
                         }
                     }
-                }
 
-                // Autoplay Radio Card in scroll feed
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0x11FFFFFF))
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Filled.Radio, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text("Nhạc Radio tự động (Autoplay)", style = MaterialTheme.typography.bodyMedium, color = Color.White, fontWeight = FontWeight.Bold)
-                            Text("Tự động tìm phát nhạc tương tự khi hết hàng đợi", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
-                        }
-                        Switch(
-                            checked = autoRadioEnabled,
-                            onCheckedChange = { recManager.setAutoRadioEnabled(it) }
+                    // ── PORTRAIT INLINE AUDIOPHILE SIGNAL PATH ──────────────────────────────
+                    item {
+                        Text(
+                            text = "ĐƯỜNG TRUYỀN TÍN HIỆU (SIGNAL PATH)",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(top = 12.dp)
                         )
                     }
-                }
 
-                // ── PORTRAIT INLINE RECOMMENDATIONS ────────────────────────────────────
-                item {
-                    Text(
-                        text = "GỢI Ý BÀI HÁT TƯƠNG TỰ (RADIO)",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-                }
-
-                if (isRecLoading) {
                     item {
-                        Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.primary)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0x0AFFFFFF))
+                                .padding(16.dp)
+                        ) {
+                            SignalPathStep(
+                                title = "1. NGUỒN NHẠC GỐC (ORIGINAL FILE)",
+                                value = formatName,
+                                subValue = originalSpecs,
+                                isFirst = true,
+                                color = ledColor
+                            )
+
+                            val isTranscoded = remember(suffix) { isServerTranscodeSuffix(suffix) }
+                            val streamingValue = if (isTranscoded) "Server Transcoded (FLAC 24-bit)" else "Direct Stream (Nguyên bản)"
+                            val streamingSub = if (isTranscoded) {
+                                "Dữ liệu gốc định dạng $suffix được máy chủ tự động chuyển mã không hao tổn sang FLAC 24-bit PCM giúp Android giải mã tối ưu."
+                            } else {
+                                "Truyền phát trực tiếp ở chất lượng nguyên gốc từ máy chủ, không qua xử lý hay tái nén."
+                            }
+                            SignalPathStep(
+                                title = "2. PHƯƠNG THỨC TRUYỀN PHÁT (STREAMING)",
+                                value = streamingValue,
+                                subValue = streamingSub,
+                                color = ledColor
+                            )
+
+                            val engineValue = if (isDspEnabled) "HQPlayer-grade Audiophile DSP" else "ExoPlayer Engine (Float 32-bit)"
+                            SignalPathStep(
+                                title = "3. BỘ GIẢI MÃ SỐ (AUDIO ENGINE / DSP)",
+                                value = engineValue,
+                                subValue = audioReport.dspEngineStatus,
+                                color = ledColor,
+                                content = {
+                                    InteractiveDspSelectors(
+                                        activeFilter = activeFilter,
+                                        activeDither = activeDither,
+                                        activeModulator = activeModulator,
+                                        onFilterSelected = { player.setFilter(it) },
+                                        onDitherSelected = { player.setDither(it) },
+                                        onModulatorSelected = { player.setModulator(it) }
+                                    )
+                                }
+                            )
+
+                            val deviceDetails = "${activeDevice.techLabel} • Định dạng thực tế: ${audioReport.actualOutputFormat}\n${activeDevice.description}"
+                            SignalPathStep(
+                                title = "4. THIẾT BỊ ĐẦU RA (OUTPUT HARDWARE)",
+                                value = activeDevice.name,
+                                subValue = deviceDetails,
+                                color = ledColor
+                            )
+
+                            SignalPathStep(
+                                title = "5. DỰ BÁO CHẤT LƯỢNG (AUDIO FORECAST)",
+                                value = audioReport.statusLabel,
+                                subValue = audioReport.statusDesc,
+                                isLast = true,
+                                color = ledColor
+                            )
                         }
                     }
-                } else if (recSongs.isEmpty()) {
+
+                    // Dynamic Hardware Specs matching note in scroll feed
                     item {
-                        Text("Không có gợi ý tương tự", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    }
-                } else {
-                    itemsIndexed(recSongs) { index, song ->
-                        Row(
+                        val hardwareNote = activeDevice.hardwareNote
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .clickable {
-                                    player.appendSong(song)
-                                    queueItems = player.getQueue()
-                                    currentIndex = player.getCurrentIndex()
-                                    player.skipToQueueItem(player.getQueue().size - 1)
-                                }
-                                .padding(vertical = 6.dp, horizontal = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .background(Color(0x08FFFFFF))
+                                .padding(12.dp)
                         ) {
-                            AsyncImage(
-                                model = repo.config.coverArtUrl(song.coverArt, 120),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(Color(0xFF231F27)),
-                                contentScale = ContentScale.Crop
+                            Text(
+                                text = hardwareNote,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFC4BBA6),
+                                lineHeight = 16.sp
                             )
-                            Spacer(Modifier.width(12.dp))
-                            Column(Modifier.weight(1f)) {
-                               Text(
-                                    song.title,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.White,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    song.artist ?: "Unknown Artist",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFFC4BBA6),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                            IconButton(
-                                onClick = {
-                                    player.appendSong(song)
-                                    queueItems = player.getQueue()
-                                    currentIndex = player.getCurrentIndex()
-                                    Toast.makeText(context, "Đã thêm vào cuối hàng đợi", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    // Audiophile review panel placed at the absolute bottom of portrait scroll feed
+                    item {
+                        AudiophileReviewPanel(
+                            songId = currentSongId ?: "",
+                            songDetails = songDetails,
+                            onSongDetailsChanged = { songDetails = it },
+                            reviewNote = reviewNote,
+                            onReviewNoteChanged = { note ->
+                                reviewNote = note
+                                currentSongId?.let { id ->
+                                    sharedPrefs.edit().putString(id, note).apply()
                                 }
-                            ) {
-                                Icon(Icons.Filled.PlayArrow, "Thêm", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                             }
-                        }
-                    }
-                }
-                item {
-                    AudiophileReviewPanel(
-                        songId = currentSongId ?: "",
-                        songDetails = songDetails,
-                        onSongDetailsChanged = { songDetails = it },
-                        reviewNote = reviewNote,
-                        onReviewNoteChanged = { note ->
-                            reviewNote = note
-                            currentSongId?.let { id ->
-                                sharedPrefs.edit().putString(id, note).apply()
-                            }
-                        }
-                    )
-                }
-
-                // ── PORTRAIT INLINE AUDIOPHILE SIGNAL PATH ──────────────────────────────
-                item {
-                    Text(
-                        text = "ĐƯỜNG TRUYỀN TÍN HIỆU (SIGNAL PATH)",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(top = 12.dp)
-                    )
-                }
-
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0x0AFFFFFF))
-                            .padding(16.dp)
-                    ) {
-                        SignalPathStep(
-                            title = "1. NGUỒN NHẠC GỐC (ORIGINAL FILE)",
-                            value = formatName,
-                            subValue = originalSpecs,
-                            isFirst = true,
-                            color = ledColor
-                        )
-
-                        val isTranscoded = remember(suffix) { isServerTranscodeSuffix(suffix) }
-                        val streamingValue = if (isTranscoded) "Server Transcoded (FLAC 24-bit)" else "Direct Stream (Nguyên bản)"
-                        val streamingSub = if (isTranscoded) {
-                            "Dữ liệu gốc định dạng $suffix được máy chủ tự động chuyển mã không hao tổn sang FLAC 24-bit PCM giúp Android giải mã tối ưu."
-                        } else {
-                            "Truyền phát trực tiếp ở chất lượng nguyên gốc từ máy chủ, không qua xử lý hay tái nén."
-                        }
-                        SignalPathStep(
-                            title = "2. PHƯƠNG THỨC TRUYỀN PHÁT (STREAMING)",
-                            value = streamingValue,
-                            subValue = streamingSub,
-                            color = ledColor
-                        )
-
-                        val engineValue = if (isDspEnabled) "HQPlayer-grade Audiophile DSP" else "ExoPlayer Engine (Float 32-bit)"
-                        SignalPathStep(
-                            title = "3. BỘ GIẢI MÃ SỐ (AUDIO ENGINE / DSP)",
-                            value = engineValue,
-                            subValue = audioReport.dspEngineStatus,
-                            color = ledColor
-                        )
-
-                        val deviceDetails = "${activeDevice.techLabel} • Định dạng thực tế: ${audioReport.actualOutputFormat}\n${activeDevice.description}"
-                        SignalPathStep(
-                            title = "4. THIẾT BỊ ĐẦU RA (OUTPUT HARDWARE)",
-                            value = activeDevice.name,
-                            subValue = deviceDetails,
-                            color = ledColor
-                        )
-
-                        SignalPathStep(
-                            title = "5. DỰ BÁO CHẤT LƯỢNG (AUDIO FORECAST)",
-                            value = audioReport.statusLabel,
-                            subValue = audioReport.statusDesc,
-                            isLast = true,
-                            color = ledColor
-                        )
-                    }
-                }
-
-                // Dynamic Hardware Specs matching note
-                item {
-                    val hardwareNote = activeDevice.hardwareNote
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0x08FFFFFF))
-                            .padding(12.dp)
-                    ) {
-                        Text(
-                            text = hardwareNote,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFC4BBA6),
-                            lineHeight = 16.sp
                         )
                     }
                 }
@@ -1752,20 +1782,21 @@ private fun SignalPathStep(
     subValue: String,
     isFirst: Boolean = false,
     isLast: Boolean = false,
-    color: Color
+    color: Color,
+    content: @Composable (() -> Unit)? = null
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(vertical = 4.dp),
         verticalAlignment = Alignment.Top
     ) {
         // Line and Node column
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(32.dp).padding(top = 4.dp)
+            modifier = Modifier.width(32.dp).fillMaxHeight()
         ) {
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(16.dp).padding(top = 4.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -1785,7 +1816,7 @@ private fun SignalPathStep(
                     modifier = Modifier
                         .padding(vertical = 2.dp)
                         .width(3.dp)
-                        .height(64.dp)
+                        .weight(1f)
                         .clip(RoundedCornerShape(1.5.dp))
                         .background(
                             Brush.verticalGradient(
@@ -1821,9 +1852,15 @@ private fun SignalPathStep(
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
+            if (content != null) {
+                Box(modifier = Modifier.padding(top = 8.dp)) {
+                    content()
+                }
+            }
         }
     }
 }
+
 
 private fun formatOriginalSpecs(suffix: String?, bitDepth: Int, samplingRate: Int, bitRate: Int): Pair<String, String> {
     val fmt = suffix?.lowercase() ?: "audio"

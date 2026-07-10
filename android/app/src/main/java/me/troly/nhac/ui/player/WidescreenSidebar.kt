@@ -383,12 +383,6 @@ fun WidescreenSidebar(
                 text = { Text("ĐƯỜNG TRUYỀN", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
                 icon = { Icon(Icons.Filled.Info, null, modifier = Modifier.size(16.dp)) }
             )
-            Tab(
-                selected = activeTab == 2,
-                onClick = { activeTab = 2 },
-                text = { Text("BỘ LỌC DSP", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
-                icon = { Icon(Icons.Filled.Tune, null, modifier = Modifier.size(16.dp)) }
-            )
         }
 
         // Tab Contents container
@@ -398,7 +392,7 @@ fun WidescreenSidebar(
                 .weight(1f)
                 .background(Color(0xFF111014))
                 .swipeGestures(
-                    onSwipeLeft = { if (activeTab < 2) activeTab += 1 },
+                    onSwipeLeft = { if (activeTab < 1) activeTab += 1 },
                     onSwipeRight = { if (activeTab > 0) activeTab -= 1 }
                 )
         ) {
@@ -668,7 +662,19 @@ fun WidescreenSidebar(
                             title = "3. BỘ XỬ LÝ SỐ (AUDIO ENGINE / DSP)",
                             value = dspEngineTitle,
                             subValue = audioReport.dspEngineStatus,
-                            color = ledColor
+                            color = ledColor,
+                            content = if (audioReport.isUpsampled) {
+                                {
+                                    InteractiveDspSelectors(
+                                        activeFilter = activeFilter,
+                                        activeDither = activeDither,
+                                        activeModulator = activeModulator,
+                                        onFilterSelected = { player.setFilter(it) },
+                                        onDitherSelected = { player.setDither(it) },
+                                        onModulatorSelected = { player.setModulator(it) }
+                                    )
+                                }
+                            } else null
                         )
                         
                         // 4. Output Device details
@@ -691,226 +697,7 @@ fun WidescreenSidebar(
                     }
                 }
                 
-                2 -> {
-                    // TAB 3: HQPLAYER-GRADE DSP FILTER CONTROL (PERSISTENT & INTELLIGENT)
-                    val scrollState = rememberScrollState()
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(scrollState)
-                            .padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            text = "BỘ LỌC NỘI SUY SỐ & ĐIỀU CHẾ (HQPLAYER DSP)",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        
-                        // Smart Hardware Recommendation Card
-                        if (audioReport.recommendation != null) {
-                            Card(
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)),
-                                shape = RoundedCornerShape(12.dp),
-                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(12.dp),
-                                    verticalAlignment = Alignment.Top
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Info,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp).padding(top = 2.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    Column {
-                                        Text(
-                                            text = "Gợi ý tối ưu âm học",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        Text(
-                                            text = audioReport.recommendation,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color(0xFFE5DECD),
-                                            modifier = Modifier.padding(top = 2.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // 1. Resampler Filter Option
-                        Column {
-                            Text("1. Resampler Filter (Bộ lọc nội suy)", style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.Bold)
-                            Text("Chỉ định bộ lọc cắt tần số biên dốc của âm thanh", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
-                            Spacer(Modifier.height(8.dp))
-                            
-                            val filterOptions = listOf("Bypass", "poly-sinc-xtr-lp", "Closed-Form-M", "sinc-L")
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                             ) {
-                                filterOptions.forEach { option ->
-                                    val isSelected = activeFilter == option
-                                    val bgAnimatedColor by animateColorAsState(
-                                        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(0x0EFFFFFF),
-                                        animationSpec = tween(durationMillis = 200)
-                                    )
-                                    val textAnimatedColor by animateColorAsState(
-                                        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color(0xFFE5DECD),
-                                        animationSpec = tween(durationMillis = 200)
-                                    )
-                                    val optionScale by animateFloatAsState(
-                                        targetValue = if (isSelected) 1.02f else 1.0f,
-                                        animationSpec = tween(durationMillis = 150)
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .graphicsLayer(scaleX = optionScale, scaleY = optionScale)
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(bgAnimatedColor)
-                                            .clickable { player.setFilter(option) }
-                                            .padding(vertical = 8.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = option,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = textAnimatedColor
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // 2. Dither / Noise Shaper Option
-                        Column {
-                            Text("2. Dither & Noise Shaper (Bộ phân dither)", style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.Bold)
-                            Text("Chuyển dịch nhiễu lượng tử cơ học ra khỏi dải nghe nhạy cảm", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
-                            Spacer(Modifier.height(8.dp))
-                            
-                            val ditherOptions = listOf("None", "Gauss dither", "NS9 (Shaper)", "LNS15")
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                ditherOptions.forEach { option ->
-                                    val isSelected = activeDither == option
-                                    val bgAnimatedColor by animateColorAsState(
-                                        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(0x0EFFFFFF),
-                                        animationSpec = tween(durationMillis = 200)
-                                    )
-                                    val textAnimatedColor by animateColorAsState(
-                                        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color(0xFFE5DECD),
-                                        animationSpec = tween(durationMillis = 200)
-                                    )
-                                    val optionScale by animateFloatAsState(
-                                        targetValue = if (isSelected) 1.02f else 1.0f,
-                                        animationSpec = tween(durationMillis = 150)
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .graphicsLayer(scaleX = optionScale, scaleY = optionScale)
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(bgAnimatedColor)
-                                            .clickable { player.setDither(option) }
-                                            .padding(vertical = 8.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = option.split(" ")[0],
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = textAnimatedColor
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // 3. Modulator (PCM vs SDM)
-                        Column {
-                            Text("3. Modulator / Upsampler (Bộ điều chế SDM)", style = MaterialTheme.typography.titleSmall, color = Color.White, fontWeight = FontWeight.Bold)
-                            Text("Cấu hình dồn mẫu Sigma-Delta lên dòng siêu cao tần 1-bit", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
-                            Spacer(Modifier.height(8.dp))
-                            
-                            val modulatorOptions = listOf("PCM (Bit-Perfect)", "DSD64 (Sigma-Delta)", "DSD512 (HQ-grade)")
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                modulatorOptions.forEach { option ->
-                                    val isSelected = activeModulator == option
-                                    val bgAnimatedColor by animateColorAsState(
-                                        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color(0x0EFFFFFF),
-                                        animationSpec = tween(durationMillis = 200)
-                                    )
-                                    val textAnimatedColor by animateColorAsState(
-                                        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color(0xFFE5DECD),
-                                        animationSpec = tween(durationMillis = 200)
-                                    )
-                                    val indicatorColor by animateColorAsState(
-                                        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary else Color(0xFF00E676),
-                                        animationSpec = tween(durationMillis = 200)
-                                    )
-                                    val optionScale by animateFloatAsState(
-                                        targetValue = if (isSelected) 1.01f else 1.0f,
-                                        animationSpec = tween(durationMillis = 150)
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .graphicsLayer(scaleX = optionScale, scaleY = optionScale)
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(bgAnimatedColor)
-                                            .clickable { player.setModulator(option) }
-                                            .padding(vertical = 10.dp, horizontal = 16.dp),
-                                        contentAlignment = Alignment.CenterStart
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(6.dp)
-                                                    .clip(CircleShape)
-                                                    .background(indicatorColor)
-                                            )
-                                            Spacer(Modifier.width(10.dp))
-                                            Text(
-                                                text = option,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                fontWeight = FontWeight.Bold,
-                                                color = textAnimatedColor
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Dynamic Hardware Specs matching note
-                        val hardwareNote = activeDevice.hardwareNote
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0x08FFFFFF))
-                                .padding(12.dp)
-                        ) {
-                            Text(
-                                text = hardwareNote,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFFFB300),
-                                lineHeight = 16.sp
-                            )
-                        }
-                    }
-                }
+
             }
         }
     }
@@ -923,15 +710,16 @@ private fun SignalPathStep(
     subValue: String,
     isFirst: Boolean = false,
     isLast: Boolean = false,
-    color: Color
+    color: Color,
+    content: @Composable (() -> Unit)? = null
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(vertical = 2.dp),
         verticalAlignment = Alignment.Top
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(24.dp).padding(top = 4.dp)
+            modifier = Modifier.width(24.dp).fillMaxHeight().padding(top = 4.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -943,7 +731,7 @@ private fun SignalPathStep(
                 Box(
                     modifier = Modifier
                         .width(1.5.dp)
-                        .height(56.dp)
+                        .weight(1f)
                         .background(color.copy(alpha = 0.2f))
                 )
             }
@@ -975,6 +763,10 @@ private fun SignalPathStep(
                 lineHeight = 15.sp,
                 modifier = Modifier.padding(top = 3.dp)
             )
+            if (content != null) {
+                Spacer(Modifier.height(8.dp))
+                content()
+            }
         }
     }
 }

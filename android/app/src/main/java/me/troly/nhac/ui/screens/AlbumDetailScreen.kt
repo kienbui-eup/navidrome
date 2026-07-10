@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -199,15 +200,16 @@ fun AlbumDetailScreen(
             // Dual-Pane Layout for Widescreen, Tablets, and TVs
             Row(
                 modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(24.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Left Panel: Static album visual details & actions (fixed 360dp width)
+                // Left Panel: Responsive album visual details & actions
                 Column(
                     modifier = Modifier
-                        .width(360.dp)
+                        .weight(0.38f)
+                        .widthIn(max = 360.dp)
                         .fillMaxHeight()
                         .statusBarsPadding()
-                        .padding(start = 24.dp, top = 24.dp, bottom = 24.dp)
+                        .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
                         .shadow(16.dp, RoundedCornerShape(24.dp))
                         .background(Color.Black.copy(alpha = 0.25f), RoundedCornerShape(24.dp))
                         .background(
@@ -217,7 +219,7 @@ fun AlbumDetailScreen(
                             shape = RoundedCornerShape(24.dp)
                         )
                         .border(0.5.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(24.dp))
-                        .padding(24.dp),
+                        .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
@@ -266,7 +268,8 @@ fun AlbumDetailScreen(
                     CoverImage(
                         url = coverUrl, contentDescription = a.name, corner = 20.dp,
                         modifier = Modifier
-                            .size(240.dp)
+                            .fillMaxWidth(0.85f)
+                            .aspectRatio(1f)
                             .shadow(24.dp, RoundedCornerShape(20.dp))
                     )
 
@@ -359,9 +362,9 @@ fun AlbumDetailScreen(
                 // Right Panel: Scrollable Tracklist
                 LazyColumn(
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(0.62f)
                         .fillMaxHeight(),
-                    contentPadding = PaddingValues(top = 24.dp, end = 24.dp, bottom = if (selectionMode) 160.dp else 88.dp),
+                    contentPadding = PaddingValues(top = 16.dp, end = 16.dp, bottom = if (selectionMode) 160.dp else 88.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     itemsIndexed(a.song, key = { _, s -> s.id }) { index, song ->

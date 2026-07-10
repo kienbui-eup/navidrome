@@ -339,7 +339,7 @@ func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string,
 	if losslessOnly {
 		kept := res.Hits[:0]
 		for _, h := range res.Hits {
-			if h.Lossless || h.Source == "youtube" || h.Source == "zing" {
+			if h.Lossless {
 				kept = append(kept, h)
 			}
 		}

@@ -1715,6 +1715,34 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
           </Grid>
         </Grid>
 
+        {source !== 'remote_server' && (
+          <Box display="flex" alignItems="center" mt={1.5} pl={0.5}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={losslessOnly}
+                  onChange={(e) => {
+                    setLosslessOnly(e.target.checked)
+                    setRawSongs([])
+                    setRawAlbums([])
+                    setRawArtists([])
+                    setRawArtistsTree([])
+                  }}
+                  color="primary"
+                />
+              }
+              label={
+                <Box display="flex" alignItems="center" gap={0.5}>
+                  <GraphicEqIcon fontSize="small" style={{ color: losslessOnly ? '#C5A880' : 'inherit' }} />
+                  <Typography variant="body2" style={{ fontWeight: losslessOnly ? 'bold' : 'normal', color: losslessOnly ? '#C5A880' : 'inherit' }}>
+                    Chỉ tìm nhạc chất lượng cao Lossless / Hi-Res (FLAC, DSD, WAV...)
+                  </Typography>
+                </Box>
+              }
+            />
+          </Box>
+        )}
+
         {/* ADVANCED FILTERING PANEL */}
         {rawSongs.length > 0 && showFilters && (
           <Box className={classes.filterPanel}>
@@ -1797,6 +1825,14 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
               ⚠️ {w}
             </Typography>
           ))}
+        </Box>
+      )}
+
+      {losslessOnly && (source === 'public_search_zing' || source === 'public_search_youtube') && (
+        <Box p={2} borderRadius={8} bgcolor="rgba(197, 168, 128, 0.1)" border="1px solid #C5A880" mt={2}>
+          <Typography variant="body2" style={{ color: '#C5A880', fontWeight: 'bold' }}>
+            🔔 Nguồn Zing MP3 và YouTube Music chỉ cung cấp định dạng nén (MP3, Opus/AAC). Hãy tắt tùy chọn "Chỉ tìm nhạc chất lượng cao Lossless / Hi-Res" bên trên để tìm thấy kết quả từ các nguồn này.
+          </Typography>
         </Box>
       )}
 
