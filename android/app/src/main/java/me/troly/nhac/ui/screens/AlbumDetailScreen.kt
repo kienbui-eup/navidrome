@@ -205,8 +205,8 @@ fun AlbumDetailScreen(
                 // Left Panel: Responsive album visual details & actions
                 Column(
                     modifier = Modifier
-                        .weight(0.38f)
-                        .widthIn(max = 360.dp)
+                        .weight(0.4f)
+                        .widthIn(min = 300.dp, max = 360.dp)
                         .fillMaxHeight()
                         .statusBarsPadding()
                         .padding(start = 16.dp, top = 16.dp, bottom = 16.dp)
@@ -328,7 +328,7 @@ fun AlbumDetailScreen(
                     // Action buttons
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         val playSource = rememberInteractionSource()
                         Button(
@@ -337,24 +337,36 @@ fun AlbumDetailScreen(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
                             modifier = Modifier
                                 .weight(1f)
                                 .then(if (isTv) Modifier.tvFocusable(playSource) else Modifier)
                         ) {
                             Icon(Icons.Filled.PlayArrow, contentDescription = null)
-                            Text("Phát", modifier = Modifier.padding(start = 4.dp))
+                            Text(
+                                text = "Phát",
+                                modifier = Modifier.padding(start = 4.dp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                         val shuffleSource = rememberInteractionSource()
                         OutlinedButton(
                             onClick = { player.play(a.song.shuffled(), 0); onNowPlaying() },
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                             border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f)),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
                             modifier = Modifier
                                 .weight(1f)
                                 .then(if (isTv) Modifier.tvFocusable(shuffleSource) else Modifier)
                         ) {
                             Icon(Icons.Filled.Shuffle, contentDescription = null)
-                            Text("Xáo trộn", modifier = Modifier.padding(start = 4.dp))
+                            Text(
+                                text = "Xáo trộn",
+                                modifier = Modifier.padding(start = 4.dp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
                 }
@@ -362,7 +374,7 @@ fun AlbumDetailScreen(
                 // Right Panel: Scrollable Tracklist
                 LazyColumn(
                     modifier = Modifier
-                        .weight(0.62f)
+                        .weight(0.60f)
                         .fillMaxHeight(),
                     contentPadding = PaddingValues(top = 16.dp, end = 16.dp, bottom = if (selectionMode) 160.dp else 88.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -506,29 +518,49 @@ fun AlbumDetailScreen(
                             // Format Quality Badge
                             AlbumQualityBadge(songs = a.song, modifier = Modifier.padding(top = 8.dp))
 
-                            Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 val playSource = rememberInteractionSource()
                                 Button(
                                     onClick = { player.play(a.song, 0); onNowPlaying() },
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary),
-                                    modifier = Modifier.then(if (isTv) Modifier.tvFocusable(playSource) else Modifier)
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .then(if (isTv) Modifier.tvFocusable(playSource) else Modifier)
                                 ) {
                                     Icon(Icons.Filled.PlayArrow, contentDescription = null)
-                                    Text("Phát", modifier = Modifier.padding(start = 4.dp))
+                                    Text(
+                                        text = "Phát",
+                                        modifier = Modifier.padding(start = 4.dp),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
                                 }
                                 val shuffleSource = rememberInteractionSource()
                                 OutlinedButton(
                                     onClick = { player.play(a.song.shuffled(), 0); onNowPlaying() },
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = Color.White
-                                    ),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                                     border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f)),
-                                    modifier = Modifier.then(if (isTv) Modifier.tvFocusable(shuffleSource) else Modifier)
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .then(if (isTv) Modifier.tvFocusable(shuffleSource) else Modifier)
                                 ) {
                                     Icon(Icons.Filled.Shuffle, contentDescription = null)
-                                    Text("Ngẫu nhiên", modifier = Modifier.padding(start = 4.dp))
+                                    Text(
+                                        text = "Ngẫu nhiên",
+                                        modifier = Modifier.padding(start = 4.dp),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
                                 }
                             }
                         }
