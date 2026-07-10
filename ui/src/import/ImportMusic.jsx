@@ -425,12 +425,6 @@ const ImportMusic = () => {
     <Card className={classes.root}>
       <Title title={`${APP_NAME} - Import nhạc`} />
       <CardContent className={classes.cardContent}>
-        <Typography variant="h6" className={classes.title}>Import nhạc từ nguồn công khai</Typography>
-        <Typography className={classes.hint}>
-          Tải nhạc từ URL/podcast trực tiếp, thư mục Google Drive công khai,
-          kho mở Internet Archive, hoặc một server vi2play khác vào thư viện.
-          Chỉ dùng cho nội dung bạn có quyền tải.
-        </Typography>
 
         {libraries.length > 1 && (
           <FormControl className={classes.libSelect} margin="normal">
@@ -458,10 +452,30 @@ const ImportMusic = () => {
               value={jobPct}
               style={{ marginTop: 8, marginBottom: 8 }}
             />
-            <Typography className={classes.hint}>
+             <Typography className={classes.hint}>
               Xong {job.completed} • Trùng {job.skipped} • Lỗi {job.failed}
               {job.current ? ` • Đang tải: ${job.current}` : ''}
             </Typography>
+            {job.items && job.items.length > 0 && (
+              <Box style={{ marginTop: 12, maxHeight: 220, overflow: 'auto', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: 8, background: 'rgba(0,0,0,0.15)' }}>
+                {job.items.map((it, idx) => (
+                  <Box key={idx} display="flex" flexDirection="column" style={{ marginBottom: 6, paddingBottom: 6, borderBottom: idx < job.items.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="body2" style={{ fontSize: '0.82rem', fontWeight: it.status === 'downloading' ? 'bold' : 'normal', color: it.status === 'completed' ? '#4caf50' : (it.status === 'failed' ? '#f44336' : (it.status === 'downloading' ? '#2196f3' : (it.status === 'skipped' ? '#ff9800' : '#888'))) }}>
+                        {it.status === 'downloading' ? '📥 ' : (it.status === 'completed' ? '✅ ' : (it.status === 'failed' ? '❌ ' : (it.status === 'skipped' ? '⏭️ ' : '⏳ ')))}
+                        {it.label}
+                      </Typography>
+                      <Typography variant="caption" style={{ color: '#aaa', marginLeft: 8, flexShrink: 0 }}>
+                        {it.status === 'downloading' ? `${it.progress}% (${formatBytes(it.size || 0)})` : (it.status === 'completed' ? 'Xong' : (it.status === 'failed' ? 'Lỗi' : (it.status === 'skipped' ? 'Trùng' : 'Đang chờ')))}
+                      </Typography>
+                    </Box>
+                    {it.status === 'downloading' && (
+                      <LinearProgress variant="determinate" value={it.progress} style={{ marginTop: 4, height: 3, borderRadius: 1 }} />
+                    )}
+                  </Box>
+                ))}
+              </Box>
+            )}
             {jobRunning && (
               <Button size="small" onClick={cancelJob} style={{ marginTop: 8 }}>
                 Hủy

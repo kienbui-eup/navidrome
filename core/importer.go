@@ -131,16 +131,27 @@ func (it ImportJobItem) label() string {
 	}
 }
 
+type ImportJobItemStatus struct {
+	ID       string `json:"id"`
+	Type     string `json:"type"`
+	Label    string `json:"label"`
+	Status   string `json:"status"`   // "pending" | "downloading" | "completed" | "failed" | "skipped" | "canceled"
+	Progress int    `json:"progress"` // 0 to 100
+	Size     int64  `json:"size"`     // size in bytes
+	Error    string `json:"error,omitempty"`
+}
+
 // ImportJob is the progress state of a background batch import.
 type ImportJob struct {
-	ID        string   `json:"id"`
-	Status    string   `json:"status"` // "running" | "completed" | "canceled"
-	Total     int      `json:"total"`
-	Completed int      `json:"completed"`
-	Failed    int      `json:"failed"`
-	Skipped   int      `json:"skipped"` // duplicates
-	Current   string   `json:"current"`
-	Errors    []string `json:"errors"`
+	ID        string                `json:"id"`
+	Status    string                `json:"status"` // "running" | "completed" | "canceled"
+	Total     int                   `json:"total"`
+	Completed int                   `json:"completed"`
+	Failed    int                   `json:"failed"`
+	Skipped   int                   `json:"skipped"` // duplicates
+	Current   string                `json:"current"`
+	Items     []ImportJobItemStatus `json:"items"`
+	Errors    []string              `json:"errors"`
 	cancel    context.CancelFunc
 }
 
@@ -455,49 +466,104 @@ func (imp *importer) StartImportJob(ctx context.Context, items []ImportJobItem, 
 }
 
 func (imp *importer) runJob(ctx context.Context, jobID string, items []ImportJobItem, libraryID int) {
-	for _, it := range items {
+	// Initialize items status list
+	imp.updateJob(jobID, func(j *ImportJob) {
+		j.Items = make([]ImportJobItemStatus, len(items))
+		for i, it := range items {
+			j.Items[i] = ImportJobItemStatus{
+				ID:     it.ID,
+				Type:   it.Type,
+				Label:  it.label(),
+				Status: "pending",
+			}
+		}
+	})
+
+	// Parallel execution with max 3 concurrent downloads
+	const maxConcurrent = 3
+	sem := make(chan struct{}, maxConcurrent)
+	var wg sync.WaitGroup
+
+	for i, it := range items {
 		if ctx.Err() != nil {
-			imp.updateJob(jobID, func(j *ImportJob) { j.Status = "canceled" })
+			imp.updateJob(jobID, func(j *ImportJob) {
+				j.Status = "canceled"
+				for idx := range j.Items {
+					if j.Items[idx].Status == "pending" {
+						j.Items[idx].Status = "canceled"
+					}
+				}
+			})
 			break
 		}
-		imp.updateJob(jobID, func(j *ImportJob) { j.Current = it.label() })
 
-		var res *ImportResult
-		var err error
-		switch it.Type {
-		case "url":
-			res, err = imp.ImportURL(ctx, it.URL, libraryID)
-		case "archive":
-			res, err = imp.ImportArchive(ctx, it.Identifier, it.Filename, libraryID)
-		case "drive":
-			res, err = imp.ImportDriveFile(ctx, it.ID, it.Name, libraryID)
-		case "remote":
-			res, err = imp.importRemoteItem(ctx, it, libraryID)
-		case "youtube":
-			res, err = imp.ImportYouTubeTrack(ctx, it.ID, it.Name, libraryID)
-		case "zing":
-			res, err = imp.ImportZingTrack(ctx, it.ID, it.Name, libraryID)
-		case "deezer":
-			res, err = imp.ImportDeezerTrack(ctx, it.ID, it.Name, libraryID)
-		default:
-			err = fmt.Errorf("unknown item type %q", it.Type)
-		}
+		sem <- struct{}{}
+		wg.Add(1)
 
-		imp.updateJob(jobID, func(j *ImportJob) {
-			switch {
-			case err != nil:
-				j.Failed++
-				msg := fmt.Sprintf("%s: %v", it.label(), err)
-				if len(j.Errors) < 100 {
-					j.Errors = append(j.Errors, msg)
-				}
-			case res != nil && res.Duplicate:
-				j.Skipped++
+		go func(index int, item ImportJobItem) {
+			defer func() {
+				<-sem
+				wg.Done()
+			}()
+
+			imp.updateJob(jobID, func(j *ImportJob) {
+				j.Items[index].Status = "downloading"
+				j.Current = item.label()
+			})
+
+			// Set progress callback for this item index
+			ctxWithCallback := context.WithValue(ctx, "job_item_progress_fn", func(read int64, pct int) {
+				imp.updateJob(jobID, func(j *ImportJob) {
+					j.Items[index].Progress = pct
+					j.Items[index].Size = read
+				})
+			})
+
+			var res *ImportResult
+			var err error
+			switch item.Type {
+			case "url":
+				res, err = imp.ImportURL(ctxWithCallback, item.URL, libraryID)
+			case "archive":
+				res, err = imp.ImportArchive(ctxWithCallback, item.Identifier, item.Filename, libraryID)
+			case "drive":
+				res, err = imp.ImportDriveFile(ctxWithCallback, item.ID, item.Name, libraryID)
+			case "remote":
+				res, err = imp.importRemoteItem(ctxWithCallback, item, libraryID)
+			case "youtube":
+				res, err = imp.ImportYouTubeTrack(ctxWithCallback, item.ID, item.Name, libraryID)
+			case "zing":
+				res, err = imp.ImportZingTrack(ctxWithCallback, item.ID, item.Name, libraryID)
+			case "deezer":
+				res, err = imp.ImportDeezerTrack(ctxWithCallback, item.ID, item.Name, libraryID)
 			default:
-				j.Completed++
+				err = fmt.Errorf("unknown item type %q", item.Type)
 			}
-		})
+
+			imp.updateJob(jobID, func(j *ImportJob) {
+				if err != nil {
+					j.Failed++
+					j.Items[index].Status = "failed"
+					j.Items[index].Error = err.Error()
+					msg := fmt.Sprintf("%s: %v", item.label(), err)
+					if len(j.Errors) < 100 {
+						j.Errors = append(j.Errors, msg)
+					}
+				} else if res != nil && res.Duplicate {
+					j.Skipped++
+					j.Items[index].Status = "skipped"
+					j.Items[index].Progress = 100
+				} else {
+					j.Completed++
+					j.Items[index].Status = "completed"
+					j.Items[index].Progress = 100
+				}
+			})
+		}(i, it)
 	}
+
+	wg.Wait()
+
 	imp.updateJob(jobID, func(j *ImportJob) {
 		j.Current = ""
 		if j.Status == "running" {
@@ -526,6 +592,7 @@ func (imp *importer) GetImportJob(id string) (*ImportJob, bool) {
 	snapshot := *job
 	snapshot.cancel = nil
 	snapshot.Errors = append([]string(nil), job.Errors...)
+	snapshot.Items = append([]ImportJobItemStatus(nil), job.Items...)
 	return &snapshot, true
 }
 
@@ -683,12 +750,46 @@ func (imp *importer) downloadTo(ctx context.Context, rawURL, name string, valida
 		}
 	}
 
+	if resp.ContentLength > 0 {
+		ctx = context.WithValue(ctx, "job_item_total_size", resp.ContentLength)
+	}
+
 	res, err := imp.persist(ctx, resp.Body, name, meta)
 	if err != nil {
 		return nil, err
 	}
 	log.Info(ctx, "Imported audio file", "name", res.SavedName, "bytes", res.Bytes, "duplicate", res.Duplicate, "url", rawURL)
 	return res, nil
+}
+
+type progressReader struct {
+	r          io.Reader
+	total      int64
+	read       int64
+	onProgress func(read int64, progress int)
+	lastUpdate time.Time
+}
+
+func (pr *progressReader) Read(p []byte) (n int, err error) {
+	n, err = pr.r.Read(p)
+	if n > 0 {
+		pr.read += int64(n)
+		if pr.onProgress != nil {
+			now := time.Now()
+			if now.Sub(pr.lastUpdate) >= 200*time.Millisecond || err == io.EOF {
+				pr.lastUpdate = now
+				pct := 0
+				if pr.total > 0 {
+					pct = int((pr.read * 100) / pr.total)
+					if pct > 100 {
+						pct = 100
+					}
+				}
+				pr.onProgress(pr.read, pct)
+			}
+		}
+	}
+	return n, err
 }
 
 // persist streams r into the target library's Imported/ folder, hashing the
@@ -704,6 +805,26 @@ func (imp *importer) persist(ctx context.Context, r io.Reader, name string, meta
 		return nil, err
 	}
 
+	// Try to get progress callback and total size from context
+	var onProgress func(read int64, progress int)
+	if val := ctx.Value("job_item_progress_fn"); val != nil {
+		if fn, ok := val.(func(read int64, progress int)); ok {
+			onProgress = fn
+		}
+	}
+	var totalSize int64
+	if val := ctx.Value("job_item_total_size"); val != nil {
+		if sz, ok := val.(int64); ok {
+			totalSize = sz
+		}
+	}
+
+	pr := &progressReader{
+		r:          r,
+		total:      totalSize,
+		onProgress: onProgress,
+	}
+
 	// Stream to a unique temp file while computing the content hash.
 	out, err := os.CreateTemp(destDir, ".nd-import-*.part")
 	if err != nil {
@@ -711,7 +832,7 @@ func (imp *importer) persist(ctx context.Context, r io.Reader, name string, meta
 	}
 	tmpPath := out.Name()
 	hasher := sha256.New()
-	written, err := io.Copy(out, io.TeeReader(io.LimitReader(r, maxDownloadBytes+1), hasher))
+	written, err := io.Copy(out, io.TeeReader(io.LimitReader(pr, maxDownloadBytes+1), hasher))
 	closeErr := out.Close()
 	if err != nil {
 		_ = os.Remove(tmpPath)
@@ -928,6 +1049,9 @@ func (imp *importer) ImportDriveFile(ctx context.Context, fileID, name string, l
 		return nil, fmt.Errorf("file %q is not a supported audio type", finalName)
 	}
 	meta := importMeta{libraryID: libraryID, source: "drive", ref: fileID}
+	if resp.ContentLength > 0 {
+		ctx = context.WithValue(ctx, "job_item_total_size", resp.ContentLength)
+	}
 	res, err := imp.persist(ctx, resp.Body, finalName, meta)
 	if err != nil {
 		return nil, err

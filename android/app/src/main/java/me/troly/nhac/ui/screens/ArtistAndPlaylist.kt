@@ -68,10 +68,20 @@ import me.troly.nhac.ui.components.DeletePlaylistDialog
 import me.troly.nhac.ui.components.SongRow
 
 // ── Artist detail ───────────────────────────────────────────────────────────
-class ArtistViewModel(private val repo: SubsonicRepository, id: String) : ViewModel() {
+class ArtistViewModel(private val repo: SubsonicRepository, private val id: String) : ViewModel() {
     private val _artist = MutableStateFlow<Artist?>(null)
     val artist = _artist.asStateFlow()
-    init { viewModelScope.launch { runCatching { _artist.value = repo.artist(id) } } }
+    init { 
+        load()
+        viewModelScope.launch {
+            repo.refreshEvent.collect {
+                load()
+            }
+        }
+    }
+    private fun load() {
+        viewModelScope.launch { runCatching { _artist.value = repo.artist(id) } }
+    }
 }
 
 @Composable
@@ -129,7 +139,14 @@ fun ArtistDetailScreen(artistId: String, onBack: () -> Unit, onAlbum: (String) -
 class PlaylistsViewModel(private val repo: SubsonicRepository) : ViewModel() {
     private val _items = MutableStateFlow<List<Playlist>>(emptyList())
     val items = _items.asStateFlow()
-    init { reload() }
+    init { 
+        reload()
+        viewModelScope.launch {
+            repo.refreshEvent.collect {
+                reload()
+            }
+        }
+    }
     fun reload() { viewModelScope.launch { runCatching { _items.value = repo.playlists() } } }
 }
 
@@ -190,10 +207,20 @@ fun PlaylistsScreen(onPlaylist: (String) -> Unit) {
 }
 
 // ── Playlist detail ─────────────────────────────────────────────────────────
-class PlaylistViewModel(private val repo: SubsonicRepository, id: String) : ViewModel() {
+class PlaylistViewModel(private val repo: SubsonicRepository, private val id: String) : ViewModel() {
     private val _pl = MutableStateFlow<Playlist?>(null)
     val pl = _pl.asStateFlow()
-    init { viewModelScope.launch { runCatching { _pl.value = repo.playlist(id) } } }
+    init { 
+        load()
+        viewModelScope.launch {
+            repo.refreshEvent.collect {
+                load()
+            }
+        }
+    }
+    private fun load() {
+        viewModelScope.launch { runCatching { _pl.value = repo.playlist(id) } }
+    }
 }
 
 @Composable

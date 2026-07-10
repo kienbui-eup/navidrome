@@ -127,6 +127,8 @@ public struct Song: Codable, Identifiable, Hashable {
     public let bitRate: Int?
     public let bitDepth: Int?
     public let samplingRate: Int?
+    public let starred: String?
+    public let userRating: Int?
     
     public func hash(into hasher: inout Hasher) {
         hasher.combine(id)

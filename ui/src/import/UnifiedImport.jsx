@@ -48,6 +48,8 @@ import EditIcon from '@material-ui/icons/Edit'
 import DeleteIcon from '@material-ui/icons/Delete'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
+import ExpandLessIcon from '@material-ui/icons/ExpandLess'
 import HomeIcon from '@material-ui/icons/Home'
 import StorageIcon from '@material-ui/icons/Storage'
 import FolderIcon from '@material-ui/icons/Folder'
@@ -131,6 +133,69 @@ const useStyles = makeStyles((theme) => ({
     [theme.breakpoints.down('xs')]: {
       display: 'none',
     }
+  },
+  treeArtistBlock: {
+    marginBottom: theme.spacing(1.5),
+    backgroundColor: 'rgba(255, 255, 255, 0.015)',
+    borderRadius: theme.shape.borderRadius * 1.2,
+    border: '1px solid rgba(255, 255, 255, 0.05)',
+    overflow: 'hidden',
+    transition: 'all 0.2s ease',
+    '&:hover': {
+      borderColor: 'rgba(197, 168, 128, 0.3)',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+    },
+  },
+  treeArtistHeader: {
+    padding: '12px 16px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.005)',
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    },
+    [theme.breakpoints.down('xs')]: {
+      padding: '8px 12px',
+    },
+  },
+  treeArtistName: {
+    fontWeight: 'bold',
+    color: '#FFF',
+    fontSize: '0.95rem',
+    [theme.breakpoints.down('xs')]: {
+      fontSize: '0.88rem',
+    },
+  },
+  treeAlbumBlock: {
+    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+    backgroundColor: 'rgba(255, 255, 255, 0.01)',
+    borderRadius: theme.shape.borderRadius,
+    border: '1px solid rgba(255, 255, 255, 0.03)',
+    overflow: 'hidden',
+  },
+  treeAlbumHeader: {
+    padding: '8px 12px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    },
+    [theme.breakpoints.down('xs')]: {
+      padding: '6px 10px',
+    },
+  },
+  treeAlbumName: {
+    fontWeight: 'bold',
+    color: '#DDD',
+    fontSize: '0.88rem',
+    [theme.breakpoints.down('xs')]: {
+      fontSize: '0.82rem',
+    },
   },
   breadcrumbContainer: {
     display: 'flex',
@@ -418,6 +483,13 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
 
   // Hierarchical Data Tree
   const [artistsTree, setRawArtistsTree] = useState([])
+  const [expandedArtists, setExpandedArtists] = useState({})
+  const [expandedAlbums, setExpandedAlbums] = useState({})
+
+  const resetTreeExpansion = useCallback(() => {
+    setExpandedArtists({})
+    setExpandedAlbums({})
+  }, [])
 
   // UI View Levels & Layout Settings
   const [displayMode, setDisplayMode] = useState('hierarchy') // hierarchy | flat
@@ -535,6 +607,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
 
   // Construct hierarchy (Artist -> Album -> Songs)
   const buildHierarchy = useCallback((songsList, albumsList = [], artistsList = []) => {
+    resetTreeExpansion()
     const tree = {}
 
     // Add base artists from artistList
@@ -639,7 +712,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
     })
 
     setRawArtistsTree(finalTree)
-  }, [])
+  }, [resetTreeExpansion])
 
   // Auto-search when serverId is selected or changed
   useEffect(() => {
@@ -680,9 +753,10 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
     setRawArtists([])
     setRawArtistsTree([])
     setViewPath([])
+    resetTreeExpansion()
     setWarnings([])
     stopPreview()
-  }, [source])
+  }, [source, resetTreeExpansion])
 
   // Auto-search for online search sources when selected
   useEffect(() => {
@@ -764,6 +838,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
             ...art,
             albums: Object.values(art.albums),
           }))
+          resetTreeExpansion()
           setRawArtistsTree(finalTree)
         } catch (e) {
           // Ignore
@@ -840,6 +915,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
         })
 
         const tree = Object.values(archiveArtists).sort((a, b) => a.name.localeCompare(b.name, 'vi'))
+        resetTreeExpansion()
         setRawArtistsTree(tree)
         if (items.length === 0) notify('Không tìm thấy nội dung nào', 'info')
       } catch (e) {
@@ -1116,6 +1192,32 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
       setBusy(null)
     }
   }
+
+  const toggleArtistExpand = useCallback((artist) => {
+    const isExpanded = !!expandedArtists[artist.id]
+    setExpandedArtists((prev) => ({
+      ...prev,
+      [artist.id]: !isExpanded,
+    }))
+    if (!isExpanded && artist.lazy && source === 'remote_server') {
+      loadRemoteArtistAlbums(artist)
+    }
+  }, [expandedArtists, source, loadRemoteArtistAlbums])
+
+  const toggleAlbumExpand = useCallback((artist, album) => {
+    const isExpanded = !!expandedAlbums[album.id]
+    setExpandedAlbums((prev) => ({
+      ...prev,
+      [album.id]: !isExpanded,
+    }))
+    if (!isExpanded && album.lazy) {
+      if (source === 'internet_archive') {
+        loadArchiveAlbumSongs(artist.name, album)
+      } else if (source === 'remote_server') {
+        loadRemoteAlbumSongs(artist.name, album)
+      }
+    }
+  }, [expandedAlbums, source, loadArchiveAlbumSongs, loadRemoteAlbumSongs])
 
   // Handle drill down clicks
   const selectArtist = (artist) => {
@@ -1701,161 +1803,173 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
 
           {displayMode === 'hierarchy' && source !== 'flat' ? (
             <Box>
-              {/* BREADCRUMB */}
-              {renderBreadcrumbs()}
-
-              {/* LEVEL 1: ARTISTS */}
-              {viewPath.length === 0 && (
-                <Box className={classes.gridContainer}>
-                  {renderedArtists.map((artist) => (
-                    <Card key={artist.id} className={classes.gridCard} onClick={() => selectArtist(artist)}>
-                      <CardContent style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: 20 }}>
-                        <Avatar className={classes.artistAvatar}>
-                          {artist.name.charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Typography variant="subtitle1" style={{ fontWeight: 'bold', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {artist.name}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary" style={{ marginTop: 4 }}>
-                          {artist.albumCount} Album • {artist.songCount} Bài hát
-                        </Typography>
-
-                        {/* Import All Artist Songs */}
-                        {artist.songCount > 0 && (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="primary"
-                            startIcon={busy === `batch-${artist.name}` ? <CircularProgress size={12} /> : <GetAppIcon />}
-                            disabled={busy === `batch-${artist.name}`}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              const allSongs = artist.albums.reduce((all, alb) => [...all, ...alb.songs], [])
-                              handleImportBatch(artist.name, allSongs)
-                            }}
-                            style={{ marginTop: 12 }}
-                          >
-                            Tải tất cả
-                          </Button>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </Box>
-              )}
-
-              {/* LEVEL 2: ALBUMS OF ARTIST */}
-              {viewPath.length === 1 && (
-                <Box className={classes.gridContainer}>
-                  {viewPath[0].albums.map((album) => (
-                    <Card key={album.id} className={classes.gridCard} onClick={() => selectAlbum(album)}>
-                      <CardContent style={{ padding: 20 }}>
-                        <Box display="flex" alignItems="center" gap={1.5} mb={1.5}>
-                          <AlbumIcon color="primary" style={{ fontSize: '2.5rem' }} />
+              {/* TREE STRUCTURE: COLLAPSIBLE ARTISTS, ALBUMS & SONGS */}
+              <List style={{ padding: 0 }}>
+                {renderedArtists.map((artist) => {
+                  const isArtistExpanded = !!expandedArtists[artist.id]
+                  const artistBusy = busy === `load-${artist.id}`
+                  const artistImportBusy = busy === `batch-${artist.name}`
+                  return (
+                    <Box key={artist.id} className={classes.treeArtistBlock}>
+                      {/* ARTIST ROW */}
+                      <Box 
+                        className={classes.treeArtistHeader}
+                        onClick={() => toggleArtistExpand(artist)}
+                      >
+                        <Box display="flex" alignItems="center" gap={1.5} style={{ flexGrow: 1, overflow: 'hidden' }}>
+                          <IconButton size="small" style={{ color: '#C5A880', padding: 4 }}>
+                            {isArtistExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                          </IconButton>
+                          <Avatar style={{ width: 34, height: 34, backgroundColor: '#C5A880', color: '#0A0A0A', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                            {artist.name.charAt(0).toUpperCase()}
+                          </Avatar>
                           <Box style={{ overflow: 'hidden' }}>
-                            <Typography variant="subtitle1" style={{ fontWeight: 'bold', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                              {album.name}
+                            <Typography className={classes.treeArtistName}>
+                              {artist.name}
                             </Typography>
-                            <Typography variant="body2" color="textSecondary">
-                              {album.year ? `${album.year} • ` : ''}{album.songCount || album.songs.length || '?'} bài hát
+                            <Typography variant="caption" color="textSecondary" style={{ fontSize: '0.75rem' }}>
+                              {artist.albumCount} Album • {artist.songCount} Bài hát
                             </Typography>
                           </Box>
                         </Box>
-
-                        {/* Import Album Button */}
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="primary"
-                          startIcon={busy === `batch-${album.name}` ? <CircularProgress size={12} /> : <GetAppIcon />}
-                          disabled={busy === `batch-${album.name}`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            if (album.lazy) {
-                              notify('Vui lòng mở album này để tải về', 'info')
-                            } else {
-                              handleImportBatch(album.name, album.songs)
-                            }
-                          }}
-                          fullWidth
-                          style={{ marginTop: 12 }}
-                        >
-                          Tải album
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </Box>
-              )}
-
-              {/* LEVEL 3: TRACKS LIST */}
-              {viewPath.length === 2 && (
-                <Box>
-                  {viewPath[1].lazy && busy === `load-${viewPath[1].id}` ? (
-                    <Box display="flex" justifyContent="center" py={6}>
-                      <CircularProgress />
-                    </Box>
-                  ) : (
-                    <Box>
-                      <Box className={classes.albumHeader}>
-                        <Box>
-                          <Typography variant="h6" style={{ fontWeight: 'bold' }}>
-                            {viewPath[1].name}
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary">
-                            Nghệ sĩ: {viewPath[0].name} {viewPath[1].year ? `• Năm phát hành: ${viewPath[1].year}` : ''}
-                          </Typography>
+                        <Box display="flex" alignItems="center">
+                          {artistBusy && <CircularProgress size={14} style={{ marginRight: 8, color: '#C5A880' }} />}
+                          {artist.songCount > 0 && (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={artistImportBusy ? <CircularProgress size={12} color="inherit" /> : <GetAppIcon />}
+                              disabled={artistImportBusy}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                const allSongs = artist.albums.reduce((all, alb) => [...all, ...alb.songs], [])
+                                handleImportBatch(artist.name, allSongs)
+                              }}
+                              style={{ border: '1px solid rgba(197, 168, 128, 0.3)', color: '#C5A880', padding: '2px 8px', fontSize: '0.75rem', borderRadius: 4 }}
+                            >
+                              <span className={classes.displayModeText}>Tải tất cả</span>
+                            </Button>
+                          )}
                         </Box>
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          startIcon={busy === `batch-${viewPath[1].name}` ? <CircularProgress size={16} color="inherit" /> : <GetAppIcon />}
-                          disabled={busy === `batch-${viewPath[1].name}`}
-                          onClick={() => handleImportBatch(viewPath[1].name, viewPath[1].songs)}
-                        >
-                          Tải toàn bộ album ({viewPath[1].songs.length} bài)
-                        </Button>
                       </Box>
 
-                      {/* Tracks */}
-                      <List>
-                        {filterAndSortSongs(viewPath[1].songs).map((song, idx) => {
-                          const isBusy = busy === `import-${song.id}`
-                          return (
-                            <ListItem key={song.id} className={classes.songItem} divider>
-                              <IconButton onClick={() => togglePreview(song)}>
-                                {playing === song.id ? <StopIcon /> : <PlayArrowIcon />}
-                              </IconButton>
-                              <ListItemText
-                                primary={
-                                  <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                                    <Typography variant="body1" style={{ fontWeight: 500 }}>
-                                      {idx + 1}. {song.title}
-                                    </Typography>
-                                    {renderAudioSpecs(song)}
-                                  </Box>
-                                }
-                                secondary={
-                                  <Box display="flex" gap={1.5} alignItems="center" flexWrap="wrap" mt={0.5} className={classes.metaText}>
-                                    {song.length && <span>⏱️ {song.length}</span>}
-                                    {song.size > 0 && <span>💾 {formatBytes(song.size)}</span>}
-                                    {song.downloads > 0 && <span>📥 {song.downloads} lượt tải</span>}
-                                  </Box>
-                                }
-                              />
-                              <Box display="flex" alignItems="center" style={{ marginLeft: 8 }}>
-                                <IconButton disabled={isBusy} onClick={() => handleImportSingle(song)}>
-                                  {isBusy ? <CircularProgress size={18} /> : <GetAppIcon />}
-                                </IconButton>
-                              </Box>
-                            </ListItem>
-                          )
-                        })}
-                      </List>
+                      {/* ALBUMS ROW (Only visible if expanded) */}
+                      {isArtistExpanded && (
+                        <Box style={{ paddingLeft: 20, paddingRight: 12, paddingBottom: 8 }}>
+                          {artistBusy ? (
+                            <Box display="flex" justifyContent="center" py={1.5}>
+                              <CircularProgress size={20} style={{ color: '#C5A880' }} />
+                            </Box>
+                          ) : (
+                            <Box style={{ borderLeft: '1px dashed rgba(255, 255, 255, 0.1)', paddingLeft: 12 }}>
+                              {artist.albums && artist.albums.length > 0 ? (
+                                artist.albums.map((album) => {
+                                  const isAlbumExpanded = !!expandedAlbums[album.id]
+                                  const albumBusy = busy === `load-${album.id}`
+                                  const albumImportBusy = busy === `batch-${album.name}`
+                                  return (
+                                    <Box key={album.id} className={classes.treeAlbumBlock}>
+                                      {/* ALBUM ROW */}
+                                      <Box 
+                                        className={classes.treeAlbumHeader}
+                                        onClick={() => toggleAlbumExpand(artist, album)}
+                                      >
+                                        <Box display="flex" alignItems="center" gap={1} style={{ flexGrow: 1, overflow: 'hidden' }}>
+                                          <IconButton size="small" style={{ color: '#C5A880', padding: 4 }}>
+                                            {isAlbumExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                          </IconButton>
+                                          <AlbumIcon style={{ fontSize: '1.25rem', color: '#C5A880' }} />
+                                          <Box style={{ overflow: 'hidden' }}>
+                                            <Typography className={classes.treeAlbumName}>
+                                              {album.name} {album.year ? `(${album.year})` : ''}
+                                            </Typography>
+                                            <Typography variant="caption" color="textSecondary" style={{ fontSize: '0.72rem' }}>
+                                              {album.songCount || album.songs.length || '?'} bài hát
+                                            </Typography>
+                                          </Box>
+                                        </Box>
+                                        <Box display="flex" alignItems="center">
+                                          {albumBusy && <CircularProgress size={12} style={{ marginRight: 6, color: '#C5A880' }} />}
+                                          {album.songs && album.songs.length > 0 && (
+                                            <Button
+                                              size="small"
+                                              variant="text"
+                                              startIcon={albumImportBusy ? <CircularProgress size={12} color="inherit" /> : <GetAppIcon />}
+                                              disabled={albumImportBusy}
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleImportBatch(album.name, album.songs)
+                                              }}
+                                              style={{ color: '#C5A880', padding: '2px 4px', fontSize: '0.72rem' }}
+                                            >
+                                              <span className={classes.displayModeText}>Tải album</span>
+                                            </Button>
+                                          )}
+                                        </Box>
+                                      </Box>
+
+                                      {/* TRACKS LIST (Only visible if expanded) */}
+                                      {isAlbumExpanded && (
+                                        <Box style={{ paddingLeft: 8, paddingRight: 4, paddingBottom: 4 }}>
+                                          {albumBusy ? (
+                                            <Box display="flex" justifyContent="center" py={1.5}>
+                                              <CircularProgress size={16} style={{ color: '#C5A880' }} />
+                                            </Box>
+                                          ) : (
+                                            <List style={{ padding: 0 }}>
+                                              {filterAndSortSongs(album.songs || []).map((song, sIdx) => {
+                                                const isSongBusy = busy === `import-${song.id}`
+                                                return (
+                                                  <ListItem key={song.id} className={classes.songItem} divider style={{ borderBottom: '1px solid rgba(255,255,255,0.02)', padding: '6px 8px' }}>
+                                                    <IconButton size="small" onClick={() => togglePreview(song)} style={{ marginRight: 4, padding: 4 }}>
+                                                      {playing === song.id ? <StopIcon style={{ fontSize: '1.1rem' }} /> : <PlayArrowIcon style={{ fontSize: '1.1rem' }} />}
+                                                    </IconButton>
+                                                    <ListItemText
+                                                      primary={
+                                                        <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+                                                          <Typography variant="body2" style={{ fontWeight: 500, fontSize: '0.82rem' }}>
+                                                            {sIdx + 1}. {song.title}
+                                                          </Typography>
+                                                          {renderAudioSpecs(song)}
+                                                        </Box>
+                                                      }
+                                                      secondary={
+                                                        <Box display="flex" gap={1.5} alignItems="center" flexWrap="wrap" mt={0.25} style={{ fontSize: '0.72rem', color: '#888' }}>
+                                                          {song.length && <span>⏱️ {song.length}</span>}
+                                                          {song.size > 0 && <span>💾 {formatBytes(song.size)}</span>}
+                                                          {song.downloads > 0 && <span>📥 {song.downloads} lượt tải</span>}
+                                                        </Box>
+                                                      }
+                                                      style={{ margin: 0 }}
+                                                    />
+                                                    <Box display="flex" alignItems="center" style={{ marginLeft: 4 }}>
+                                                      <IconButton size="small" disabled={isSongBusy} onClick={() => handleImportSingle(song)} style={{ padding: 4 }}>
+                                                        {isSongBusy ? <CircularProgress size={12} /> : <GetAppIcon style={{ fontSize: '1.1rem' }} />}
+                                                      </IconButton>
+                                                    </Box>
+                                                  </ListItem>
+                                                )
+                                              })}
+                                            </List>
+                                          )}
+                                        </Box>
+                                      )}
+                                    </Box>
+                                  )
+                                })
+                              ) : (
+                                <Typography variant="caption" style={{ color: '#888', fontStyle: 'italic', display: 'block', padding: 8 }}>
+                                  Không tìm thấy album nào cho ca sĩ này
+                                </Typography>
+                              )}
+                            </Box>
+                          )}
+                        </Box>
+                      )}
                     </Box>
-                  )}
-                </Box>
-              )}
+                  )
+                })}
+              </List>
             </Box>
           ) : (
             /* FLAT LIST VIEW */

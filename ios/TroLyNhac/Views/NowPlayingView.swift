@@ -29,6 +29,20 @@ struct NowPlayingView: View {
     @State private var animateVisualizer = false
     @State private var isSuggestionLoading = false
     
+    // Audiophile Review Panel State
+    @State private var localStarred: String? = nil
+    @State private var localUserRating: Int = 0
+    @State private var localReviewNote: String = ""
+    @State private var isEditingReview = false
+    @State private var reviewInput: String = ""
+    
+    private func syncLocalSongState(for song: Song) {
+        self.localStarred = song.starred
+        self.localUserRating = song.userRating ?? 0
+        self.localReviewNote = UserDefaults.standard.string(forKey: "audiophile_review_\(song.id)") ?? ""
+        self.reviewInput = self.localReviewNote
+    }
+    
     var body: some View {
         guard let song = playerManager.currentSong else {
             return AnyView(EmptyView())
@@ -99,12 +113,20 @@ struct NowPlayingView: View {
             .onAppear {
                 startMonitoringRouteChanges()
                 updateVisualizerState()
+                if let song = playerManager.currentSong {
+                    syncLocalSongState(for: song)
+                }
             }
             .onDisappear {
                 stopMonitoringRouteChanges()
             }
             .onChange(of: playerManager.isPlaying) { _ in
                 updateVisualizerState()
+            }
+            .onChange(of: playerManager.currentSong) { newSong in
+                if let song = newSong {
+                    syncLocalSongState(for: song)
+                }
             }
             // Signal Path Popover Sheet
             .sheet(isPresented: $showingSignalPathSheet) {
@@ -479,6 +501,12 @@ struct NowPlayingView: View {
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
+                        audiophileReviewPanel(song)
+                        
+                        Divider()
+                            .background(Color.white.opacity(0.08))
+                            .padding(.vertical, 8)
+                        
                         let suffix = song.suffix?.lowercased() ?? "flac"
                         let isTranscoded = repository.isServerTranscodeSuffix(song.suffix)
                         
@@ -573,6 +601,182 @@ struct NowPlayingView: View {
             }
             .padding(24)
         }
+    }
+    
+    // ── AUDIOPHILE REVIEW PANEL ──────────────────────────────────────────────
+    
+    private func audiophileReviewPanel(_ song: Song) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Section Header
+            HStack(spacing: 6) {
+                Image(systemName: "star.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(.orange)
+                
+                Text("ĐÁNH GIÁ CHẤT LƯỢNG MASTERING")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+                    .tracking(0.5)
+            }
+            
+            // Rating Stars & Favorite Heart Row
+            HStack {
+                // Stars
+                HStack(spacing: 8) {
+                    ForEach(1...5, id: \.self) { starIndex in
+                        let active = starIndex <= localUserRating
+                        Image(systemName: active ? "star.fill" : "star")
+                            .font(.system(size: 28))
+                            .foregroundColor(active ? Color.orange : Color.white.opacity(0.15))
+                            .onTapGesture {
+                                let newRating = (localUserRating == starIndex) ? 0 : starIndex
+                                Task {
+                                    do {
+                                        try await repository.setRating(id: song.id, rating: newRating)
+                                        await MainActor.run {
+                                            self.localUserRating = newRating
+                                        }
+                                    } catch {
+                                        print("Lỗi cập nhật đánh giá: \(error)")
+                                    }
+                                }
+                            }
+                    }
+                }
+                
+                Spacer()
+                
+                // Favorite Heart Button
+                let isStarred = localStarred != nil
+                Button(action: {
+                    Task {
+                        do {
+                            if isStarred {
+                                try await repository.unstar(id: song.id)
+                                await MainActor.run {
+                                    self.localStarred = nil
+                                }
+                            } else {
+                                try await repository.star(id: song.id)
+                                await MainActor.run {
+                                    self.localStarred = "starred"
+                                }
+                            }
+                        } catch {
+                            print("Lỗi cập nhật yêu thích: \(error)")
+                        }
+                    }
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(isStarred ? Color.red.opacity(0.12) : Color.white.opacity(0.04))
+                            .frame(width: 40, height: 40)
+                            .overlay(
+                                Circle()
+                                    .stroke(isStarred ? Color.red.opacity(0.3) : Color.white.opacity(0.08), lineWidth: 0.5)
+                            )
+                        
+                        Image(systemName: isStarred ? "heart.fill" : "heart")
+                            .font(.system(size: 18))
+                            .foregroundColor(isStarred ? .red : .white.opacity(0.3))
+                    }
+                }
+            }
+            
+            Divider()
+                .background(Color.white.opacity(0.06))
+            
+            // Review Notes Header
+            HStack {
+                Text("GHI CHÚ TRẢI NGHIỆM NGHE NHẠC")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.gray)
+                
+                Spacer()
+                
+                if !isEditingReview {
+                    Button(action: {
+                        self.reviewInput = localReviewNote
+                        self.isEditingReview = true
+                    }) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 12))
+                            .foregroundColor(.appPrimary)
+                    }
+                }
+            }
+            
+            if isEditingReview {
+                VStack(spacing: 10) {
+                    TextField(
+                        "Ví dụ: Bản thu SACD chất lượng cao, dải trầm ấm áp, sân khấu rộng mở, độ động cực kỳ chi tiết...",
+                        text: $reviewInput
+                    )
+                    .font(.system(size: 13))
+                    .foregroundColor(.white)
+                    .padding(10)
+                    .background(Color.white.opacity(0.05))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.appPrimary.opacity(0.3), lineWidth: 1)
+                    )
+                    
+                    HStack {
+                        Spacer()
+                        
+                        Button("Huỷ") {
+                            self.isEditingReview = false
+                        }
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
+                        
+                        Spacer().frame(width: 16)
+                        
+                        Button("Lưu") {
+                            UserDefaults.standard.set(reviewInput, forKey: "audiophile_review_\(song.id)")
+                            self.localReviewNote = reviewInput
+                            self.isEditingReview = false
+                        }
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.appPrimary)
+                    }
+                }
+            } else {
+                Button(action: {
+                    self.reviewInput = localReviewNote
+                    self.isEditingReview = true
+                }) {
+                    HStack {
+                        if !localReviewNote.isEmpty {
+                            Text(localReviewNote)
+                                .font(.system(size: 13).italic())
+                                .foregroundColor(Color(red: 0.77, green: 0.73, blue: 0.65))
+                                .multilineTextAlignment(.leading)
+                                .lineSpacing(4)
+                        } else {
+                            Text("Chưa có đánh giá cho bản thu này. Nhấp để ghi lại cảm nhận âm trường, chi tiết, hay thiết bị phối ghép phù hợp...")
+                                .font(.system(size: 11))
+                                .foregroundColor(.white.opacity(0.25))
+                                .multilineTextAlignment(.leading)
+                                .lineSpacing(4)
+                        }
+                        Spacer()
+                    }
+                    .padding(12)
+                    .background(Color.white.opacity(0.03))
+                    .cornerRadius(8)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(16)
+        .background(Color.white.opacity(0.04))
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+        )
     }
     
     private func signalStep(icon: String, color: Color, title: String, subtitle: String, details: [String]) -> some View {

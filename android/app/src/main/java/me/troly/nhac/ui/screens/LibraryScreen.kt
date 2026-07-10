@@ -57,7 +57,17 @@ class LibraryViewModel(private val repo: SubsonicRepository) : ViewModel() {
     val albums = _albums.asStateFlow()
     private val _artists = MutableStateFlow<List<Artist>>(emptyList())
     val artists = _artists.asStateFlow()
+    
     init {
+        load()
+        viewModelScope.launch {
+            repo.refreshEvent.collect {
+                load()
+            }
+        }
+    }
+    
+    private fun load() {
         viewModelScope.launch { runCatching { _albums.value = repo.albums("alphabeticalByName", 100) } }
         viewModelScope.launch { runCatching { _artists.value = repo.artists() } }
     }

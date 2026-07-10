@@ -21,6 +21,7 @@ import retrofit2.http.Path
 import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.random.Random
+import kotlinx.coroutines.flow.asSharedFlow
 
 /** Connection settings for the Navidrome (Subsonic/OpenSubsonic) server. */
 data class ServerConfig(
@@ -108,6 +109,18 @@ interface SubsonicApi {
 
     @GET("rest/getScanStatus.view")
     suspend fun getScanStatus(): SubsonicResponse
+
+    @GET("rest/getSong.view")
+    suspend fun song(@Query("id") id: String): SubsonicResponse
+
+    @GET("rest/star.view")
+    suspend fun star(@Query("id") id: String): SubsonicResponse
+
+    @GET("rest/unstar.view")
+    suspend fun unstar(@Query("id") id: String): SubsonicResponse
+
+    @GET("rest/setRating.view")
+    suspend fun setRating(@Query("id") id: String, @Query("rating") rating: Int): SubsonicResponse
 }
 
 // ── NATIVE API ──────────────────────────────────────────────────────────────
@@ -173,6 +186,7 @@ interface NativeApi {
     val starred2: Starred2? = null,
     val searchResult3: SearchResult3? = null,
     val scanStatus: ScanStatus? = null,
+    val song: Song? = null,
     val error: SubsonicError? = null,
 )
 
@@ -228,6 +242,8 @@ interface NativeApi {
     val bitRate: Int? = null,
     val bitDepth: Int? = null,
     val samplingRate: Int? = null,
+    val starred: String? = null,
+    val userRating: Int? = null,
 )
 
 /** Domain-facing repository: builds the client and returns parsed lists/objects. */
@@ -336,6 +352,22 @@ class SubsonicRepository(val config: ServerConfig) {
     suspend fun starredSongs() = body(api.starred()).starred2?.song ?: emptyList()
     suspend fun search(q: String) = body(api.search(q)).searchResult3 ?: SearchResult3()
     suspend fun getScanStatus() = body(api.getScanStatus()).scanStatus ?: ScanStatus()
+    suspend fun song(id: String) = body(api.song(id)).song ?: throw IllegalStateException("Không tìm thấy bài hát")
+
+    suspend fun star(id: String) {
+        body(api.star(id))
+        triggerLocalRefresh()
+    }
+
+    suspend fun unstar(id: String) {
+        body(api.unstar(id))
+        triggerLocalRefresh()
+    }
+
+    suspend fun setRating(id: String, rating: Int) {
+        body(api.setRating(id, rating))
+        triggerLocalRefresh()
+    }
 
     /** Creates a new playlist seeded with [songIds]. */
     suspend fun createPlaylist(name: String, songIds: List<String>) {

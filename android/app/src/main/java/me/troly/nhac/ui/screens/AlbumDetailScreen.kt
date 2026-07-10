@@ -73,7 +73,14 @@ import me.troly.nhac.ui.components.SongRow
 class AlbumViewModel(private val repo: SubsonicRepository, private val albumId: String) : ViewModel() {
     private val _album = MutableStateFlow<Album?>(null)
     val album = _album.asStateFlow()
-    init { refresh() }
+    init { 
+        refresh() 
+        viewModelScope.launch {
+            repo.refreshEvent.collect {
+                refresh()
+            }
+        }
+    }
     fun refresh() { viewModelScope.launch { runCatching { _album.value = repo.album(albumId) } } }
 }
 

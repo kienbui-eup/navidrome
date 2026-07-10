@@ -87,7 +87,8 @@ struct MiniPlayerView: View {
                 .frame(height: 60)
             }
             .background(
-                Color.appSurface
+                Color.appSurface.opacity(0.85)
+                    .background(.ultraThinMaterial)
                     .shadow(color: Color.black.opacity(0.4), radius: 10, x: 0, y: -4)
             )
             .overlay(

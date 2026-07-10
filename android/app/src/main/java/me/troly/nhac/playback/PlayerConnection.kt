@@ -190,6 +190,7 @@ class PlayerConnection(context: Context, private val config: ServerConfig) {
 
     private fun Song.toMediaItem(): MediaItem {
         val extras = android.os.Bundle().apply {
+            putString("songId", id)
             putString("suffix", suffix)
             putInt("bitRate", bitRate ?: 0)
             putInt("bitDepth", bitDepth ?: 0)
@@ -197,6 +198,8 @@ class PlayerConnection(context: Context, private val config: ServerConfig) {
             putString("artistId", artistId)
             putString("albumId", albumId)
             putString("coverArt", coverArt)
+            putString("starred", starred)
+            putInt("userRating", userRating ?: 0)
             // Server-reported duration (seconds → ms); authoritative for transcoded DSD.
             putLong("durationMs", (duration ?: 0).toLong() * 1000L)
         }

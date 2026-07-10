@@ -197,6 +197,13 @@ fun WidescreenSidebar(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(64.dp)
+                            .shadow(
+                                elevation = 8.dp,
+                                shape = RoundedCornerShape(8.dp),
+                                clip = false,
+                                ambientColor = ledColor.copy(alpha = 0.45f),
+                                spotColor = ledColor
+                            )
                             .clip(RoundedCornerShape(8.dp))
                             .background(Color(0xFF1D1A15))
                     )

@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -26,6 +27,11 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import me.troly.nhac.data.subsonic.isServerTranscodeSuffix
 import me.troly.nhac.data.subsonic.coverArtUrl
 import me.troly.nhac.playback.AudioDeviceHelper
@@ -230,6 +237,27 @@ fun NowPlayingScreen(onClose: () -> Unit) {
     val duration = state.durationMs.coerceAtLeast(1)
     val progress = if (scrubbing) scrubValue else state.positionMs.toFloat() / duration
 
+    // Infinite transition for the Play/Pause Breathing Halo
+    val breathingTransition = rememberInfiniteTransition(label = "play_breathing")
+    val haloScale by breathingTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.35f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "halo_scale"
+    )
+    val haloAlpha by breathingTransition.animateFloat(
+        initialValue = 0.45f,
+        targetValue = 0.05f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "halo_alpha"
+    )
+
     // Dynamic interactive artwork properties
     val isPlaying = state.isPlaying
     val artScale by animateFloatAsState(
@@ -258,10 +286,34 @@ fun NowPlayingScreen(onClose: () -> Unit) {
     }
     
     val extras = meta?.extras
+    val currentSongId = remember(meta) { extras?.getString("songId") }
     val suffix = extras?.getString("suffix")
     val bitRate = extras?.getInt("bitRate") ?: 0
     val bitDepth = extras?.getInt("bitDepth") ?: 0
     val samplingRate = extras?.getInt("samplingRate") ?: 0
+
+    val scope = rememberCoroutineScope()
+    var songDetails by remember { mutableStateOf<me.troly.nhac.data.subsonic.Song?>(null) }
+    LaunchedEffect(currentSongId) {
+        val id = currentSongId ?: return@LaunchedEffect
+        songDetails = null
+        try {
+            songDetails = repo.song(id)
+        } catch (e: Exception) {
+            val ex = meta?.extras
+            songDetails = me.troly.nhac.data.subsonic.Song(
+                id = id,
+                title = meta?.title?.toString() ?: "",
+                starred = ex?.getString("starred"),
+                userRating = ex?.getInt("userRating")
+            )
+        }
+    }
+
+    val sharedPrefs = remember(context) { context.getSharedPreferences("audiophile_reviews", Context.MODE_PRIVATE) }
+    var reviewNote by remember(currentSongId) {
+        mutableStateOf(sharedPrefs.getString(currentSongId ?: "", "") ?: "")
+    }
 
     // HQPlayer filter state from global persistent player connection
     val activeFilter by player.activeFilter.collectAsState()
@@ -376,7 +428,13 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                                     scaleX = artScale
                                     scaleY = artScale
                                 }
-                                .shadow(artShadow, RoundedCornerShape(artCorner))
+                                .shadow(
+                                    elevation = artShadow,
+                                    shape = RoundedCornerShape(artCorner),
+                                    clip = false,
+                                    ambientColor = ledColor.copy(alpha = 0.45f),
+                                    spotColor = ledColor
+                                )
                                 .clip(RoundedCornerShape(artCorner))
                                 .background(MaterialTheme.colorScheme.surfaceVariant),
                         )
@@ -499,23 +557,53 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             Icon(Icons.Filled.SkipPrevious, "Bài trước", modifier = Modifier.size(36.dp), tint = Color.White)
                         }
                         Box(
-                            Modifier.padding(horizontal = 16.dp).size(64.dp)
-                                .clip(CircleShape).background(MaterialTheme.colorScheme.primary)
-                                .clickable { player.togglePlay() },
                             contentAlignment = Alignment.Center,
+                            modifier = Modifier.padding(horizontal = 16.dp).size(80.dp)
                         ) {
-                            Icon(
-                                if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                contentDescription = "Phát/Dừng", modifier = Modifier.size(36.dp),
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                            )
+                            if (state.isPlaying) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .graphicsLayer {
+                                            scaleX = haloScale
+                                            scaleY = haloScale
+                                            alpha = haloAlpha
+                                        }
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
+                                )
+                            }
+                            Box(
+                                Modifier.size(64.dp)
+                                    .clip(CircleShape).background(MaterialTheme.colorScheme.primary)
+                                    .clickable { player.togglePlay() },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                    contentDescription = "Phát/Dừng", modifier = Modifier.size(36.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                )
+                            }
                         }
                         IconButton(onClick = { player.next() }, modifier = Modifier.size(56.dp)) {
                             Icon(Icons.Filled.SkipNext, "Bài sau", modifier = Modifier.size(36.dp), tint = Color.White)
                         }
                     }
 
-                    Spacer(Modifier.height(16.dp))
+                    AudiophileReviewPanel(
+                        songId = currentSongId ?: "",
+                        songDetails = songDetails,
+                        onSongDetailsChanged = { songDetails = it },
+                        reviewNote = reviewNote,
+                        onReviewNoteChanged = { note ->
+                            reviewNote = note
+                            currentSongId?.let { id ->
+                                sharedPrefs.edit().putString(id, note).apply()
+                            }
+                        }
+                    )
+
+                    Spacer(Modifier.height(24.dp))
 
                     // Embedded Signal Path Steps inside Left Column scroll
                     Text(
@@ -972,7 +1060,13 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                                     scaleX = artScale
                                     scaleY = artScale
                                 }
-                                .shadow(artShadow, RoundedCornerShape(artCorner))
+                                .shadow(
+                                    elevation = artShadow,
+                                    shape = RoundedCornerShape(artCorner),
+                                    clip = false,
+                                    ambientColor = ledColor.copy(alpha = 0.45f),
+                                    spotColor = ledColor
+                                )
                                 .clip(RoundedCornerShape(artCorner))
                                 .background(MaterialTheme.colorScheme.surfaceVariant),
                         )
@@ -1102,16 +1196,33 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             Icon(Icons.Filled.SkipPrevious, "Bài trước", modifier = Modifier.size(36.dp), tint = Color.White)
                         }
                         Box(
-                            Modifier.padding(horizontal = 16.dp).size(64.dp)
-                                .clip(CircleShape).background(MaterialTheme.colorScheme.primary)
-                                .clickable { player.togglePlay() },
                             contentAlignment = Alignment.Center,
+                            modifier = Modifier.padding(horizontal = 16.dp).size(80.dp)
                         ) {
-                            Icon(
-                                if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                contentDescription = "Phát/Dừng", modifier = Modifier.size(36.dp),
-                                tint = MaterialTheme.colorScheme.onPrimary,
-                            )
+                            if (state.isPlaying) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .graphicsLayer {
+                                            scaleX = haloScale
+                                            scaleY = haloScale
+                                            alpha = haloAlpha
+                                        }
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
+                                )
+                            }
+                            Box(
+                                Modifier.size(64.dp)
+                                    .clip(CircleShape).background(MaterialTheme.colorScheme.primary)
+                                    .clickable { player.togglePlay() },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                    contentDescription = "Phát/Dừng", modifier = Modifier.size(36.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                )
+                            }
                         }
                         IconButton(onClick = { player.next() }, modifier = Modifier.size(56.dp)) {
                             Icon(Icons.Filled.SkipNext, "Bài sau", modifier = Modifier.size(36.dp), tint = Color.White)
@@ -1289,6 +1400,20 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         }
                     }
                 }
+                item {
+                    AudiophileReviewPanel(
+                        songId = currentSongId ?: "",
+                        songDetails = songDetails,
+                        onSongDetailsChanged = { songDetails = it },
+                        reviewNote = reviewNote,
+                        onReviewNoteChanged = { note ->
+                            reviewNote = note
+                            currentSongId?.let { id ->
+                                sharedPrefs.edit().putString(id, note).apply()
+                            }
+                        }
+                    )
+                }
 
                 // ── PORTRAIT INLINE AUDIOPHILE SIGNAL PATH ──────────────────────────────
                 item {
@@ -1399,29 +1524,47 @@ private fun SignalPathStep(
             modifier = Modifier.width(32.dp).padding(top = 4.dp)
         ) {
             Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(color)
-            )
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(14.dp)
+                        .clip(CircleShape)
+                        .background(color.copy(alpha = 0.25f))
+                )
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                )
+            }
             if (!isLast) {
                 Box(
                     modifier = Modifier
-                        .width(2.dp)
+                        .padding(vertical = 2.dp)
+                        .width(3.dp)
                         .height(64.dp)
-                        .background(color.copy(alpha = 0.25f))
+                        .clip(RoundedCornerShape(1.5.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(color.copy(alpha = 0.4f), color.copy(alpha = 0.1f))
+                            )
+                        )
                 )
             }
         }
         
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(10.dp))
         
         Column(modifier = Modifier.weight(1f).padding(bottom = 16.dp)) {
             Text(
-                text = title,
+                text = title.uppercase(),
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF8E8E93),
-                fontWeight = FontWeight.Bold
+                color = color.copy(alpha = 0.85f),
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
             )
             Text(
                 text = value,
@@ -1430,12 +1573,14 @@ private fun SignalPathStep(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(top = 2.dp)
             )
-            Text(
-                text = subValue,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFC4BBA6),
-                modifier = Modifier.padding(top = 4.dp)
-            )
+            if (subValue.isNotEmpty()) {
+                Text(
+                    text = subValue,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFC4BBA6),
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
         }
     }
 }
@@ -1482,3 +1627,239 @@ private fun formatOriginalSpecs(suffix: String?, bitDepth: Int, samplingRate: In
 }
 
 private fun formatMs(ms: Long): String = formatDuration((ms / 1000).toInt())
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AudiophileReviewPanel(
+    songId: String,
+    songDetails: me.troly.nhac.data.subsonic.Song?,
+    onSongDetailsChanged: (me.troly.nhac.data.subsonic.Song) -> Unit,
+    reviewNote: String,
+    onReviewNoteChanged: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val repo = LocalRepo.current
+    val scope = rememberCoroutineScope()
+    
+    var isEditingReview by remember { mutableStateOf(false) }
+    var reviewInput by remember(reviewNote) { mutableStateOf(reviewNote) }
+    
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color(0x0CFFFFFF))
+            .border(0.5.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+            .padding(16.dp)
+    ) {
+        // Section Header
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = null,
+                tint = Color(0xFFFFB300),
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "ĐÁNH GIÁ CHẤT LƯỢNG MASTERING",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                letterSpacing = 0.5.sp
+            )
+        }
+        
+        // Rating Stars & Heart Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val currentRating = songDetails?.userRating ?: 0
+                (1..5).forEach { starIndex ->
+                    val active = starIndex <= currentRating
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = "Rate $starIndex stars",
+                        tint = if (active) Color(0xFFFFB300) else Color.White.copy(alpha = 0.15f),
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clickable {
+                                val newRating = if (currentRating == starIndex) 0 else starIndex
+                                scope.launch {
+                                    try {
+                                        repo.setRating(songId, newRating)
+                                        songDetails?.let { onSongDetailsChanged(it.copy(userRating = newRating)) }
+                                        Toast.makeText(context, "Đã cập nhật đánh giá: $newRating sao", Toast.LENGTH_SHORT).show()
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Lỗi cập nhật đánh giá", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                            .padding(4.dp)
+                    )
+                }
+            }
+            
+            val isStarred = songDetails?.starred != null
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(if (isStarred) Color(0x15FF1744) else Color(0x0AFFFFFF))
+                    .border(
+                        width = 0.5.dp,
+                        color = if (isStarred) Color(0xFFFF1744).copy(alpha = 0.3f) else Color.White.copy(alpha = 0.08f),
+                        shape = CircleShape
+                    )
+                    .clickable {
+                        scope.launch {
+                            try {
+                                if (isStarred) {
+                                    repo.unstar(songId)
+                                    songDetails?.let { onSongDetailsChanged(it.copy(starred = null)) }
+                                    Toast.makeText(context, "Đã bỏ yêu thích", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    repo.star(songId)
+                                    songDetails?.let { onSongDetailsChanged(it.copy(starred = "starred")) }
+                                    Toast.makeText(context, "Đã thêm vào yêu thích", Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Lỗi cập nhật yêu thích", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Favorite,
+                    contentDescription = "Yêu thích",
+                    tint = if (isStarred) Color(0xFFFF1744) else Color.White.copy(alpha = 0.3f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(14.dp))
+        HorizontalDivider(color = Color.White.copy(alpha = 0.06f), thickness = 0.5.dp)
+        Spacer(modifier = Modifier.height(14.dp))
+        
+        // Review Notes Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "GHI CHÚ TRẢI NGHIỆM NGHE NHẠC",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF8E8E93)
+            )
+            
+            if (!isEditingReview) {
+                IconButton(
+                    onClick = { isEditingReview = true },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = "Sửa ghi chú",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        if (isEditingReview) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = reviewInput,
+                    onValueChange = { reviewInput = it },
+                    placeholder = {
+                        Text(
+                            "Ví dụ: Bản thu SACD chất lượng cao, dải trầm ấm áp, sân khấu rộng mở, độ động cực kỳ chi tiết...",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.3f)
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.12f),
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White
+                    ),
+                    maxLines = 5
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = {
+                            reviewInput = reviewNote
+                            isEditingReview = false
+                        }
+                    ) {
+                        Text("Huỷ", color = Color.White.copy(alpha = 0.6f))
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Button(
+                        onClick = {
+                            onReviewNoteChanged(reviewInput)
+                            isEditingReview = false
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(imageVector = Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Lưu", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isEditingReview = true }
+                    .background(Color(0x06FFFFFF), RoundedCornerShape(8.dp))
+                    .padding(12.dp)
+            ) {
+                if (reviewNote.isNotBlank()) {
+                    Text(
+                        text = reviewNote,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFFC4BBA6),
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                        lineHeight = 20.sp
+                    )
+                } else {
+                    Text(
+                        text = "Chưa có đánh giá cho bản thu này. Nhấp để ghi lại cảm nhận âm trường, chi tiết, hay thiết bị phối ghép phù hợp...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.25f),
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+        }
+    }
+}

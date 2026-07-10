@@ -44,7 +44,14 @@ import me.troly.nhac.ui.components.CoverImage
 import me.troly.nhac.ui.components.SkeletonHome
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.border
 
@@ -55,24 +62,82 @@ data class HomeState(
     val frequent: List<Album> = emptyList(),
     val recent: List<Album> = emptyList(),
     val random: List<Album> = emptyList(),
+    val isScanning: Boolean = false,
+    val scanCount: Int? = null,
 )
 
 class HomeViewModel(private val repo: SubsonicRepository) : ViewModel() {
     private val _state = MutableStateFlow(HomeState())
     val state = _state.asStateFlow()
-    init { load() }
+
+    init {
+        load()
+        
+        // Listen to repo's refreshEvent to trigger silent updates
+        viewModelScope.launch {
+            repo.refreshEvent.collect {
+                loadSilent()
+            }
+        }
+
+        // Poll library scan status
+        viewModelScope.launch {
+            var wasScanning = false
+            while (true) {
+                try {
+                    val status = repo.getScanStatus()
+                    _state.value = _state.value.copy(
+                        isScanning = status.scanning,
+                        scanCount = status.count
+                    )
+                    // If scanning just finished, trigger a global refresh to update all lists
+                    if (wasScanning && !status.scanning) {
+                        repo.triggerLocalRefresh()
+                    }
+                    wasScanning = status.scanning
+                } catch (e: Exception) {
+                    // Ignore transient network errors during polling
+                }
+                delay(5000)
+            }
+        }
+    }
+
     fun load() = viewModelScope.launch {
-        _state.value = HomeState(loading = true)
+        _state.value = _state.value.copy(loading = true)
+        loadInternal()
+    }
+
+    private suspend fun loadInternal() {
         try {
-            _state.value = HomeState(
+            _state.value = _state.value.copy(
                 loading = false,
+                error = null,
                 newest = repo.albums("newest", 20),
                 frequent = repo.albums("frequent", 20),
                 recent = repo.albums("recent", 20),
                 random = repo.albums("random", 20),
             )
         } catch (e: Exception) {
-            _state.value = HomeState(loading = false, error = e.message ?: "Lỗi tải")
+            _state.value = _state.value.copy(loading = false, error = e.message ?: "Lỗi tải")
+        }
+    }
+
+    fun loadSilent() = viewModelScope.launch {
+        try {
+            val newest = repo.albums("newest", 20)
+            val frequent = repo.albums("frequent", 20)
+            val recent = repo.albums("recent", 20)
+            val random = repo.albums("random", 20)
+            _state.value = _state.value.copy(
+                newest = newest,
+                frequent = frequent,
+                recent = recent,
+                random = random,
+                error = null
+            )
+        } catch (e: Exception) {
+            // Silence background reload errors if we already have data
         }
     }
 }
@@ -119,56 +184,121 @@ fun HomeScreen(
         }
         else -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 16.dp)) {
             // Personalized Greeting & Audio Insights Header
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = greeting,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-                Spacer(Modifier.height(8.dp))
-                
-                // Audio Output Insights Capsule (Glossy Glassmorphic with dynamic border)
-                Row(
-                    modifier = Modifier
-                        .scale(capsuleScale)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF222026))
-                        .border(
-                            width = 0.5.dp,
-                            color = Color.White.copy(alpha = 0.12f),
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .clickable(interactionSource = capsuleSource, indication = null) { onNavigateToSettings() }
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Hearing,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(Modifier.width(6.dp))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Đầu ra: ${activeDevice.name}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFC4BBA6),
-                        modifier = Modifier.weight(1f, fill = false),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        text = greeting,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     )
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.height(8.dp))
+                    
+                    // Audio Output Insights Capsule (Glossy Glassmorphic with dynamic border)
+                    Row(
+                        modifier = Modifier
+                            .scale(capsuleScale)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF222026))
+                            .border(
+                                width = 0.5.dp,
+                                color = Color.White.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable(interactionSource = capsuleSource, indication = null) { onNavigateToSettings() }
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Hearing,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Đầu ra: ${activeDevice.name}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFC4BBA6),
+                            modifier = Modifier.weight(1f, fill = false),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(ledColor)
+                        )
+                    }
+                }
+
+                // Real-time synchronization / manual scan action (D-pad & touch accessible)
+                val refreshScope = rememberCoroutineScope()
+                var isRefreshedClicked by remember { mutableStateOf(false) }
+                val rotationAngle by animateFloatAsState(
+                    targetValue = if (isRefreshedClicked || s.isScanning) 360f else 0f,
+                    animationSpec = if (s.isScanning) {
+                        androidx.compose.animation.core.infiniteRepeatable(
+                            animation = androidx.compose.animation.core.tween(1500, easing = androidx.compose.animation.core.LinearEasing)
+                        )
+                    } else {
+                        androidx.compose.animation.core.tween(500)
+                    },
+                    label = "sync_rotation"
+                )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (s.isScanning) {
+                        Box(
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0x1500E676))
+                                .border(0.5.dp, Color(0x5500E676), RoundedCornerShape(12.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Đồng bộ...",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF00E676),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
                     Box(
                         modifier = Modifier
-                            .size(6.dp)
+                            .size(42.dp)
                             .clip(CircleShape)
-                            .background(ledColor)
-                    )
+                            .background(Color(0x12FFFFFF))
+                            .clickable {
+                                isRefreshedClicked = true
+                                refreshScope.launch {
+                                    repo.triggerLocalRefresh()
+                                    delay(500)
+                                    isRefreshedClicked = false
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Sync,
+                            contentDescription = "Đồng bộ",
+                            tint = if (s.isScanning) Color(0xFF00E676) else Color.White,
+                            modifier = Modifier
+                                .size(22.dp)
+                                .graphicsLayer(rotationZ = rotationAngle)
+                        )
+                    }
                 }
             }
 

@@ -225,6 +225,24 @@ public class SubsonicRepository: ObservableObject {
         return body.starred2?.song ?? []
     }
     
+    public func star(id: String) async throws {
+        let params = [URLQueryItem(name: "id", value: id)]
+        let _: SubsonicResponse = try await performRequest(endpoint: "rest/star.view", queryParams: params)
+    }
+    
+    public func unstar(id: String) async throws {
+        let params = [URLQueryItem(name: "id", value: id)]
+        let _: SubsonicResponse = try await performRequest(endpoint: "rest/unstar.view", queryParams: params)
+    }
+    
+    public func setRating(id: String, rating: Int) async throws {
+        let params = [
+            URLQueryItem(name: "id", value: id),
+            URLQueryItem(name: "rating", value: String(rating))
+        ]
+        let _: SubsonicResponse = try await performRequest(endpoint: "rest/setRating.view", queryParams: params)
+    }
+    
     public func search(query: String) async throws -> SearchResult3 {
         let params = [
             URLQueryItem(name: "query", value: query),
