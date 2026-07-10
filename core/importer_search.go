@@ -19,6 +19,7 @@ import (
 	"github.com/vi2play/vi2play/adapters/deezer"
 	"github.com/vi2play/vi2play/adapters/ytdlp"
 	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/log"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
@@ -251,12 +252,17 @@ func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string,
 		}()
 	}
 
+	onlineQuery := query
+	if onlineQuery == "*" || onlineQuery == "" {
+		onlineQuery = "nhạc mới hot"
+	}
+
 	if flag.Lookup("test.v") == nil {
 		// Concurrently search YouTube
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ytSongs, err := ytdlp.SearchSongs(ctx, query, 15)
+			ytSongs, err := ytdlp.SearchSongs(ctx, onlineQuery, 15)
 			var hits []SongHit
 			if err == nil {
 				for _, s := range ytSongs {
@@ -281,7 +287,7 @@ func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string,
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			dzSongs, err := deezer.SearchTracks(ctx, query, 15)
+			dzSongs, err := deezer.SearchTracks(ctx, onlineQuery, 15)
 			var hits []SongHit
 			if err == nil {
 				for _, s := range dzSongs {
@@ -302,6 +308,14 @@ func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string,
 			}
 			collect(hits, err, "Deezer Lossless")
 		}()
+
+		// Concurrently search Zing MP3
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			zingSongs, err := imp.searchZingSongs(ctx, onlineQuery)
+			collect(zingSongs, err, "Zing MP3")
+		}()
 	}
 
 	wg.Wait()
@@ -309,7 +323,7 @@ func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string,
 	if losslessOnly {
 		kept := res.Hits[:0]
 		for _, h := range res.Hits {
-			if h.Lossless {
+			if h.Lossless || h.Source == "youtube" || h.Source == "zing" {
 				kept = append(kept, h)
 			}
 		}
@@ -493,3 +507,85 @@ func (imp *importer) PreviewDrive(ctx context.Context, fileID, rangeHeader strin
 	}
 	return resp, nil
 }
+
+func (imp *importer) DownloadZingAudio(ctx context.Context, songID, title, artist string) (io.ReadCloser, string, error) {
+	// Thử tải trực tiếp từ Zing MP3 qua yt-dlp
+	targetURL := fmt.Sprintf("https://zingmp3.vn/bai-hat/%s.html", songID)
+	stream, ext, err := ytdlp.DownloadAudio(ctx, targetURL)
+	if err == nil {
+		return stream, ext, nil
+	}
+
+	log.Warn(ctx, "Zing download direct failed (possibly geoblocked), falling back to YouTube Music", "id", songID, "title", title, "artist", artist, "error", err)
+
+	// Fallback sang YouTube Music
+	fallbackQuery := fmt.Sprintf("%s %s", title, artist)
+	ytSongs, errSearch := ytdlp.SearchSongs(ctx, fallbackQuery, 1)
+	if errSearch == nil && len(ytSongs) > 0 {
+		log.Info(ctx, "Zing fallback matched YouTube track", "yt_id", ytSongs[0].ID, "yt_title", ytSongs[0].Title)
+		return ytdlp.DownloadAudio(ctx, ytSongs[0].ID)
+	}
+
+	return nil, "", fmt.Errorf("Zing download failed and YouTube fallback failed: %w", err)
+}
+
+func (imp *importer) searchZingSongs(ctx context.Context, query string) ([]SongHit, error) {
+	u := fmt.Sprintf("%s/complete?type=artist,album,song,key&num=15&query=%s", imp.zingBase, url.QueryEscape(query))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
+	resp, err := imp.api.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Zing MP3 API returned HTTP %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Result bool `json:"result"`
+		Data   []struct {
+			Song []struct {
+				ID       string `json:"id"`
+				Name     string `json:"name"`
+				Artist   string `json:"artist"`
+				Duration string `json:"duration"`
+			} `json:"song"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	var hits []SongHit
+	if result.Result && len(result.Data) > 0 {
+		for _, group := range result.Data {
+			for _, s := range group.Song {
+				if s.ID == "" || s.Name == "" {
+					continue
+				}
+				durationSec, _ := strconv.Atoi(s.Duration)
+				hits = append(hits, SongHit{
+					Source:     "zing",
+					Title:      s.Name,
+					Artist:     s.Artist,
+					FileID:     s.ID,
+					Filename:   s.Name + ".mp3",
+					Format:     "MP3 128kbps",
+					Length:     strconv.Itoa(durationSec),
+					Quality:    35,
+					Lossless:   false,
+					PreviewURL: fmt.Sprintf("/api/import/preview?source=zing&id=%s&title=%s&artist=%s", s.ID, url.QueryEscape(s.Name), url.QueryEscape(s.Artist)),
+				})
+			}
+		}
+	}
+	return hits, nil
+}
+

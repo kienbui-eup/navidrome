@@ -128,7 +128,7 @@ struct NowPlayingView: View {
             ZStack {
                 Color.appBackground.ignoresSafeArea()
                 
-                AsyncImage(url: repository.coverArtUrl(coverArtId: song.coverArt, size: 600)) { image in
+                AsyncImage(url: repository.coverArtUrl(coverArtId: song.coverArt, size: 32)) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -555,6 +555,18 @@ struct NowPlayingView: View {
                                 audioReport.recommendation
                             ].compactMap { $0 }
                         )
+                        
+                        // ── DYNAMIC HARDWARE SPECS MATCHING NOTE ────────────
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(activeDevice.hardwareNote)
+                                .font(.system(size: 11, weight: .regular))
+                                .foregroundColor(Color(red: 0.77, green: 0.73, blue: 0.65))
+                                .lineSpacing(4)
+                        }
+                        .padding(12)
+                        .background(Color.white.opacity(0.04))
+                        .cornerRadius(8)
+                        .padding(.top, 8)
                     }
                     .padding(.vertical, 10)
                 }

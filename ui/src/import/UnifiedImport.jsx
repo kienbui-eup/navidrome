@@ -51,6 +51,8 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import HomeIcon from '@material-ui/icons/Home'
 import StorageIcon from '@material-ui/icons/Storage'
 import FolderIcon from '@material-ui/icons/Folder'
+import AccountTreeIcon from '@material-ui/icons/AccountTree'
+import FormatListBulletedIcon from '@material-ui/icons/FormatListBulleted'
 
 import { httpClient } from '../dataProvider'
 import { formatBytes } from '../utils'
@@ -100,24 +102,35 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 'bold',
   },
   searchPanel: {
-    padding: theme.spacing(3),
-    borderRadius: theme.shape.borderRadius * 1.5,
+    padding: theme.spacing(2),
+    borderRadius: theme.shape.borderRadius * 1.2,
     backgroundColor: theme.palette.background.paper,
     border: `1px solid ${theme.palette.divider}`,
-    boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
     [theme.breakpoints.down('xs')]: {
-      padding: theme.spacing(2),
+      padding: theme.spacing(1.2),
     },
   },
   filterPanel: {
-    marginTop: theme.spacing(2),
-    padding: theme.spacing(2.5),
+    marginTop: theme.spacing(1.5),
+    padding: theme.spacing(2),
     backgroundColor: 'rgba(255, 255, 255, 0.01)',
     borderRadius: theme.shape.borderRadius,
     border: `1px solid ${theme.palette.divider}`,
     [theme.breakpoints.down('xs')]: {
-      padding: theme.spacing(1.5),
+      padding: theme.spacing(1.2),
     },
+  },
+  sectionTitle: {
+    fontWeight: 'bold',
+    [theme.breakpoints.down('xs')]: {
+      fontSize: '1rem',
+    }
+  },
+  displayModeText: {
+    [theme.breakpoints.down('xs')]: {
+      display: 'none',
+    }
   },
   breadcrumbContainer: {
     display: 'flex',
@@ -209,7 +222,7 @@ const useStyles = makeStyles((theme) => ({
   },
   songItem: {
     borderRadius: theme.shape.borderRadius,
-    marginBottom: theme.spacing(1),
+    marginBottom: theme.spacing(0.5),
     border: '1px solid transparent',
     transition: 'all 0.15s ease',
     paddingRight: theme.spacing(1),
@@ -218,8 +231,10 @@ const useStyles = makeStyles((theme) => ({
       borderColor: theme.palette.divider,
     },
     [theme.breakpoints.down('xs')]: {
-      paddingLeft: theme.spacing(1),
-      paddingRight: theme.spacing(1),
+      paddingLeft: theme.spacing(0.5),
+      paddingRight: theme.spacing(0.5),
+      paddingTop: '4px',
+      paddingBottom: '4px',
     },
   },
   formatChipDSD: {
@@ -412,6 +427,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
   const [filterYear, setFilterYear] = useState('all')
   const [filterFormat, setFilterFormat] = useState('all')
   const [sortBy, setSortBy] = useState('quality') // quality | year | downloads | likes
+  const [showFilters, setShowFilters] = useState(false)
 
   // Audio preview playback
   const [playing, setPlaying] = useState(null)
@@ -1164,7 +1180,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
             libraryId,
           }),
         })
-      } else if (song.source === 'youtube' || song.source === 'deezer') {
+      } else if (song.source === 'youtube' || song.source === 'deezer' || song.source === 'zing') {
         res = await httpClient('/api/import/job', {
           method: 'POST',
           body: JSON.stringify({
@@ -1207,7 +1223,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
             id: song.id,
             name: song.title,
           }
-        } else if (song.source === 'youtube' || song.source === 'deezer') {
+        } else if (song.source === 'youtube' || song.source === 'deezer' || song.source === 'zing') {
           return {
             type: song.source,
             id: song.id,
@@ -1332,6 +1348,13 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
   const uniqueYears = Array.from(new Set(rawSongs.map((s) => s.year).filter(Boolean))).sort().reverse()
   const uniqueFormats = Array.from(new Set(rawSongs.map((s) => s.format || s.suffix).filter(Boolean))).sort()
 
+  const activeFiltersCount = 
+    (filterSinger.trim() ? 1 : 0) + 
+    (filterComposer.trim() ? 1 : 0) + 
+    (filterYear !== 'all' ? 1 : 0) + 
+    (filterFormat !== 'all' ? 1 : 0) + 
+    (sortBy !== 'quality' ? 1 : 0)
+
   const renderedArtists = artistsTree
 
   // Render Premium Quality Chips
@@ -1432,8 +1455,8 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
     <Box className={classes.root}>
       {/* SEARCH CONTROL BAR */}
       <Box className={classes.searchPanel}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+        <Grid container spacing={1} alignItems="center">
+          <Grid item xs={source === 'remote_server' ? 7 : 12} sm={source === 'remote_server' ? 8 : 12} md={4}>
             <Box display="flex" gap={1} alignItems="center">
               <FormControl variant="outlined" size="small" fullWidth>
                 <InputLabel>Chọn nguồn nhập</InputLabel>
@@ -1469,7 +1492,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                 </Select>
               </FormControl>
               {source === 'remote_server' && (
-                <>
+                <Box display="flex" gap={0.5}>
                   <IconButton size="small" onClick={() => handleOpenServerDialog(null)} title="Thêm server">
                     <AddIcon color="primary" />
                   </IconButton>
@@ -1487,7 +1510,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                       </IconButton>
                     </>
                   )}
-                </>
+                </Box>
               )}
             </Box>
           </Grid>
@@ -1519,7 +1542,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
           </Grid>
 
           {source === 'remote_server' && (
-            <Grid item xs={12} sm={6} md={2}>
+            <Grid item xs={5} sm={4} md={2}>
               <FormControl variant="outlined" size="small" fullWidth>
                 <InputLabel>Số lượng ca sĩ</InputLabel>
                 <Select
@@ -1536,31 +1559,44 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
             </Grid>
           )}
 
-          <Grid item xs={12} md={source === 'remote_server' ? 2 : 3} style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={busy === 'search' ? <CircularProgress size={16} color="inherit" /> : <SearchIcon />}
-              onClick={handleSearch}
-              disabled={busy === 'search'}
-              fullWidth
-            >
-              {source === 'google_drive' ? 'Quét thư mục' : 'Tìm kiếm'}
-            </Button>
+          <Grid item xs={12} md={source === 'remote_server' ? 2 : 3}>
+            <Box display="flex" gap={1} width="100%" alignItems="center">
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={busy === 'search' ? <CircularProgress size={16} color="inherit" /> : <SearchIcon />}
+                onClick={handleSearch}
+                disabled={busy === 'search'}
+                style={{ flex: 1, height: 40 }}
+              >
+                {source === 'google_drive' ? 'Quét thư mục' : 'Tìm kiếm'}
+              </Button>
+              {rawSongs.length > 0 && (
+                <Button
+                  variant={showFilters || activeFiltersCount > 0 ? "contained" : "outlined"}
+                  color={showFilters || activeFiltersCount > 0 ? "primary" : "default"}
+                  onClick={() => setShowFilters(!showFilters)}
+                  style={{ height: 40, minWidth: 90 }}
+                  startIcon={<FilterListIcon />}
+                >
+                  Lọc{activeFiltersCount > 0 ? ` (${activeFiltersCount})` : ''}
+                </Button>
+              )}
+            </Box>
           </Grid>
         </Grid>
 
         {/* ADVANCED FILTERING PANEL */}
-        {rawSongs.length > 0 && (
+        {rawSongs.length > 0 && showFilters && (
           <Box className={classes.filterPanel}>
-            <Box display="flex" alignItems="center" gap={1} mb={2}>
+            <Box display="flex" alignItems="center" gap={1} mb={1.5}>
               <FilterListIcon color="primary" />
               <Typography variant="subtitle2" style={{ fontWeight: 'bold' }}>
                 Bộ lọc kết quả ({rawSongs.length} bài tìm thấy)
               </Typography>
             </Box>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={3}>
+            <Grid container spacing={1}>
+              <Grid item xs={6} sm={3}>
                 <TextField
                   label="Tên ca sĩ"
                   placeholder="Nhập tên..."
@@ -1571,7 +1607,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={3}>
+              <Grid item xs={6} sm={3}>
                 <TextField
                   label="Bài hát / Tác giả"
                   placeholder="Nhập tên..."
@@ -1582,7 +1618,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={12} sm={2}>
+              <Grid item xs={4} sm={2}>
                 <FormControl variant="outlined" size="small" fullWidth>
                   <InputLabel>Năm</InputLabel>
                   <Select value={filterYear} label="Năm" onChange={(e) => setFilterYear(e.target.value)}>
@@ -1595,7 +1631,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={2}>
+              <Grid item xs={4} sm={2}>
                 <FormControl variant="outlined" size="small" fullWidth>
                   <InputLabel>Định dạng</InputLabel>
                   <Select value={filterFormat} label="Định dạng" onChange={(e) => setFilterFormat(e.target.value)}>
@@ -1608,7 +1644,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={2}>
+              <Grid item xs={4} sm={2}>
                 <FormControl variant="outlined" size="small" fullWidth>
                   <InputLabel>Sắp xếp</InputLabel>
                   <Select value={sortBy} label="Sắp xếp" onChange={(e) => setSortBy(e.target.value)}>
@@ -1638,8 +1674,8 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
       {/* RESULTS DISPLAY CONTROLLER */}
       {renderedArtists.length > 0 && (
         <Box>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6" style={{ fontWeight: 'bold' }}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={1.5}>
+            <Typography variant="h6" className={classes.sectionTitle}>
               Danh mục kết quả
             </Typography>
             {/* FLAT / HIERARCHY SWITCH */}
@@ -1648,14 +1684,16 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                 <Button
                   variant={displayMode === 'hierarchy' ? 'contained' : 'outlined'}
                   onClick={() => setDisplayMode('hierarchy')}
+                  startIcon={<AccountTreeIcon />}
                 >
-                  🎙️ Cấu trúc phân cấp
+                  <span className={classes.displayModeText}>Cấu trúc phân cấp</span>
                 </Button>
                 <Button
                   variant={displayMode === 'flat' ? 'contained' : 'outlined'}
                   onClick={() => setDisplayMode('flat')}
+                  startIcon={<FormatListBulletedIcon />}
                 >
-                  📄 Danh sách phẳng
+                  <span className={classes.displayModeText}>Danh sách phẳng</span>
                 </Button>
               </ButtonGroup>
             )}

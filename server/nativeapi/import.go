@@ -197,6 +197,23 @@ func (api *Router) importPreviewHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if source == "zing" {
+		id := r.URL.Query().Get("id")
+		title := r.URL.Query().Get("title")
+		artist := r.URL.Query().Get("artist")
+		stream, _, err := api.importer.DownloadZingAudio(r.Context(), id, title, artist)
+		if err != nil {
+			http.Error(w, "Zing download failed: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer stream.Close()
+
+		w.Header().Set("Content-Type", "audio/mpeg")
+		w.WriteHeader(http.StatusOK)
+		_, _ = io.Copy(w, stream)
+		return
+	}
+
 	if source == "deezer" {
 		id := r.URL.Query().Get("id")
 		arl := conf.Server.Deezer.ARL

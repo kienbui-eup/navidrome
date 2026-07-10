@@ -112,70 +112,85 @@ fun AudioVisualizer(isPlaying: Boolean, modifier: Modifier = Modifier) {
     }
 }
 
+fun Any?.toLowResArtwork(): Any? {
+    if (this == null) return null
+    if (this is String && this.contains("getCoverArt.view")) {
+        return this.replace(Regex("([&?])size=\\d+"), "$1size=24")
+    }
+    if (this is android.net.Uri) {
+        val uriStr = this.toString()
+        if (uriStr.contains("getCoverArt.view")) {
+            return android.net.Uri.parse(uriStr.replace(Regex("([&?])size=\\d+"), "$1size=24"))
+        }
+    }
+    return this
+}
+
 @Composable
 fun AnimatedAmbientBackground(artworkUri: Any?, modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "ambient_background")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
+    val infiniteTransition = rememberInfiniteTransition(label = "ambient_glow")
+    
+    // Slow, luxurious breathing pulse for ambient color depth
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.55f,
+        targetValue = 0.85f,
         animationSpec = infiniteRepeatable(
-            animation = tween(45000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
-    )
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1.25f,
-        targetValue = 1.45f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(18000, easing = FastOutSlowInEasing),
+            animation = tween(12000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "scale"
-    )
-    val translationX by infiniteTransition.animateFloat(
-        initialValue = -40f,
-        targetValue = 40f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(22000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "translateX"
-    )
-    val translationY by infiniteTransition.animateFloat(
-        initialValue = -30f,
-        targetValue = 30f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(26000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "translateY"
+        label = "pulseAlpha"
     )
 
-    Box(modifier = modifier.fillMaxSize()) {
-        AsyncImage(
-            model = artworkUri,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
+    val scalePulse by infiniteTransition.animateFloat(
+        initialValue = 1.15f,
+        targetValue = 1.30f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(16000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scalePulse"
+    )
+
+    val lowResArt = remember(artworkUri) { artworkUri.toLowResArtwork() }
+
+    Box(modifier = modifier.fillMaxSize().background(Color(0xFF0B0B0D))) {
+        if (lowResArt != null) {
+            AsyncImage(
+                model = lowResArt,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        this.scaleX = scalePulse
+                        this.scaleY = scalePulse
+                        this.alpha = pulseAlpha
+                    }
+                    .blur(24.dp, edgeTreatment = androidx.compose.ui.draw.BlurredEdgeTreatment.Unbounded),
+            )
+        }
+
+        // Multi-layer high-end scrims for deep, professional contrast
+        // Layer 1: Radial vignette to center the focus and darken edges
+        Box(
+            Modifier
                 .fillMaxSize()
-                .graphicsLayer {
-                    this.scaleX = scale
-                    this.scaleY = scale
-                    this.rotationZ = rotation
-                    this.translationX = translationX
-                    this.translationY = translationY
-                }
-                .blur(64.dp),
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(Color.Transparent, Color(0xE00B0B0D)),
+                        radius = 1200f
+                    )
+                )
         )
+        // Layer 2: Solid vertical dark fade for maximum legibility of controls
         Box(
             Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(
-                            Color(0xCC0B0B0D),
-                            Color(0xF80B0B0D)
+                        colors = listOf(
+                            Color(0x700B0B0D),
+                            Color(0xF00B0B0D)
                         )
                     )
                 )
@@ -893,11 +908,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             }
 
                             // Dynamic Hardware Specs matching note
-                            val hardwareNote = when (activeDevice.typeLabel) {
-                                "USB DAC" -> "💡 Lưu ý phần cứng: USB DAC Topping E30 đang được kết nối. Chip giải mã AK4493 hỗ trợ gốc DSD512. Hãy kết hợp với Pre Suca T5C bóng Mullard 403b và op-amp Muses02 để trải nghiệm âm thanh analog cực mượt, dải âm ấm dày và nhạc tính đỉnh cao!"
-                                "Bluetooth" -> "💡 Lưu ý phần cứng: Đang phát qua Bluetooth không dây. Codec LDAC/SSC hỗ trợ dải động rộng nhưng không truyền tải được luồng DSD thô. Các bộ điều chế SDM tạm thời được giảm mẫu về PCM 24-bit/96kHz tối ưu."
-                                else -> "💡 Lưu ý phần cứng: Đang phát ra Loa ngoài của Galaxy Z Fold 5. Để bảo vệ thời lượng pin và tránh quá nhiệt, các bộ lọc upsampling nặng được bypass. Hãy cắm USB DAC Topping E30 qua cổng Type-C để thưởng thức âm thanh Roon-grade!"
-                            }
+                            val hardwareNote = activeDevice.hardwareNote
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1348,11 +1359,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
                 // Dynamic Hardware Specs matching note
                 item {
-                    val hardwareNote = when (activeDevice.typeLabel) {
-                        "USB DAC" -> "💡 Lưu ý phần cứng: USB DAC Topping E30 đang được kết nối. Chip giải mã AK4493 hỗ trợ gốc DSD512. Hãy kết hợp với Pre Suca T5C bóng Mullard 403b và op-amp Muses02 để trải nghiệm âm thanh analog cực mượt, dải âm ấm dày và nhạc tính đỉnh cao!"
-                        "Bluetooth" -> "💡 Lưu ý phần cứng: Đang phát qua Bluetooth không dây. Codec LDAC/SSC hỗ trợ dải động rộng nhưng không truyền tải được luồng DSD thô. Các bộ điều chế SDM tạm thời được giảm mẫu về PCM 24-bit/96kHz tối ưu."
-                        else -> "💡 Lưu ý phần cứng: Đang phát ra Loa ngoài của Galaxy Z Fold 5. Để bảo vệ thời lượng pin và tránh quá nhiệt, các bộ lọc upsampling nặng được bypass. Hãy cắm USB DAC Topping E30 qua cổng Type-C để thưởng thức âm thanh Roon-grade!"
-                    }
+                    val hardwareNote = activeDevice.hardwareNote
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()

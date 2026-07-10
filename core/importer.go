@@ -91,6 +91,8 @@ type Importer interface {
 	History(ctx context.Context) []ImportRecord
 	// TriggerScan asks the scanner to pick up newly imported files (async).
 	TriggerScan(ctx context.Context)
+	// DownloadZingAudio streams a song from Zing MP3, or falls back to YouTube if blocked/unavailable.
+	DownloadZingAudio(ctx context.Context, songID, title, artist string) (io.ReadCloser, string, error)
 }
 
 type ImportResult struct {
@@ -187,6 +189,7 @@ type DriveFile struct {
 const (
 	importSubfolder     = "Imported"
 	archiveBaseURL      = "https://archive.org"
+	zingBaseURL         = "http://ac.mp3.zing.vn"
 	maxDownloadBytes    = int64(1) << 30 // 1 GiB per file
 	downloadTimeout     = 15 * time.Minute
 	metadataTimeout     = 30 * time.Second
@@ -220,6 +223,7 @@ type importer struct {
 	// Base URLs, overridable in tests.
 	archiveBase string
 	driveBase   string
+	zingBase    string
 
 	mu            sync.Mutex
 	jobs          map[string]*ImportJob
@@ -247,6 +251,7 @@ func NewImporter(ds model.DataStore, scanner model.Scanner) Importer {
 		api:         &http.Client{Timeout: metadataTimeout},
 		archiveBase: archiveBaseURL,
 		driveBase:   "https://www.googleapis.com",
+		zingBase:    zingBaseURL,
 	}
 }
 
@@ -470,6 +475,8 @@ func (imp *importer) runJob(ctx context.Context, jobID string, items []ImportJob
 			res, err = imp.importRemoteItem(ctx, it, libraryID)
 		case "youtube":
 			res, err = imp.ImportYouTubeTrack(ctx, it.ID, it.Name, libraryID)
+		case "zing":
+			res, err = imp.ImportZingTrack(ctx, it.ID, it.Name, libraryID)
 		case "deezer":
 			res, err = imp.ImportDeezerTrack(ctx, it.ID, it.Name, libraryID)
 		default:
@@ -1228,3 +1235,40 @@ func (s *iaString) UnmarshalJSON(b []byte) error {
 	*s = ""
 	return nil
 }
+
+func (imp *importer) ImportZingTrack(ctx context.Context, songID, name string, libraryID int) (*ImportResult, error) {
+	songID = strings.TrimSpace(songID)
+	if songID == "" {
+		return nil, fmt.Errorf("empty Zing song id")
+	}
+
+	title := name
+	artist := ""
+	if idx := strings.Index(name, " - "); idx != -1 {
+		title = name[:idx]
+		artist = name[idx+3:]
+	}
+
+	stream, ext, err := imp.DownloadZingAudio(ctx, songID, title, artist)
+	if err != nil {
+		return nil, err
+	}
+	defer stream.Close()
+
+	if name == "" {
+		name = songID
+	}
+	finalName := name
+	if !strings.HasSuffix(strings.ToLower(finalName), "."+ext) {
+		finalName = finalName + "." + ext
+	}
+
+	meta := importMeta{libraryID: libraryID, source: "zing", ref: songID}
+	res, err := imp.persist(ctx, stream, finalName, meta)
+	if err != nil {
+		return nil, err
+	}
+	log.Info(ctx, "Imported audio file from Zing MP3", "name", res.SavedName, "bytes", res.Bytes, "duplicate", res.Duplicate, "id", songID)
+	return res, nil
+}
+

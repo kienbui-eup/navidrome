@@ -132,6 +132,23 @@ func newSearchTestServer(t *testing.T, driveStatus int) *httptest.Server {
 			},
 		})
 	})
+	mux.HandleFunc("/complete", func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"result": true,
+			"data": []map[string]any{
+				{
+					"song": []map[string]any{
+						{
+							"id":       "ZZDDBWF6",
+							"name":     "Pháo Hồng",
+							"artist":   "Đạt Long Vinh",
+							"duration": "235",
+						},
+					},
+				},
+			},
+		})
+	})
 	return httptest.NewServer(mux)
 }
 
@@ -141,6 +158,7 @@ func newTestImporter(srv *httptest.Server) *importer {
 		download:    srv.Client(),
 		archiveBase: srv.URL,
 		driveBase:   srv.URL,
+		zingBase:    srv.URL,
 	}
 }
 
@@ -283,3 +301,19 @@ func TestSearchSongsEmptyQuery(t *testing.T) {
 	}
 }
 
+func TestSearchZingSongs(t *testing.T) {
+	srv := newSearchTestServer(t, http.StatusOK)
+	defer srv.Close()
+	imp := newTestImporter(srv)
+
+	hits, err := imp.searchZingSongs(context.Background(), "Pháo Hồng")
+	if err != nil {
+		t.Fatalf("searchZingSongs: %v", err)
+	}
+	if len(hits) != 1 {
+		t.Fatalf("got %d hits, want 1", len(hits))
+	}
+	if hits[0].Source != "zing" || hits[0].Title != "Pháo Hồng" || hits[0].FileID != "ZZDDBWF6" {
+		t.Errorf("unexpected hit: %+v", hits[0])
+	}
+}

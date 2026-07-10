@@ -9,6 +9,27 @@ public struct ActiveDeviceDetails: Equatable {
     public let description: String
     public let isHiResCapable: Bool
     public let isLossless: Bool
+    
+    public var hardwareNote: String {
+        switch typeLabel {
+        case "USB DAC":
+            let isTopping = name.localizedCaseInsensitiveContains("Topping") || name.localizedCaseInsensitiveContains("E30")
+            if isTopping {
+                return "💡 Lưu ý phần cứng: USB DAC Topping E30 đang được kết nối. Chip giải mã AK4493 hỗ trợ gốc DSD512. Hãy kết hợp với Pre Suca T5C bóng Mullard 403b và op-amp Muses02 để trải nghiệm âm thanh analog cực mượt, dải âm ấm dày và nhạc tính đỉnh cao!"
+            } else {
+                return "💡 Lưu ý phần cứng: USB DAC [\(name)] đang được kết nối. Thiết bị hỗ trợ chất lượng tối đa \(maxQualityForecast). Đã kích hoạt chế độ Bit-Perfect trực tiếp qua cổng USB để giữ nguyên vẹn tín hiệu số nguyên bản!"
+            }
+        case "Bluetooth":
+            return "💡 Lưu ý phần cứng: Đang phát qua tai nghe/thiết bị Bluetooth không dây [\(name)]. Tự động tối ưu hóa luồng truyền tải không dây codec chất lượng cao (Apple AAC) lên tới 16-bit/44.1kHz, vô hiệu hóa upsampling siêu tần DSD để tránh hao pin và suy hao băng thông."
+        default:
+            let isIpad = UIDevice.current.userInterfaceIdiom == .pad
+            if isIpad {
+                return "💡 Lưu ý phần cứng: Đang phát ra Loa ngoài của iPad. Hệ thống tự động bypass các bộ lọc upsampling để bảo vệ thời lượng pin và tránh nóng máy."
+            } else {
+                return "💡 Lưu ý phần cứng: Đang phát ra Loa ngoài của iPhone. Để bảo vệ thời lượng pin và tránh quá nhiệt, các bộ lọc upsampling nặng được bypass. Hãy cắm USB DAC Topping E30 qua cổng Lightning/Type-C để thưởng thức âm thanh Roon-grade!"
+            }
+        }
+    }
 }
 
 public class AudioDeviceHelper {

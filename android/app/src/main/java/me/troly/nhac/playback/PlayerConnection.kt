@@ -196,6 +196,7 @@ class PlayerConnection(context: Context, private val config: ServerConfig) {
             putInt("samplingRate", samplingRate ?: 0)
             putString("artistId", artistId)
             putString("albumId", albumId)
+            putString("coverArt", coverArt)
             // Server-reported duration (seconds → ms); authoritative for transcoded DSD.
             putLong("durationMs", (duration ?: 0).toLong() * 1000L)
         }

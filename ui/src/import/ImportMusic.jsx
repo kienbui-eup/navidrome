@@ -152,17 +152,48 @@ const parseDriveFilename = (file) => {
 }
 
 const useStyles = makeStyles((theme) => ({
-  root: { marginTop: '1em' },
+  root: {
+    marginTop: '0.5em',
+    [theme.breakpoints.down('xs')]: {
+      marginTop: 0,
+      boxShadow: 'none',
+      background: 'transparent',
+    }
+  },
+  cardContent: {
+    [theme.breakpoints.down('xs')]: {
+      padding: '8px !important',
+    }
+  },
+  title: {
+    [theme.breakpoints.down('xs')]: {
+      fontSize: '1.1rem',
+      fontWeight: 'bold',
+      marginBottom: theme.spacing(0.5),
+    }
+  },
   field: { marginRight: theme.spacing(1), minWidth: 320 },
-  libSelect: { minWidth: 220, marginBottom: theme.spacing(2) },
+  libSelect: { minWidth: 220, marginBottom: theme.spacing(1) },
   actions: {
     marginTop: theme.spacing(2),
     display: 'flex',
     gap: theme.spacing(1),
     flexWrap: 'wrap',
   },
-  section: { marginTop: theme.spacing(3) },
-  hint: { color: theme.palette.text.secondary, marginTop: theme.spacing(1) },
+  section: {
+    marginTop: theme.spacing(2),
+    [theme.breakpoints.down('xs')]: {
+      marginTop: theme.spacing(1),
+    }
+  },
+  hint: {
+    color: theme.palette.text.secondary,
+    marginTop: theme.spacing(0.5),
+    fontSize: '0.85rem',
+    [theme.breakpoints.down('xs')]: {
+      display: 'none',
+    }
+  },
   itemMeta: { color: theme.palette.text.secondary, fontSize: '0.8rem' },
   progress: {
     marginTop: theme.spacing(2),
@@ -393,8 +424,8 @@ const ImportMusic = () => {
   return (
     <Card className={classes.root}>
       <Title title={`${APP_NAME} - Import nhạc`} />
-      <CardContent>
-        <Typography variant="h6">Import nhạc từ nguồn công khai</Typography>
+      <CardContent className={classes.cardContent}>
+        <Typography variant="h6" className={classes.title}>Import nhạc từ nguồn công khai</Typography>
         <Typography className={classes.hint}>
           Tải nhạc từ URL/podcast trực tiếp, thư mục Google Drive công khai,
           kho mở Internet Archive, hoặc một server vi2play khác vào thư viện.

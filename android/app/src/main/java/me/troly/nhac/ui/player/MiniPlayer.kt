@@ -23,11 +23,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
@@ -51,7 +54,29 @@ fun MiniPlayer(onExpand: () -> Unit) {
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isVeryNarrow = configuration.screenWidthDp < 340
 
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant, modifier = Modifier.fillMaxWidth()) {
+    // Dynamic activeDevice state updating in real-time (every 1.5 seconds)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var activeDevice by remember { mutableStateOf(AudioDeviceHelper.getActiveDeviceDetails(context)) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            activeDevice = AudioDeviceHelper.getActiveDeviceDetails(context)
+            delay(1500)
+        }
+    }
+
+    Surface(
+        color = Color.Transparent,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFF221E19), // top slightly lighter warm charcoal-gold
+                        Color(0xFF14120F)  // bottom deeper warm near-black
+                    )
+                )
+            )
+    ) {
         Column(
             Modifier
                 .fillMaxWidth()
@@ -76,20 +101,17 @@ fun MiniPlayer(onExpand: () -> Unit) {
                     Text(
                         meta?.title?.toString() ?: "",
                         style = if (isVeryNarrow) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = Color.White,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         meta?.artist?.toString() ?: "",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.LightGray,
                         maxLines = 1, overflow = TextOverflow.Ellipsis,
                     )
                     
                     // Compact Signal Path & Connected Device
-                    val context = androidx.compose.ui.platform.LocalContext.current
-                    val activeDevice = remember(context) { AudioDeviceHelper.getActiveDeviceDetails(context) }
-                    
                     val extras = meta?.extras
                     val suffix = extras?.getString("suffix")
                     val bitRate = extras?.getInt("bitRate") ?: 0

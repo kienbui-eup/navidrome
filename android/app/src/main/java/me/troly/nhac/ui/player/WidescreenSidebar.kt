@@ -887,11 +887,7 @@ fun WidescreenSidebar(
                         }
                         
                         // Dynamic Hardware Specs matching note
-                        val hardwareNote = when (activeDevice.typeLabel) {
-                            "USB DAC" -> "💡 Lưu ý phần cứng: USB DAC Topping E30 đang được kết nối. Chip giải mã AK4493 hỗ trợ gốc DSD512. Hãy kết hợp với Pre Suca T5C bóng Mullard 403b và op-amp Muses02 để trải nghiệm âm thanh analog cực mượt, dải âm ấm dày và nhạc tính đỉnh cao!"
-                            "Bluetooth" -> "💡 Lưu ý phần cứng: Đang phát qua Bluetooth không dây. Codec LDAC/SSC hỗ trợ dải động rộng nhưng không truyền tải được luồng DSD thô. Các bộ điều chế SDM tạm thời được giảm mẫu về PCM 24-bit/96kHz tối ưu."
-                            else -> "💡 Lưu ý phần cứng: Đang phát ra Loa ngoài của Galaxy Z Fold 5. Để bảo vệ thời lượng pin và tránh quá nhiệt, các bộ lọc upsampling nặng được bypass. Hãy cắm USB DAC Topping E30 qua cổng Type-C để thưởng thức âm thanh Roon-grade!"
-                        }
+                        val hardwareNote = activeDevice.hardwareNote
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()

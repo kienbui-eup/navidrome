@@ -105,6 +105,9 @@ interface SubsonicApi {
 
     @GET("rest/deletePlaylist.view")
     suspend fun deletePlaylist(@Query("id") id: String): SubsonicResponse
+
+    @GET("rest/getScanStatus.view")
+    suspend fun getScanStatus(): SubsonicResponse
 }
 
 // ── NATIVE API ──────────────────────────────────────────────────────────────
@@ -169,6 +172,7 @@ interface NativeApi {
     val playlist: Playlist? = null,
     val starred2: Starred2? = null,
     val searchResult3: SearchResult3? = null,
+    val scanStatus: ScanStatus? = null,
     val error: SubsonicError? = null,
 )
 
@@ -178,6 +182,7 @@ interface NativeApi {
 @Serializable data class ArtistIndex(val name: String = "", val artist: List<Artist> = emptyList())
 @Serializable data class PlaylistsRoot(val playlist: List<Playlist> = emptyList())
 @Serializable data class Starred2(val album: List<Album> = emptyList(), val song: List<Song> = emptyList())
+@Serializable data class ScanStatus(val scanning: Boolean = false, val count: Int? = null)
 @Serializable data class SearchResult3(
     val artist: List<Artist> = emptyList(),
     val album: List<Album> = emptyList(),
@@ -228,6 +233,14 @@ interface NativeApi {
 /** Domain-facing repository: builds the client and returns parsed lists/objects. */
 class SubsonicRepository(val config: ServerConfig) {
     private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    
+    private val _refreshEvent = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val refreshEvent = _refreshEvent.asSharedFlow()
+
+    fun triggerLocalRefresh() {
+        _refreshEvent.tryEmit(Unit)
+    }
+
     private val api: SubsonicApi by lazy {
         val http = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(config))
@@ -280,19 +293,31 @@ class SubsonicRepository(val config: ServerConfig) {
     suspend fun triggerLibraryScan(): Boolean {
         val sso = getSsoToken()
         val res = nativeApi.triggerScan("Bearer $sso")
-        return res.status == "scan_started"
+        val success = res.status == "scan_started"
+        if (success) {
+            triggerLocalRefresh()
+        }
+        return success
     }
 
     suspend fun deleteSong(songId: String): Boolean {
         val sso = getSsoToken()
         val res = nativeApi.deleteSong("Bearer $sso", songId)
-        return res.ids.contains(songId)
+        val success = res.ids.contains(songId)
+        if (success) {
+            triggerLocalRefresh()
+        }
+        return success
     }
 
     suspend fun deleteAlbum(albumId: String): Boolean {
         val sso = getSsoToken()
         val res = nativeApi.deleteAlbum("Bearer $sso", albumId)
-        return res.ids.contains(albumId)
+        val success = res.ids.contains(albumId)
+        if (success) {
+            triggerLocalRefresh()
+        }
+        return success
     }
 
     private fun body(r: SubsonicResponse): SubsonicBody {
@@ -310,19 +335,23 @@ class SubsonicRepository(val config: ServerConfig) {
     suspend fun playlist(id: String) = body(api.playlist(id)).playlist
     suspend fun starredSongs() = body(api.starred()).starred2?.song ?: emptyList()
     suspend fun search(q: String) = body(api.search(q)).searchResult3 ?: SearchResult3()
+    suspend fun getScanStatus() = body(api.getScanStatus()).scanStatus ?: ScanStatus()
 
     /** Creates a new playlist seeded with [songIds]. */
     suspend fun createPlaylist(name: String, songIds: List<String>) {
         body(api.createPlaylist(name, songIds))
+        triggerLocalRefresh()
     }
 
     /** Appends [songIds] to an existing playlist. */
     suspend fun addToPlaylist(playlistId: String, songIds: List<String>) {
         body(api.updatePlaylist(playlistId, songIds))
+        triggerLocalRefresh()
     }
 
     /** Deletes a playlist (must be owned by the current user). */
     suspend fun deletePlaylist(id: String) {
         body(api.deletePlaylist(id))
+        triggerLocalRefresh()
     }
 }

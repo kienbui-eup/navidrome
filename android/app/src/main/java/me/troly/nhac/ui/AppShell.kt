@@ -75,6 +75,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -454,7 +455,19 @@ private fun CompactBottomBar(current: Tab, onSelect: (Tab) -> Unit, onOpenPlayli
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isVeryNarrow = configuration.screenWidthDp < 340
 
-    Surface(color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 3.dp) {
+    Surface(
+        color = Color.Transparent,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFF14120F),
+                        Color(0xFF0F0D0B)
+                    )
+                )
+            )
+    ) {
         // Edge-to-edge: lift the bar above the system navigation/gesture bar so items
         // aren't covered. The Surface tint still fills down to the screen edge.
         Row(
