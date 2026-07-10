@@ -41,6 +41,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.filled.Hearing
 import androidx.compose.material3.NavigationRailItemDefaults
 
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.runtime.LaunchedEffect
+
 private data class TvTabItem(val label: String, val icon: ImageVector)
 
 /**
@@ -64,9 +69,15 @@ fun TvApp() {
         TvTabItem("Thư viện", Icons.Filled.LibraryMusic)
     )
 
+    val isOverlayActive = artistId != null || playlistId != null || albumId != null || showNowPlaying
+
     Box(Modifier.fillMaxSize()) {
         Surface(color = MaterialTheme.colorScheme.background) {
-            Row(Modifier.fillMaxSize()) {
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    .focusProperties { canFocus = !isOverlayActive }
+            ) {
                 // Left NavigationRail for easy TV D-pad navigation
                 NavigationRail(
                     containerColor = Color(0xFF111014),
@@ -127,20 +138,60 @@ fun TvApp() {
 
         // Overlay screens
         artistId?.let { id ->
-            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            val focusRequester = remember(id) { FocusRequester() }
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .focusRequester(focusRequester),
+                color = MaterialTheme.colorScheme.background
+            ) {
                 ArtistDetailScreen(id, onBack = { artistId = null }, onAlbum = openAlbum)
+            }
+            LaunchedEffect(id) {
+                focusRequester.requestFocus()
             }
         }
         playlistId?.let { id ->
-            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            val focusRequester = remember(id) { FocusRequester() }
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .focusRequester(focusRequester),
+                color = MaterialTheme.colorScheme.background
+            ) {
                 PlaylistDetailScreen(id, onBack = { playlistId = null }, onNowPlaying = openNow)
+            }
+            LaunchedEffect(id) {
+                focusRequester.requestFocus()
             }
         }
         albumId?.let { id ->
-            Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                AlbumDetailScreen(id, onBack = { albumId = null }, onNowPlaying = openNow)
+            val focusRequester = remember(id) { FocusRequester() }
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .focusRequester(focusRequester),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                AlbumDetailScreen(id, onBack = { albumId = null }, onNowPlaying = openNow, onArtistClick = { artistId = it })
+            }
+            LaunchedEffect(id) {
+                focusRequester.requestFocus()
             }
         }
-        if (showNowPlaying) NowPlayingScreen(onClose = { showNowPlaying = false })
+        if (showNowPlaying) {
+            val focusRequester = remember { FocusRequester() }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .focusRequester(focusRequester)
+            ) {
+                NowPlayingScreen(onClose = { showNowPlaying = false })
+            }
+            LaunchedEffect(Unit) {
+                focusRequester.requestFocus()
+            }
+        }
     }
 }
+

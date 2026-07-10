@@ -7,6 +7,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.EaseInQuart
 import androidx.compose.animation.core.EaseOutQuart
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.border
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -15,6 +20,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -199,7 +205,7 @@ fun AppShell() {
             }
             albumId?.let { id ->
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    AlbumDetailScreen(id, onBack = { albumId = null }, onNowPlaying = openNow)
+                    AlbumDetailScreen(id, onBack = { albumId = null }, onNowPlaying = openNow, onArtistClick = { artistId = it })
                 }
             }
         }
@@ -213,12 +219,33 @@ fun AppShell() {
                         .fillMaxSize()
                         .then(if (isTv) Modifier else Modifier.systemBarsPadding())
                 ) {
-                    NavigationRail(
-                        containerColor = Color(0xFF111014),
-                        header = {
+                    if (isTv) {
+                        var isSidebarFocused by remember { mutableStateOf(false) }
+                        val sidebarWidth by animateDpAsState(
+                            targetValue = if (isSidebarFocused) 220.dp else 72.dp,
+                            animationSpec = tween(durationMillis = 250, easing = EaseOutQuart),
+                            label = "sidebarWidth"
+                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .width(sidebarWidth)
+                                .background(Color(0xFF111014))
+                                .border(
+                                    width = 0.5.dp,
+                                    brush = Brush.horizontalGradient(listOf(Color.Transparent, Color.White.copy(alpha = 0.08f))),
+                                    shape = RoundedCornerShape(0.dp)
+                                )
+                                .onFocusChanged { isSidebarFocused = it.hasFocus }
+                                .padding(vertical = 12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            // Header
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(vertical = 24.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 20.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.Hearing,
@@ -226,28 +253,69 @@ fun AppShell() {
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(28.dp)
                                 )
-                                Spacer(Modifier.height(6.dp))
-                                Text(
-                                    text = "DECENT",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                    letterSpacing = 1.sp
+                                if (isSidebarFocused) {
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(
+                                        text = "DECENT",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        letterSpacing = 1.sp
+                                    )
+                                }
+                            }
+                            
+                            Spacer(Modifier.height(16.dp))
+                            
+                            // Quick Play
+                            TvSidebarItem(
+                                icon = Icons.Filled.PlayArrow,
+                                label = "Nghe nhanh",
+                                selected = false,
+                                onClick = { quickPlay() },
+                                isExpanded = isSidebarFocused
+                            )
+                            
+                            Spacer(Modifier.height(8.dp))
+                            HorizontalDivider(color = Color.White.copy(alpha = 0.05f), modifier = Modifier.padding(horizontal = 16.dp))
+                            Spacer(Modifier.height(8.dp))
+                            
+                            Tab.entries.forEach { t ->
+                                val selected = tab == t
+                                TvSidebarItem(
+                                    icon = t.icon,
+                                    label = t.label,
+                                    selected = selected,
+                                    onClick = { tab = t },
+                                    isExpanded = isSidebarFocused
                                 )
                             }
                         }
-                    ) {
-                        if (isTv) {
-                            NavigationRailItem(
-                                selected = false, onClick = { quickPlay() },
-                                icon = { Icon(Icons.Filled.PlayArrow, contentDescription = "Nghe nhanh") },
-                                label = { Text("Nghe nhanh", fontSize = 11.sp) },
-                                colors = NavigationRailItemDefaults.colors(
-                                    unselectedIconColor = Color(0xFFA79C86),
-                                    unselectedTextColor = Color(0xFFA79C86)
-                                )
-                            )
-                        } else {
+                    } else {
+                        NavigationRail(
+                            containerColor = Color(0xFF111014),
+                            header = {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(vertical = 24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Hearing,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(
+                                        text = "DECENT",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        letterSpacing = 1.sp
+                                    )
+                                }
+                            }
+                        ) {
                             NavigationRailItem(
                                 selected = false, onClick = { showPlaylistPicker = true },
                                 icon = { Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = "Danh sách phát") },
@@ -257,22 +325,22 @@ fun AppShell() {
                                     unselectedTextColor = Color(0xFFA79C86)
                                 )
                             )
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        Tab.entries.forEach { t ->
-                            val selected = tab == t
-                            NavigationRailItem(
-                                selected = selected, onClick = { tab = t },
-                                icon = { Icon(t.icon, contentDescription = t.label) },
-                                label = { Text(t.label, fontSize = 11.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
-                                colors = NavigationRailItemDefaults.colors(
-                                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                                    unselectedIconColor = Color(0xFFA79C86),
-                                    unselectedTextColor = Color(0xFFA79C86),
-                                    indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                            Spacer(Modifier.height(12.dp))
+                            Tab.entries.forEach { t ->
+                                val selected = tab == t
+                                NavigationRailItem(
+                                    selected = selected, onClick = { tab = t },
+                                    icon = { Icon(t.icon, contentDescription = t.label) },
+                                    label = { Text(t.label, fontSize = 11.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
+                                    colors = NavigationRailItemDefaults.colors(
+                                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                                        unselectedIconColor = Color(0xFFA79C86),
+                                        unselectedTextColor = Color(0xFFA79C86),
+                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                    )
                                 )
-                            )
+                            }
                         }
                     }
                     if (showWidescreenSidebar) {
@@ -523,3 +591,48 @@ private fun BarItem(tab: Tab, current: Tab, onSelect: (Tab) -> Unit, isVeryNarro
         }
     }
 }
+
+@Composable
+private fun TvSidebarItem(
+    icon: ImageVector,
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    isExpanded: Boolean
+) {
+    val source = rememberInteractionSource()
+    val focused by source.collectIsFocusedAsState()
+    val bgAlpha by animateFloatAsState(if (focused) 0.15f else if (selected) 0.08f else 0f, label = "bgAlpha")
+    val contentColor = if (focused) Color(0xFFC4BBA6) else if (selected) MaterialTheme.colorScheme.primary else Color(0xFFA79C86)
+    
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color.White.copy(alpha = bgAlpha))
+            .then(Modifier.tvFocusable(source))
+            .clickable(interactionSource = source, indication = null, onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = contentColor,
+            modifier = Modifier.size(22.dp)
+        )
+        if (isExpanded) {
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (selected || focused) FontWeight.Bold else FontWeight.Normal,
+                color = contentColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+

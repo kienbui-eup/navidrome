@@ -1,6 +1,7 @@
 package ytdlp
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -82,7 +83,7 @@ func SearchSongs(ctx context.Context, query string, limit int) ([]YTSong, error)
 	if limit <= 0 {
 		limit = 5
 	}
-	searchStr := fmt.Sprintf("ytsearch%d:%s audio", limit, query)
+	searchStr := fmt.Sprintf("ytsearch%d:%s", limit, query)
 
 	// Build arguments dynamically
 	args := []string{
@@ -104,10 +105,12 @@ func SearchSongs(ctx context.Context, query string, limit int) ([]YTSong, error)
 	args = append(args, searchStr)
 
 	cmd := exec.CommandContext(ctx, "yt-dlp", args...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("yt-dlp search execution failed: %w", err)
+		return nil, fmt.Errorf("yt-dlp search execution failed: %w (stderr: %s)", err, strings.TrimSpace(stderr.String()))
 	}
 
 	var result struct {

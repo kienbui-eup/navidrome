@@ -3,20 +3,25 @@ package me.troly.nhac.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -42,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -54,7 +60,9 @@ import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -71,6 +79,10 @@ import me.troly.nhac.ui.components.AddToPlaylistSheet
 import me.troly.nhac.ui.components.CoverImage
 import me.troly.nhac.ui.components.SongRow
 
+import me.troly.nhac.ui.LocalIsTv
+import me.troly.nhac.ui.rememberInteractionSource
+import me.troly.nhac.ui.tvFocusable
+
 class AlbumViewModel(private val repo: SubsonicRepository, private val albumId: String) : ViewModel() {
     private val _album = MutableStateFlow<Album?>(null)
     val album = _album.asStateFlow()
@@ -86,7 +98,56 @@ class AlbumViewModel(private val repo: SubsonicRepository, private val albumId: 
 }
 
 @Composable
-fun AlbumDetailScreen(albumId: String, onBack: () -> Unit, onNowPlaying: () -> Unit) {
+fun AlbumQualityBadge(songs: List<me.troly.nhac.data.subsonic.Song>, modifier: Modifier = Modifier) {
+    val isDsd = songs.any { s -> s.suffix?.lowercase() in listOf("dsf", "dff", "diff") }
+    val isHiRes = songs.any { s -> (s.bitDepth ?: 16) > 16 || (s.samplingRate ?: 44100) > 48000 }
+    val isLossless = songs.any { s -> s.suffix?.lowercase() in listOf("flac", "alac", "wav", "dsf", "dff", "diff") }
+
+    val (badgeText, badgeColors, ledColor) = when {
+        isDsd -> Triple("DSD / SACD", listOf(Color(0xFFFFD700), Color(0xFFC5A059)), Color(0xFFFFD700))
+        isHiRes -> Triple("Hi-Res LOSSLESS", listOf(Color(0xFF00E5FF), Color(0xFF00A8BC)), Color(0xFF00E5FF))
+        isLossless -> Triple("CD LOSSLESS", listOf(Color(0xFFDCDCDC), Color(0xFF8C8C8C)), Color(0xFFB0C4DE))
+        else -> Triple("STANDARD PCM", listOf(Color(0xFF9E9E9E), Color(0xFF6E6E6E)), Color(0xFF6E6E6E))
+    }
+
+    Box(
+        modifier = modifier
+            .border(
+                width = 1.dp,
+                brush = Brush.linearGradient(badgeColors),
+                shape = RoundedCornerShape(6.dp)
+            )
+            .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .background(ledColor, CircleShape)
+                    .shadow(elevation = 4.dp, shape = CircleShape, spotColor = ledColor)
+            )
+            Text(
+                text = badgeText,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                letterSpacing = 1.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun AlbumDetailScreen(
+    albumId: String, 
+    onBack: () -> Unit, 
+    onNowPlaying: () -> Unit,
+    onArtistClick: ((String) -> Unit)? = null
+) {
     val repo = LocalRepo.current
     val player = LocalPlayer.current
     val context = LocalContext.current
@@ -102,6 +163,10 @@ fun AlbumDetailScreen(albumId: String, onBack: () -> Unit, onNowPlaying: () -> U
     var isAdmin by remember { mutableStateOf(false) }
     var showDeleteAlbumDialog by remember { mutableStateOf(false) }
     var songToDelete by remember { mutableStateOf<me.troly.nhac.data.subsonic.Song?>(null) }
+
+    val isTv = LocalIsTv.current
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isWideScreen = isTv || configuration.screenWidthDp >= 600
 
     LaunchedEffect(repo) {
         isAdmin = repo.checkAdminStatus()
@@ -119,30 +184,236 @@ fun AlbumDetailScreen(albumId: String, onBack: () -> Unit, onNowPlaying: () -> U
     val coverUrl = repo.config.coverArtUrl(a.coverArt, 600)
     val toggle = { id: String -> selected = if (id in selected) selected - id else selected + id }
 
+    val totalSecs = remember(a.song) { a.song.fold(0) { acc, s -> acc + (s.duration ?: 0) } }
+    val durationText = remember(totalSecs) {
+        val mins = totalSecs / 60
+        val secs = totalSecs % 60
+        "${mins} phút ${secs} giây"
+    }
+
     Box(Modifier.fillMaxSize()) {
-        LazyColumn(
-            Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = if (selectionMode) 160.dp else 88.dp),
-        ) {
-            item {
-                Box(Modifier.fillMaxWidth()) {
-                    // Ambient Fluid moving artwork background
-                    me.troly.nhac.ui.player.AnimatedAmbientBackground(artworkUri = coverUrl, modifier = Modifier.matchParentSize())
+        // Ambient Fluid moving artwork background across the entire screen
+        me.troly.nhac.ui.player.AnimatedAmbientBackground(artworkUri = coverUrl, modifier = Modifier.matchParentSize())
+
+        if (isWideScreen) {
+            // Dual-Pane Layout for Widescreen, Tablets, and TVs
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                // Left Panel: Static album visual details & actions (fixed 360dp width)
+                Column(
+                    modifier = Modifier
+                        .width(360.dp)
+                        .fillMaxHeight()
+                        .statusBarsPadding()
+                        .padding(start = 24.dp, top = 24.dp, bottom = 24.dp)
+                        .shadow(16.dp, RoundedCornerShape(24.dp))
+                        .background(Color.Black.copy(alpha = 0.25f), RoundedCornerShape(24.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.01f))
+                            ),
+                            shape = RoundedCornerShape(24.dp)
+                        )
+                        .border(0.5.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(24.dp))
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    // Actions Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val backSource = rememberInteractionSource()
+                        IconButton(
+                            onClick = onBack,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .then(if (isTv) Modifier.tvFocusable(backSource) else Modifier)
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại", tint = Color.White)
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isAdmin) {
+                                val deleteSource = rememberInteractionSource()
+                                IconButton(
+                                    onClick = { showDeleteAlbumDialog = true },
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .then(if (isTv) Modifier.tvFocusable(deleteSource) else Modifier)
+                                ) {
+                                    Icon(Icons.Filled.DeleteOutline, "Xoá album", tint = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                            val playlistSource = rememberInteractionSource()
+                            IconButton(
+                                onClick = { pendingAdd = a.song.map { it.id } },
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .then(if (isTv) Modifier.tvFocusable(playlistSource) else Modifier)
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Thêm vào playlist", tint = Color.White)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // Floating cover art with spot glow shadow
+                    CoverImage(
+                        url = coverUrl, contentDescription = a.name, corner = 20.dp,
+                        modifier = Modifier
+                            .size(240.dp)
+                            .shadow(24.dp, RoundedCornerShape(20.dp))
+                    )
+
+                    Text(
+                        text = a.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(top = 20.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    // Interactive clickable Artist name
+                    if (a.artist != null) {
+                        val artistSource = rememberInteractionSource()
+                        Text(
+                            text = a.artist,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFFC4BBA6),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable(
+                                    interactionSource = artistSource,
+                                    indication = androidx.compose.foundation.LocalIndication.current,
+                                    onClick = {
+                                        a.artistId?.let { onArtistClick?.invoke(it) }
+                                    }
+                                )
+                                .then(if (isTv) Modifier.tvFocusable(artistSource) else Modifier)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    // Format indicator badge
+                    AlbumQualityBadge(songs = a.song, modifier = Modifier.padding(top = 10.dp))
+
+                    Text(
+                        text = listOfNotNull(
+                            a.year?.toString(),
+                            if (a.song.isNotEmpty()) "${a.song.size} bài • $durationText" else a.songCount?.let { "$it bài" }
+                        ).joinToString(" • "),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(top = 10.dp),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.weight(1.5f))
+
+                    // Action buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        val playSource = rememberInteractionSource()
+                        Button(
+                            onClick = { player.play(a.song, 0); onNowPlaying() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .then(if (isTv) Modifier.tvFocusable(playSource) else Modifier)
+                        ) {
+                            Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                            Text("Phát", modifier = Modifier.padding(start = 4.dp))
+                        }
+                        val shuffleSource = rememberInteractionSource()
+                        OutlinedButton(
+                            onClick = { player.play(a.song.shuffled(), 0); onNowPlaying() },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                            border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f)),
+                            modifier = Modifier
+                                .weight(1f)
+                                .then(if (isTv) Modifier.tvFocusable(shuffleSource) else Modifier)
+                        ) {
+                            Icon(Icons.Filled.Shuffle, contentDescription = null)
+                            Text("Xáo trộn", modifier = Modifier.padding(start = 4.dp))
+                        }
+                    }
+                }
+
+                // Right Panel: Scrollable Tracklist
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentPadding = PaddingValues(top = 24.dp, end = 24.dp, bottom = if (selectionMode) 160.dp else 88.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    itemsIndexed(a.song, key = { _, s -> s.id }) { index, song ->
+                        SongRow(
+                            song = song, index = index,
+                            isCurrent = playState.current?.title?.toString() == song.title,
+                            onClick = {
+                                if (selectionMode) toggle(song.id)
+                                else { player.play(a.song, index); onNowPlaying() }
+                            },
+                            onAdd = { pendingAdd = listOf(song.id) },
+                            onDelete = if (isAdmin) { { songToDelete = song } } else null,
+                            onLongPress = { toggle(song.id) },
+                            selectionMode = selectionMode,
+                            selected = song.id in selected,
+                        )
+                    }
+                }
+            }
+        } else {
+            // Standard Mobile Portrait Layout
+            LazyColumn(
+                Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = if (selectionMode) 160.dp else 88.dp),
+            ) {
+                item {
                     Column(Modifier.fillMaxWidth().statusBarsPadding().padding(bottom = 12.dp)) {
                         Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            IconButton(onClick = onBack, modifier = Modifier.padding(4.dp).size(48.dp)) {
+                            val backSource = rememberInteractionSource()
+                            IconButton(
+                                onClick = onBack, 
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .size(48.dp)
+                                    .then(if (isTv) Modifier.tvFocusable(backSource) else Modifier)
+                            ) {
                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại", tint = Color.White,
                                     modifier = Modifier.size(28.dp))
                             }
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (isAdmin) {
+                                    val deleteSource = rememberInteractionSource()
                                     IconButton(
                                         onClick = { showDeleteAlbumDialog = true },
-                                        modifier = Modifier.padding(4.dp).size(48.dp),
+                                        modifier = Modifier
+                                            .padding(4.dp)
+                                            .size(48.dp)
+                                            .then(if (isTv) Modifier.tvFocusable(deleteSource) else Modifier),
                                     ) {
                                         Icon(
                                             Icons.Filled.DeleteOutline, "Xoá album",
@@ -150,9 +421,13 @@ fun AlbumDetailScreen(albumId: String, onBack: () -> Unit, onNowPlaying: () -> U
                                         )
                                     }
                                 }
+                                val playlistSource = rememberInteractionSource()
                                 IconButton(
                                     onClick = { pendingAdd = a.song.map { it.id } },
-                                    modifier = Modifier.padding(4.dp).size(48.dp),
+                                    modifier = Modifier
+                                        .padding(4.dp)
+                                        .size(48.dp)
+                                        .then(if (isTv) Modifier.tvFocusable(playlistSource) else Modifier),
                                 ) {
                                     Icon(Icons.AutoMirrored.Filled.PlaylistAdd, "Thêm album vào playlist",
                                         tint = Color.White, modifier = Modifier.size(28.dp))
@@ -191,39 +466,63 @@ fun AlbumDetailScreen(albumId: String, onBack: () -> Unit, onNowPlaying: () -> U
                             Text(a.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold,
                                 color = Color.White, modifier = Modifier.padding(top = 14.dp),
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                            val totalSecs = remember(a.song) { a.song.fold(0) { acc, s -> acc + (s.duration ?: 0) } }
-                            val durationText = remember(totalSecs) {
-                                val mins = totalSecs / 60
-                                val secs = totalSecs % 60
-                                "${mins} phút ${secs} giây"
-                            }
-                            Text(
-                                text = listOfNotNull(
-                                    a.artist,
+                            
+                            // Clickable Artist name
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(top = 4.dp)
+                            ) {
+                                if (a.artist != null) {
+                                    val artistSource = rememberInteractionSource()
+                                    Text(
+                                        text = a.artist,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFFC4BBA6),
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .clickable(
+                                                interactionSource = artistSource,
+                                                indication = androidx.compose.foundation.LocalIndication.current,
+                                                onClick = {
+                                                    a.artistId?.let { onArtistClick?.invoke(it) }
+                                                }
+                                            )
+                                            .padding(horizontal = 4.dp)
+                                    )
+                                    Text(" • ", color = Color(0xFFC4BBA6).copy(alpha = 0.5f))
+                                }
+                                val extraDetails = listOfNotNull(
                                     a.year?.toString(),
                                     if (a.song.isNotEmpty()) "${a.song.size} bài • $durationText" else a.songCount?.let { "$it bài" }
-                                ).joinToString(" • "),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFFC4BBA6),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
+                                ).joinToString(" • ")
+                                Text(extraDetails, style = MaterialTheme.typography.bodyMedium, color = Color(0xFFC4BBA6).copy(alpha = 0.7f))
+                            }
+
+                            // Format Quality Badge
+                            AlbumQualityBadge(songs = a.song, modifier = Modifier.padding(top = 8.dp))
+
                             Row(Modifier.padding(top = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                val playSource = rememberInteractionSource()
                                 Button(
                                     onClick = { player.play(a.song, 0); onNowPlaying() },
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.primary,
                                         contentColor = MaterialTheme.colorScheme.onPrimary),
+                                    modifier = Modifier.then(if (isTv) Modifier.tvFocusable(playSource) else Modifier)
                                 ) {
                                     Icon(Icons.Filled.PlayArrow, contentDescription = null)
                                     Text("Phát", modifier = Modifier.padding(start = 4.dp))
                                 }
+                                val shuffleSource = rememberInteractionSource()
                                 OutlinedButton(
                                     onClick = { player.play(a.song.shuffled(), 0); onNowPlaying() },
                                     colors = ButtonDefaults.outlinedButtonColors(
                                         contentColor = Color.White
                                     ),
-                                    border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f))
+                                    border = androidx.compose.foundation.BorderStroke(0.5.dp, Color.White.copy(alpha = 0.35f)),
+                                    modifier = Modifier.then(if (isTv) Modifier.tvFocusable(shuffleSource) else Modifier)
                                 ) {
                                     Icon(Icons.Filled.Shuffle, contentDescription = null)
                                     Text("Ngẫu nhiên", modifier = Modifier.padding(start = 4.dp))
@@ -232,24 +531,25 @@ fun AlbumDetailScreen(albumId: String, onBack: () -> Unit, onNowPlaying: () -> U
                         }
                     }
                 }
-            }
-            itemsIndexed(a.song, key = { _, s -> s.id }) { index, song ->
-                SongRow(
-                    song = song, index = index,
-                    isCurrent = playState.current?.title?.toString() == song.title,
-                    onClick = {
-                        if (selectionMode) toggle(song.id)
-                        else { player.play(a.song, index); onNowPlaying() }
-                    },
-                    onAdd = { pendingAdd = listOf(song.id) },
-                    onDelete = if (isAdmin) { { songToDelete = song } } else null,
-                    onLongPress = { toggle(song.id) },
-                    selectionMode = selectionMode,
-                    selected = song.id in selected,
-                )
+                itemsIndexed(a.song, key = { _, s -> s.id }) { index, song ->
+                    SongRow(
+                        song = song, index = index,
+                        isCurrent = playState.current?.title?.toString() == song.title,
+                        onClick = {
+                            if (selectionMode) toggle(song.id)
+                            else { player.play(a.song, index); onNowPlaying() }
+                        },
+                        onAdd = { pendingAdd = listOf(song.id) },
+                        onDelete = if (isAdmin) { { songToDelete = song } } else null,
+                        onLongPress = { toggle(song.id) },
+                        selectionMode = selectionMode,
+                        selected = song.id in selected,
+                    )
+                }
             }
         }
 
+        // Selection Bottom Bar
         if (selectionMode) {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant, tonalElevation = 3.dp,
@@ -356,3 +656,4 @@ fun AlbumDetailScreen(albumId: String, onBack: () -> Unit, onNowPlaying: () -> U
         AddToPlaylistSheet(songIds = ids, onDismiss = { pendingAdd = null })
     }
 }
+

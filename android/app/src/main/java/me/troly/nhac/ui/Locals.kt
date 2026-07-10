@@ -1,5 +1,6 @@
 package me.troly.nhac.ui
 
+import androidx.compose.foundation.focusable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,12 +14,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import me.troly.nhac.data.subsonic.SubsonicRepository
 import me.troly.nhac.playback.PlayerConnection
 import me.troly.nhac.playback.RecommendationManager
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.animation.core.EaseOutQuad
+import androidx.compose.animation.core.tween
 
 val LocalIsTv = staticCompositionLocalOf { false }
 val LocalPlayer = staticCompositionLocalOf<PlayerConnection> { error("PlayerConnection not provided") }
@@ -47,14 +53,26 @@ fun ProvideAppEnv(
 @Composable
 fun Modifier.tvFocusable(source: MutableInteractionSource): Modifier {
     val focused by source.collectIsFocusedAsState()
-    val scale by animateFloatAsState(if (focused) 1.06f else 1f, label = "focusScale")
+    val scale by animateFloatAsState(
+        targetValue = if (focused) 1.08f else 1f,
+        animationSpec = tween(durationMillis = 220, easing = EaseOutQuad),
+        label = "focusScale"
+    )
     return this
-        .graphicsLayer { scaleX = scale; scaleY = scale }
+        .graphicsLayer { 
+            scaleX = scale
+            scaleY = scale
+        }
+        .focusable(interactionSource = source)
         .then(
-            if (focused) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(10.dp))
+            if (focused) Modifier
+                .shadow(12.dp, RoundedCornerShape(10.dp))
+                .border(2.dp, Color(0xFFC4BBA6), RoundedCornerShape(10.dp))
             else Modifier,
         )
 }
 
 @Composable
 fun rememberInteractionSource() = remember { MutableInteractionSource() }
+
+

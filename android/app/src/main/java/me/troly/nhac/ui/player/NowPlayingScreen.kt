@@ -63,8 +63,24 @@ import me.troly.nhac.ui.LocalRepo
 import me.troly.nhac.ui.LocalRecManager
 import me.troly.nhac.ui.LocalIsTv
 import me.troly.nhac.ui.tvFocusable
+import me.troly.nhac.ui.components.swipeGestures
 import me.troly.nhac.ui.rememberInteractionSource
 import me.troly.nhac.ui.components.formatDuration
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.unit.Dp
+
 
 /**
  * High-Fidelity 16-Band FFT Real-Time Spectrum Analyzer with spring dynamics.
@@ -222,6 +238,131 @@ fun AnimatedAmbientBackground(artworkUri: Any?, modifier: Modifier = Modifier) {
 }
 
 /**
+ * A professional, high-end Waveform Seeker that provides premium tactile scrubbing.
+ * On TV, it automatically hooks into D-pad Left/Right keys to allow precise step seeking.
+ */
+@Composable
+fun WaveformSeekbar(
+    songId: String,
+    progress: Float,
+    onSeek: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    activeColor: Color = MaterialTheme.colorScheme.primary,
+    inactiveColor: Color = Color(0x26FFFFFF),
+    barCount: Int = 75,
+    barWidth: Dp = 3.dp,
+    gap: Dp = 2.dp
+) {
+    val isTv = LocalIsTv.current
+    val source = rememberInteractionSource()
+    
+    // Seeded amplitudes (values between 0.12f and 1.0f)
+    val heights = remember(songId, barCount) {
+        val seed = songId.hashCode().toLong()
+        val random = java.util.Random(seed)
+        FloatArray(barCount) {
+            0.12f + random.nextFloat() * 0.88f
+        }
+    }
+
+    var draggingProgress by remember { mutableStateOf<Float?>(null) }
+    val displayProgress = draggingProgress ?: progress
+
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .then(if (isTv) Modifier.tvFocusable(source) else Modifier)
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyDown) {
+                    when (keyEvent.key) {
+                        Key.DirectionLeft -> {
+                            val newProg = (progress - 0.05f).coerceIn(0f, 1f)
+                            onSeek(newProg)
+                            true
+                        }
+                        Key.DirectionRight -> {
+                            val newProg = (progress + 0.05f).coerceIn(0f, 1f)
+                            onSeek(newProg)
+                            true
+                        }
+                        else -> false
+                    }
+                } else {
+                    false
+                }
+            }
+            .pointerInput(songId) {
+                detectTapGestures(
+                    onPress = { offset ->
+                        val widthPx = size.width.toFloat()
+                        if (widthPx > 0) {
+                            val newProg = (offset.x / widthPx).coerceIn(0f, 1f)
+                            draggingProgress = newProg
+                            try {
+                                val success = tryAwaitRelease()
+                                if (success) {
+                                    onSeek(newProg)
+                                }
+                            } finally {
+                                draggingProgress = null
+                            }
+                        }
+                    }
+                )
+            }
+            .pointerInput(songId) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        val widthPx = size.width.toFloat()
+                        if (widthPx > 0) {
+                            draggingProgress = (offset.x / widthPx).coerceIn(0f, 1f)
+                        }
+                    },
+                    onDragEnd = {
+                        draggingProgress?.let { onSeek(it) }
+                        draggingProgress = null
+                    },
+                    onDragCancel = {
+                        draggingProgress = null
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        val widthPx = size.width.toFloat()
+                        if (widthPx > 0 && draggingProgress != null) {
+                            val dragChange = dragAmount.x / widthPx
+                            draggingProgress = (draggingProgress!! + dragChange).coerceIn(0f, 1f)
+                        }
+                    }
+                )
+            }
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val totalGapsWidth = gap.toPx() * (barCount - 1)
+            val availableWidth = size.width - totalGapsWidth
+            val calculatedBarWidth = availableWidth / barCount
+            
+            for (i in 0 until barCount) {
+                val x = i * (calculatedBarWidth + gap.toPx())
+                val barHeight = heights[i] * size.height
+                val y = (size.height - barHeight) / 2f
+                
+                // Active versus inactive bars coloring
+                val isPlayed = (i.toFloat() / barCount) <= displayProgress
+                val color = if (isPlayed) activeColor else inactiveColor
+                
+                drawRoundRect(
+                    color = color,
+                    topLeft = androidx.compose.ui.geometry.Offset(x, y),
+                    size = androidx.compose.ui.geometry.Size(calculatedBarWidth, barHeight),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(calculatedBarWidth / 2f)
+                )
+            }
+        }
+    }
+}
+
+/**
  * Helper to check if a USB DAC or USB headset is currently attached to the system.
  */
 fun isUsbDacConnected(context: Context): Boolean {
@@ -240,6 +381,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
     val repo = LocalRepo.current
     val recManager = LocalRecManager.current
     val context = LocalContext.current
+    val isTv = LocalIsTv.current
 
     val state by player.state.collectAsState()
     val meta = state.current
@@ -247,6 +389,24 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
     LaunchedEffect(state.isPlaying) {
         while (state.isPlaying) { player.tick(); delay(500) }
+    }
+    
+    var isScreensaverActive by remember { mutableStateOf(false) }
+    var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(state.isPlaying) {
+        if (state.isPlaying) {
+            while (true) {
+                delay(1000)
+                if (System.currentTimeMillis() - lastInteractionTime > 30000) {
+                    if (isTv) {
+                        isScreensaverActive = true
+                    }
+                }
+            }
+        } else {
+            isScreensaverActive = false
+        }
     }
     var scrubbing by remember { mutableStateOf(false) }
     var scrubValue by remember { mutableStateOf(0f) }
@@ -387,10 +547,32 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
     // Responsive design detection (Folded vs. Unfolded Cover screen)
     val configuration = LocalConfiguration.current
-    val isTv = LocalIsTv.current
     val isWideScreen = isTv || configuration.screenWidthDp >= 600
 
-    Box(Modifier.fillMaxSize()) {
+    val focusRequester = remember { FocusRequester() }
+    if (isTv) {
+        LaunchedEffect(Unit) {
+            try {
+                focusRequester.requestFocus()
+            } catch (e: Exception) {}
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .focusRequester(focusRequester)
+            .focusable()
+            .onKeyEvent { keyEvent ->
+                lastInteractionTime = System.currentTimeMillis()
+                if (isScreensaverActive) {
+                    isScreensaverActive = false
+                    true
+                } else {
+                    false
+                }
+            }
+    ) {
         // Ambient Fluid moving artwork background
         AnimatedAmbientBackground(artworkUri = art)
 
@@ -423,8 +605,24 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
-                            modifier = Modifier.padding(start = 8.dp)
+                            modifier = Modifier.weight(1f).padding(start = 8.dp)
                         )
+                        if (isTv) {
+                            val ssSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                            IconButton(
+                                onClick = { isScreensaverActive = true },
+                                modifier = Modifier
+                                    .padding(end = 8.dp)
+                                    .tvFocusable(ssSource)
+                            ) {
+                                Icon(
+                                    imageVector = androidx.compose.material.icons.Icons.Default.Radio, // using Radio as standard TV-like visual, or we can use another available icon
+                                    contentDescription = "Màn hình chờ",
+                                    tint = Color(0xFFC4BBA6),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
                     }
 
                     Spacer(Modifier.height(16.dp))
@@ -432,7 +630,12 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(1.6f),
+                            .aspectRatio(1.6f)
+                            .swipeGestures(
+                                onSwipeDown = onClose,
+                                onSwipeLeft = { player.next() },
+                                onSwipeRight = { player.previous() }
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         AsyncImage(
@@ -547,17 +750,11 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         }
                     }
 
-                    // Seekbar
-                    Slider(
-                        value = progress.coerceIn(0f, 1f),
-                        onValueChange = { scrubbing = true; scrubValue = it },
-                        onValueChangeFinished = { player.seekTo((scrubValue * duration).toLong()); scrubbing = false },
-                        colors = SliderDefaults.colors(
-                            thumbColor = MaterialTheme.colorScheme.primary,
-                            activeTrackColor = MaterialTheme.colorScheme.primary,
-                            inactiveTrackColor = Color(0x33FFFFFF),
-                        ),
-                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                    WaveformSeekbar(
+                        songId = currentSongId ?: "",
+                        progress = progress.coerceIn(0f, 1f),
+                        onSeek = { player.seekTo((it * duration).toLong()) },
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
                     )
                     Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(formatMs(state.positionMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
@@ -1083,7 +1280,12 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(1f),
+                            .aspectRatio(1f)
+                            .swipeGestures(
+                                onSwipeDown = onClose,
+                                onSwipeLeft = { player.next() },
+                                onSwipeRight = { player.previous() }
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         AsyncImage(
@@ -1202,16 +1404,11 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                 // Progress SeekBar
                 item {
                     Column {
-                        Slider(
-                            value = progress.coerceIn(0f, 1f),
-                            onValueChange = { scrubbing = true; scrubValue = it },
-                            onValueChangeFinished = { player.seekTo((scrubValue * duration).toLong()); scrubbing = false },
-                            colors = SliderDefaults.colors(
-                                thumbColor = MaterialTheme.colorScheme.primary,
-                                activeTrackColor = MaterialTheme.colorScheme.primary,
-                                inactiveTrackColor = Color(0x33FFFFFF),
-                            ),
-                            modifier = Modifier.fillMaxWidth(),
+                        WaveformSeekbar(
+                            songId = currentSongId ?: "",
+                            progress = progress.coerceIn(0f, 1f),
+                            onSeek = { player.seekTo((it * duration).toLong()) },
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                         )
                         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(formatMs(state.positionMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
@@ -1535,6 +1732,15 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     }
                 }
             }
+        }
+
+        if (isScreensaverActive && isTv) {
+            AmbientScreensaverMode(
+                artworkUri = art,
+                title = meta?.title?.toString().orEmpty(),
+                artist = meta?.artist?.toString().orEmpty(),
+                onDismiss = { isScreensaverActive = false }
+            )
         }
     }
 }
@@ -1897,3 +2103,230 @@ fun AudiophileReviewPanel(
         }
     }
 }
+
+@Composable
+fun AmbientScreensaverMode(
+    artworkUri: Any?,
+    title: String,
+    artist: String,
+    onDismiss: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "screensaver_float")
+    val xOffsetState by infiniteTransition.animateFloat(
+        initialValue = -0.3f,
+        targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 24000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "xOffset"
+    )
+    val yOffsetState by infiniteTransition.animateFloat(
+        initialValue = -0.2f,
+        targetValue = 0.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 31000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "yOffset"
+    )
+
+    // Breathing halo glow animation for artwork edge
+    val glowTransition = rememberInfiniteTransition(label = "screensaver_glow")
+    val glowRadius by glowTransition.animateFloat(
+        initialValue = 10f,
+        targetValue = 40f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glowRadius"
+    )
+
+    // Clock state
+    var timeText by remember { mutableStateOf("") }
+    var dateText by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        val timeFormat = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+        val dateFormat = java.text.SimpleDateFormat("EEEE, dd MMMM", java.util.Locale.getDefault())
+        while (true) {
+            val now = java.util.Calendar.getInstance().time
+            timeText = timeFormat.format(now)
+            dateText = dateFormat.format(now)
+            delay(1000)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF070709))
+            .clickable(
+                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                indication = null,
+                onClick = onDismiss
+            )
+    ) {
+        // Multi-layer deep blurred ambient background
+        AnimatedAmbientBackground(artworkUri = artworkUri)
+        
+        // Dark overlay scrim to make it extremely subtle and OLED-friendly
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.55f))
+        )
+
+        // Top-Right Clock & Date Panel
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 40.dp, end = 50.dp),
+            horizontalAlignment = Alignment.End
+        ) {
+            Text(
+                text = timeText,
+                style = MaterialTheme.typography.displayLarge,
+                fontWeight = FontWeight.Light,
+                color = Color.White.copy(alpha = 0.85f),
+                fontSize = 64.sp,
+                letterSpacing = (-1).sp
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = dateText.uppercase(),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFC4BBA6).copy(alpha = 0.65f),
+                letterSpacing = 1.5.sp
+            )
+        }
+
+        // Floating Artwork and Song Metadata Container
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            val screenWidth = maxWidth
+            val screenHeight = maxHeight
+
+            Row(
+                modifier = Modifier
+                    .offset(
+                        x = screenWidth * xOffsetState,
+                        y = screenHeight * yOffsetState
+                    )
+                    .width(380.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color.Black.copy(alpha = 0.45f))
+                    .border(
+                        width = 1.dp,
+                        brush = Brush.linearGradient(
+                            listOf(
+                                Color(0xFFC4BBA6).copy(alpha = 0.25f),
+                                Color.Transparent,
+                                Color(0xFFC4BBA6).copy(alpha = 0.05f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    .padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Glow rounded cover art
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .shadow(
+                            elevation = glowRadius.dp,
+                            shape = RoundedCornerShape(16.dp),
+                            clip = false,
+                            ambientColor = Color(0xFFC4BBA6).copy(alpha = 0.15f),
+                            spotColor = Color(0xFFC4BBA6).copy(alpha = 0.35f)
+                        )
+                ) {
+                    AsyncImage(
+                        model = artworkUri,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(16.dp))
+                    )
+                }
+
+                Spacer(Modifier.width(20.dp))
+
+                // Metadata details
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 22.sp
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = artist,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFFC4BBA6),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+
+        // Bottom 16-band Grandiose Silk Spectrum visualizer
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(bottom = 40.dp, start = 80.dp, end = 80.dp)
+                .height(60.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            val activeColor = Color(0xFFC4BBA6).copy(alpha = 0.65f)
+            
+            val visualizerTransition = rememberInfiniteTransition(label = "screensaver_vis")
+            val heights = remember {
+                (0 until 16).map { i ->
+                    val duration = 400 + (i * 59) % 450
+                    val target = 0.4f + (i % 4) * 0.15f
+                    duration to target
+                }
+            }.mapIndexed { i, (duration, target) ->
+                visualizerTransition.animateFloat(
+                    initialValue = 0.1f,
+                    targetValue = target,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(duration, easing = FastOutSlowInEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "ss_bar_h_$i"
+                )
+            }
+
+            for (i in 0 until 16) {
+                Box(
+                    modifier = Modifier
+                        .width(6.dp)
+                        .fillMaxHeight(heights[i].value)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(activeColor, activeColor.copy(alpha = 0.1f))
+                            ),
+                            shape = RoundedCornerShape(3.dp)
+                        )
+                )
+            }
+        }
+    }
+}
+
