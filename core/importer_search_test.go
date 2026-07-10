@@ -175,7 +175,7 @@ func TestSearchSongs(t *testing.T) {
 	withDriveKey(t, "test-key")
 	imp := newTestImporter(srv)
 
-	res, err := imp.SearchSongs(context.Background(), "hotel california", "folder123", false)
+	res, err := imp.SearchSongs(context.Background(), "hotel california", "folder123", false, "")
 	if err != nil {
 		t.Fatalf("SearchSongs: %v", err)
 	}
@@ -211,7 +211,7 @@ func TestSearchSongsLosslessOnly(t *testing.T) {
 	withDriveKey(t, "test-key")
 	imp := newTestImporter(srv)
 
-	res, err := imp.SearchSongs(context.Background(), "hotel california", "folder123", true)
+	res, err := imp.SearchSongs(context.Background(), "hotel california", "folder123", true, "")
 	if err != nil {
 		t.Fatalf("SearchSongs: %v", err)
 	}
@@ -231,7 +231,7 @@ func TestSearchSongsDriveFailureIsWarning(t *testing.T) {
 	withDriveKey(t, "test-key")
 	imp := newTestImporter(srv)
 
-	res, err := imp.SearchSongs(context.Background(), "hotel california", "folder123", false)
+	res, err := imp.SearchSongs(context.Background(), "hotel california", "folder123", false, "")
 	if err != nil {
 		t.Fatalf("SearchSongs: %v", err)
 	}
@@ -248,7 +248,7 @@ func TestSearchSongsWithoutDrive(t *testing.T) {
 	defer srv.Close()
 	imp := newTestImporter(srv)
 
-	res, err := imp.SearchSongs(context.Background(), "hotel california", "", false)
+	res, err := imp.SearchSongs(context.Background(), "hotel california", "", false, "")
 	if err != nil {
 		t.Fatalf("SearchSongs: %v", err)
 	}
@@ -292,7 +292,7 @@ func TestSearchSongsEmptyQuery(t *testing.T) {
 	withDriveKey(t, "test-key")
 	imp := newTestImporter(srv)
 
-	res, err := imp.SearchSongs(context.Background(), "", "folder123", false)
+	res, err := imp.SearchSongs(context.Background(), "", "folder123", false, "")
 	if err != nil {
 		t.Fatalf("SearchSongs empty: %v", err)
 	}

@@ -107,6 +107,21 @@ func keywordPenalty(original, candidate string) int {
 func matchScore(originalArtist, originalTitle, candidateTitle string, hasDuration bool, durationDeltaSec float64) int {
 	original := strings.TrimSpace(originalArtist + " " + originalTitle)
 	score := tokenSetSimilarity(original, candidateTitle)
+
+	// If candidate title matches the original title perfectly but doesn't have the artist name,
+	// we should boost the score if the duration matches, or if it is a very close match to the title.
+	titleScore := tokenSetSimilarity(originalTitle, candidateTitle)
+	if titleScore > score && score < 70 {
+		if hasDuration && absFloat(durationDeltaSec) <= matchDurationWindowSec {
+			// Perfect title match and duration matches -> extremely high confidence!
+			score = titleScore
+		} else if !hasDuration && titleScore >= 95 {
+			// For sources without duration (like Drive/RSS), if title is an exact match (>= 95),
+			// boost to exactly 70 to allow queueing while keeping it conservative.
+			score = 70
+		}
+	}
+
 	if hasDuration && absFloat(durationDeltaSec) <= matchDurationWindowSec {
 		score += matchDurationBonus
 	}
@@ -346,5 +361,14 @@ func compareKnown(a, b int) int {
 // stage-1 quality rule — the gate used to decide whether a matched candidate
 // is even worth queuing for admin review.
 func candidateWins(original, candidate qualityTier) bool {
+	// If original is lossless, candidate can never win unless candidate is also lossless and has higher sample rate/bit depth
+	if original.Lossless && !candidate.Lossless {
+		return false
+	}
+	// If both are lossy, and candidate's bitrate is unknown (<= 0), we treat it as a potential win in stage 1.
+	// In stage 2, the candidate's bitrate is probed and becomes known (> 0), so it will be compared strictly.
+	if !original.Lossless && !candidate.Lossless && candidate.BitRateKbps <= 0 {
+		return true
+	}
 	return compareQualityTier(original, candidate) < 0
 }

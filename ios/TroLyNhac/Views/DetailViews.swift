@@ -20,6 +20,20 @@ struct AlbumDetailView: View {
         ZStack {
             Color.appBackground.ignoresSafeArea()
             
+            if let album = album, !isLoading {
+                // Ambient blurred artwork background
+                AsyncImage(url: repository.coverArtUrl(coverArtId: album.coverArt, size: 300)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .blur(radius: 60)
+                        .opacity(0.24)
+                } placeholder: {
+                    Color.clear
+                }
+                .ignoresSafeArea()
+            }
+            
             if isLoading {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .appPrimary))
@@ -85,13 +99,17 @@ struct AlbumDetailView: View {
                 ZStack {
                     Color.white.opacity(0.04)
                     Image(systemName: "music.note.list")
-                        .font(.system(size: 48))
+                        .font(.system(size: 56))
                         .foregroundColor(.white.opacity(0.2))
                 }
             }
-            .frame(width: 180, height: 140)
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.4), radius: 8, x: 0, y: 4)
+            .frame(width: 200, height: 200)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 0.5)
+            )
+            .shadow(color: Color.black.opacity(0.45), radius: 12, x: 0, y: 6)
             
             Text(album.name)
                 .font(.system(size: 20, weight: .bold, design: .rounded))
@@ -170,29 +188,22 @@ struct AlbumDetailView: View {
                     Button(action: {
                         playerManager.play(songs, startIndex: index)
                     }) {
+                        let isPlaying = playerManager.currentSong?.id == song.id
                         HStack(spacing: 14) {
                             Text(String(song.track ?? (index + 1)))
-                                .font(.system(size: 14, weight: .medium, design: .monospaced))
-                                .foregroundColor(.gray.opacity(0.6))
+                                .font(.system(size: 14, weight: isPlaying ? .bold : .medium, design: .monospaced))
+                                .foregroundColor(isPlaying ? .appPrimary : .gray.opacity(0.6))
                                 .frame(width: 24, alignment: .leading)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(song.title)
                                     .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(isPlaying ? .appPrimary : .white)
                                     .lineLimit(1)
                                 
                                 HStack(spacing: 6) {
                                     // Suffix/Codec Tag
-                                    if let suffix = song.suffix?.uppercased() {
-                                        Text(suffix)
-                                            .font(.system(size: 8, weight: .bold))
-                                            .foregroundColor(.gray)
-                                            .padding(.horizontal, 4)
-                                            .padding(.vertical, 1)
-                                            .background(Color.white.opacity(0.08))
-                                            .cornerRadius(3)
-                                    }
+                                    CodecBadgeView(suffix: song.suffix, bitDepth: song.bitDepth)
                                     
                                     // Bitrate info
                                     if let br = song.bitRate {
@@ -202,15 +213,7 @@ struct AlbumDetailView: View {
                                     }
                                     
                                     // Hi-Res Audio Tag
-                                    if (song.bitDepth ?? 0) >= 24 || repository.isServerTranscodeSuffix(song.suffix) {
-                                        Text("Hi-Res")
-                                            .font(.system(size: 8, weight: .bold))
-                                            .foregroundColor(.appPrimary)
-                                            .padding(.horizontal, 4)
-                                            .padding(.vertical, 1)
-                                            .background(Color.appPrimary.opacity(0.15))
-                                            .cornerRadius(3)
-                                    }
+                                    HiResBadgeView(bitDepth: song.bitDepth, suffix: song.suffix, repository: repository)
                                 }
                             }
                             
@@ -350,7 +353,11 @@ struct ArtistDetailView: View {
                                             }
                                         }
                                         .frame(width: (UIScreen.main.bounds.width - 64) / 2, height: (UIScreen.main.bounds.width - 64) / 2)
-                                        .cornerRadius(10)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+                                        )
                                         
                                         Text(album.name)
                                             .font(.system(size: 13, weight: .bold))
@@ -497,7 +504,12 @@ struct PlaylistDetailView: View {
                 }
             }
             .frame(width: 140, height: 140)
-            .cornerRadius(12)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 0.5)
+            )
+            .shadow(color: Color.black.opacity(0.35), radius: 8, x: 0, y: 4)
             
             Text(pl.name)
                 .font(.system(size: 20, weight: .bold, design: .rounded))
@@ -553,7 +565,11 @@ struct PlaylistDetailView: View {
                             }
                         }
                         .frame(width: 40, height: 40)
-                        .cornerRadius(6)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 0.5)
+                        )
                         
                         VStack(alignment: .leading, spacing: 2) {
                             Text(song.title)
@@ -624,5 +640,99 @@ struct PlaylistDetailView: View {
         let m = Int(seconds) / 60
         let s = Int(seconds) % 60
         return String(format: "%d:%02d", m, s)
+    }
+}
+
+// MARK: - PREMIUM AUDIO QUALITY BADGES (ROON / SUBSTREAM STYLE)
+struct CodecBadgeView: View {
+    let suffix: String?
+    let bitDepth: Int?
+    
+    var body: some View {
+        if let s = suffix?.uppercased() {
+            let isHiRes = ["DSD", "DSF", "DIFF", "FLAC"].contains(s) && (bitDepth ?? 16) >= 24
+            let isDsd = ["DSD", "DSF", "DIFF"].contains(s)
+            let isLossless = ["WAV", "ALAC", "AIF", "AIFF", "APE", "FLAC"].contains(s) && !isHiRes
+            
+            if isHiRes || isDsd {
+                Text(s)
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(Color(red: 1.0, green: 0.84, blue: 0.0)) // Royal Gold
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.18, green: 0.14, blue: 0.05), Color(red: 0.26, green: 0.2, blue: 0.06)],
+                            startPoint: .leading, endPoint: .trailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 3)
+                            .stroke(Color(red: 1.0, green: 0.84, blue: 0.0).opacity(0.35), lineWidth: 0.5)
+                    )
+            } else if isLossless {
+                Text(s)
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(Color(red: 0.0, green: 0.9, blue: 1.0)) // Cyan
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.03, green: 0.15, blue: 0.18), Color(red: 0.04, green: 0.23, blue: 0.27)],
+                            startPoint: .leading, endPoint: .trailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 3)
+                            .stroke(Color(red: 0.0, green: 0.9, blue: 1.0).opacity(0.35), lineWidth: 0.5)
+                    )
+            } else {
+                Text(s)
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.gray)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.11, green: 0.11, blue: 0.13), Color(red: 0.15, green: 0.14, blue: 0.17)],
+                            startPoint: .leading, endPoint: .trailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 3))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 3)
+                            .stroke(Color.gray.opacity(0.15), lineWidth: 0.5)
+                    )
+            }
+        }
+    }
+}
+
+struct HiResBadgeView: View {
+    let bitDepth: Int?
+    let suffix: String?
+    let repository: SubsonicRepository
+    
+    var body: some View {
+        if (bitDepth ?? 0) >= 24 || repository.isServerTranscodeSuffix(suffix) {
+            Text("Hi-Res")
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(Color(red: 1.0, green: 0.84, blue: 0.0)) // Royal Gold
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 0.22, green: 0.18, blue: 0.06), Color(red: 0.32, green: 0.25, blue: 0.08)],
+                        startPoint: .leading, endPoint: .trailing
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 3))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 3)
+                        .stroke(Color(red: 1.0, green: 0.84, blue: 0.0).opacity(0.4), lineWidth: 0.5)
+                )
+        }
     }
 }

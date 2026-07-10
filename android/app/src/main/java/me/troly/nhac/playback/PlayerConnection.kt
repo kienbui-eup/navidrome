@@ -36,7 +36,7 @@ data class PlaybackState(
  * Bridges the UI to [PlaybackService] via a Media3 [MediaController], exposing a
  * simple [state] flow and playback commands. One instance lives for the app.
  */
-class PlayerConnection(context: Context, private val config: ServerConfig) {
+class PlayerConnection(private val context: Context, private val config: ServerConfig) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     val recManager = RecommendationManager(context)
@@ -80,6 +80,11 @@ class PlayerConnection(context: Context, private val config: ServerConfig) {
                 checkAndTriggerAutoRadio(player)
             }
         }
+
+        @androidx.media3.common.util.UnstableApi
+        override fun onAudioSessionIdChanged(audioSessionId: Int) {
+            AudioVisualizerHelper.start(audioSessionId)
+        }
     }
 
     /**
@@ -118,10 +123,33 @@ class PlayerConnection(context: Context, private val config: ServerConfig) {
         }, MoreExecutors.directExecutor())
     }
 
+    private var lastPrefetchedSongId: String? = null
+
     /** Refresh position for the seek bar (call on a ticker while playing). */
+    @androidx.media3.common.util.UnstableApi
     fun tick() {
         val c = controller ?: return
-        _state.value = snapshot(c)
+        val currentState = snapshot(c)
+        _state.value = currentState
+
+        // Active prefetching: triggers at >= 90% duration of current track
+        if (currentState.isPlaying && currentState.durationMs > 0) {
+            val progress = currentState.positionMs.toFloat() / currentState.durationMs
+            val currentSongId = currentState.current?.extras?.getString("songId")
+            if (progress >= 0.90f && lastPrefetchedSongId != currentSongId) {
+                val nextIndex = c.currentMediaItemIndex + 1
+                if (nextIndex in 0 until c.mediaItemCount) {
+                    val nextItem = c.getMediaItemAt(nextIndex)
+                    val nextSongId = nextItem.mediaId
+                    val nextUri = nextItem.localConfiguration?.uri?.toString()
+                    if (nextUri != null && lastPrefetchedSongId != nextSongId) {
+                        lastPrefetchedSongId = nextSongId
+                        Log.d("PlayerConn", "Triggering Active Prefetch for next track: ${nextItem.mediaMetadata.title} ($nextSongId)")
+                        AudioCacheManager.prefetch(context, nextUri)
+                    }
+                }
+            }
+        }
     }
 
     fun play(songs: List<Song>, startIndex: Int = 0) {
@@ -179,6 +207,7 @@ class PlayerConnection(context: Context, private val config: ServerConfig) {
     }
 
     fun release() {
+        AudioVisualizerHelper.stop()
         controller?.removeListener(listener)
         controller?.release()
         controller = null

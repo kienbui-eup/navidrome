@@ -37,7 +37,12 @@ class PlaybackService : MediaLibraryService() {
             .setUsage(androidx.media3.common.C.USAGE_MEDIA)
             .build()
 
+        val cacheDataSourceFactory = AudioCacheManager.getCacheDataSourceFactory(this)
+        val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(this)
+            .setDataSourceFactory(cacheDataSourceFactory)
+
         val player = ExoPlayer.Builder(this, renderers)
+            .setMediaSourceFactory(mediaSourceFactory)
             .setLoadControl(loadControl)
             .setAudioAttributes(audioAttributes, /* handleAudioFocus= */ true)
             .setHandleAudioBecomingNoisy(true)

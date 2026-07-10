@@ -560,8 +560,8 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
     const val = e.target.value
     if (val === 'google_drive') {
       setSource('google_drive')
-    } else if (val === 'public_search') {
-      setSource('public_search')
+    } else if (val.startsWith('public_search')) {
+      setSource(val)
     } else if (val === 'internet_archive') {
       setSource('internet_archive')
     } else if (val.startsWith('subsonic_')) {
@@ -745,7 +745,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
 
   // Reset view & data on source change
   useEffect(() => {
-    if (source !== 'public_search' && source !== 'internet_archive') {
+    if (!source.startsWith('public_search') && source !== 'internet_archive') {
       setQuery('')
     }
     setRawSongs([])
@@ -760,7 +760,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
 
   // Auto-search for online search sources when selected
   useEffect(() => {
-    if (source === 'public_search') {
+    if (source.startsWith('public_search')) {
       const defaultQuery = 'nhạc mới hot'
       setQuery(defaultQuery)
       
@@ -770,9 +770,18 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
         setViewPath([])
         setWarnings([])
         try {
+          const provider = source === 'public_search_youtube'
+            ? 'youtube'
+            : source === 'public_search_zing'
+            ? 'zing'
+            : source === 'public_search_deezer'
+            ? 'deezer'
+            : 'all'
+
           const params = new URLSearchParams({
             q: defaultQuery,
             lossless: losslessOnly ? 'true' : 'false',
+            provider: provider,
           })
           const { json } = await httpClient(`/api/import/search/songs?${params.toString()}`)
           const hits = json.hits || []
@@ -852,7 +861,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
 
   // Execute unified search
   const handleSearch = async () => {
-    if (source === 'public_search') {
+    if (source.startsWith('public_search')) {
       if (!query.trim() && !driveFolder.trim()) {
         notify('Vui lòng nhập từ khóa hoặc thư mục Google Drive', 'warning')
         return
@@ -862,9 +871,18 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
       setViewPath([])
       setWarnings([])
       try {
+        const provider = source === 'public_search_youtube'
+          ? 'youtube'
+          : source === 'public_search_zing'
+          ? 'zing'
+          : source === 'public_search_deezer'
+          ? 'deezer'
+          : 'all'
+
         const params = new URLSearchParams({
           q: query,
           lossless: losslessOnly ? 'true' : 'false',
+          provider: provider,
         })
         if (driveFolder.trim()) params.set('drive', driveFolder.trim())
         const { json } = await httpClient(`/api/import/search/songs?${params.toString()}`)
@@ -1566,8 +1584,8 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                   value={
                     source === 'google_drive'
                       ? 'google_drive'
-                      : source === 'public_search'
-                      ? 'public_search'
+                      : source.startsWith('public_search')
+                      ? source
                       : source === 'internet_archive'
                       ? 'internet_archive'
                       : serverId
@@ -1586,7 +1604,16 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                     📁 Google Drive Folder
                   </MenuItem>
                   <MenuItem value="public_search">
-                    🌐 Tìm nhạc Online (Zing MP3 / YouTube / Deezer)
+                    🌐 Tìm tất cả nguồn Online (Gộp)
+                  </MenuItem>
+                  <MenuItem value="public_search_youtube">
+                    📺 Tìm nhạc YouTube Music (Opus)
+                  </MenuItem>
+                  <MenuItem value="public_search_zing">
+                    💚 Tìm nhạc Zing MP3 (320kbps)
+                  </MenuItem>
+                  <MenuItem value="public_search_deezer">
+                    💜 Tìm nhạc Deezer Lossless (FLAC)
                   </MenuItem>
                   <MenuItem value="internet_archive">
                     🏛️ Thư viện Internet Archive

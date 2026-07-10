@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -160,7 +161,9 @@ fun AlbumDetailScreen(albumId: String, onBack: () -> Unit, onNowPlaying: () -> U
                         }
                         Column(
                             modifier = Modifier
+                                .widthIn(max = 600.dp)
                                 .fillMaxWidth()
+                                .align(Alignment.CenterHorizontally)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                                 .shadow(16.dp, RoundedCornerShape(20.dp))
                                 .background(

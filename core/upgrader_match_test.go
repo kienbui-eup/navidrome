@@ -98,6 +98,20 @@ func TestMatchScore(t *testing.T) {
 			candidateTitle: "Bohemian Rhapsody (Cover)",
 			want:           85, // sim = 2*3/(4+3)*100 = 85 (truncated), no penalty
 		},
+		{
+			name:           "artist prefix fallback with duration: boost to titleScore and apply bonus",
+			originalArtist: "The Beatles", originalTitle: "Yesterday",
+			candidateTitle: "Yesterday",
+			hasDuration:    true, durationDeltaSec: 2,
+			want:           100, // titleScore=100, bonus=+10, clamped to 100
+		},
+		{
+			name:           "artist prefix fallback without duration: boost to 70",
+			originalArtist: "The Beatles", originalTitle: "Yesterday",
+			candidateTitle: "Yesterday",
+			hasDuration:    false,
+			want:           70, // titleScore=100, no duration => boost to 70
+		},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -231,7 +245,7 @@ func TestCandidateWins(t *testing.T) {
 		want                bool
 	}{
 		{"flac candidate beats mp3 original", qualityTier{Lossless: false, BitRateKbps: 128}, qualityTier{Lossless: true}, true},
-		{"same lossy class, unknown candidate bitrate: does not win", qualityTier{Lossless: false, BitRateKbps: 128}, qualityTier{Lossless: false}, false},
+		{"same lossy class, unknown candidate bitrate: wins in stage 1", qualityTier{Lossless: false, BitRateKbps: 128}, qualityTier{Lossless: false}, true},
 		{"lower-bitrate lossy candidate does not win", qualityTier{Lossless: false, BitRateKbps: 320}, qualityTier{Lossless: false, BitRateKbps: 128}, false},
 		{"higher-bitrate lossy candidate wins", qualityTier{Lossless: false, BitRateKbps: 128}, qualityTier{Lossless: false, BitRateKbps: 320}, true},
 		{"identical tiers do not win (tie is not a win)", qualityTier{Lossless: true, SampleRate: 44100}, qualityTier{Lossless: true, SampleRate: 44100}, false},

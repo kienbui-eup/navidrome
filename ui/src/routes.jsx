@@ -4,6 +4,8 @@ import Personal from './personal/Personal'
 import ImportMusic from './import/ImportMusic'
 import UpgradeQuality from './upgrade/UpgradeQuality'
 import ServerStatus from './server/ServerStatus'
+import MetadataDashboard from './import/MetadataDashboard'
+import MusicTrends from './import/MusicTrends'
 
 const routes = [
   <Route exact path="/personal" render={() => <Personal />} key={'personal'} />,
@@ -15,6 +17,13 @@ const routes = [
     key={'upgrade'}
   />,
   <Route exact path="/server" render={() => <ServerStatus />} key={'server'} />,
+  <Route
+    exact
+    path="/metadata-dashboard"
+    render={() => <MetadataDashboard />}
+    key={'metadata-dashboard'}
+  />,
+  <Route exact path="/trends" render={() => <MusicTrends />} key={'trends'} />,
 ]
 
 export default routes

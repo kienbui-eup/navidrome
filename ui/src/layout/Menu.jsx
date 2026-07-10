@@ -12,7 +12,7 @@ import albumLists from '../album/albumLists'
 import PlaylistsSubMenu from './PlaylistsSubMenu'
 import LibrarySelector from '../common/LibrarySelector'
 import config from '../config'
-import { MdCloudDownload, MdHighQuality } from 'react-icons/md'
+import { MdCloudDownload, MdHighQuality, MdSettings, MdTrendingUp } from 'react-icons/md'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -236,6 +236,24 @@ const Menu = ({ dense = false }) => {
                 activeClassName={classes.active}
                 primaryText={translate('menu.upgradeQuality', { _: 'Nâng cấp Chất lượng' })}
                 leftIcon={<MdHighQuality size={24} />}
+                sidebarIsOpen={open}
+                dense={dense}
+              />
+              <MenuItemLink
+                key="metadata-dashboard"
+                to="/metadata-dashboard"
+                activeClassName={classes.active}
+                primaryText={translate('menu.metadataDashboard', { _: 'Quản Lý Metadata' })}
+                leftIcon={<MdSettings size={24} />}
+                sidebarIsOpen={open}
+                dense={dense}
+              />
+              <MenuItemLink
+                key="trends"
+                to="/trends"
+                activeClassName={classes.active}
+                primaryText={translate('menu.musicTrends', { _: 'Nhạc Hot & Xu Hướng' })}
+                leftIcon={<MdTrendingUp size={24} />}
                 sidebarIsOpen={open}
                 dense={dense}
               />

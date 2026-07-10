@@ -197,7 +197,15 @@ func escapeArchivePath(filename string) string {
 	return strings.Join(segments, "/")
 }
 
-func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string, losslessOnly bool) (*SongSearchResult, error) {
+func hasProvider(provider, target string) bool {
+	p := strings.ToLower(strings.TrimSpace(provider))
+	if p == "" || p == "all" {
+		return true
+	}
+	return p == target
+}
+
+func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string, losslessOnly bool, provider string) (*SongSearchResult, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		query = "*"
@@ -237,13 +245,15 @@ func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string,
 		res.Hits = append(res.Hits, hits...)
 	}
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		hits, err := imp.searchArchiveSongs(ctx, query)
-		collect(hits, err, "Archive.org")
-	}()
-	if strings.TrimSpace(driveFolder) != "" {
+	if hasProvider(provider, "archive") {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			hits, err := imp.searchArchiveSongs(ctx, query)
+			collect(hits, err, "Archive.org")
+		}()
+	}
+	if strings.TrimSpace(driveFolder) != "" && hasProvider(provider, "drive") {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -259,63 +269,69 @@ func (imp *importer) SearchSongs(ctx context.Context, query, driveFolder string,
 
 	if flag.Lookup("test.v") == nil {
 		// Concurrently search YouTube
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			ytSongs, err := ytdlp.SearchSongs(ctx, onlineQuery, 15)
-			var hits []SongHit
-			if err == nil {
-				for _, s := range ytSongs {
-					hits = append(hits, SongHit{
-						Source:     "youtube",
-						Title:      s.Title,
-						Artist:     s.Artist,
-						FileID:     s.ID,
-						Filename:   s.Title + ".opus",
-						Format:     "Opus 160kbps",
-						Length:     strconv.Itoa(s.Duration),
-						Quality:    35,
-						Lossless:   false,
-						PreviewURL: fmt.Sprintf("/api/import/preview?source=youtube&id=%s", s.ID),
-					})
+		if hasProvider(provider, "youtube") {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				ytSongs, err := ytdlp.SearchSongs(ctx, onlineQuery, 15)
+				var hits []SongHit
+				if err == nil {
+					for _, s := range ytSongs {
+						hits = append(hits, SongHit{
+							Source:     "youtube",
+							Title:      s.Title,
+							Artist:     s.Artist,
+							FileID:     s.ID,
+							Filename:   s.Title + ".opus",
+							Format:     "Opus 160kbps",
+							Length:     strconv.Itoa(s.Duration),
+							Quality:    35,
+							Lossless:   false,
+							PreviewURL: fmt.Sprintf("/api/import/preview?source=youtube&id=%s", s.ID),
+						})
+					}
 				}
-			}
-			collect(hits, err, "YouTube Music")
-		}()
+				collect(hits, err, "YouTube Music")
+			}()
+		}
 
 		// Concurrently search Deezer
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			dzSongs, err := deezer.SearchTracks(ctx, onlineQuery, 15)
-			var hits []SongHit
-			if err == nil {
-				for _, s := range dzSongs {
-					hits = append(hits, SongHit{
-						Source:     "deezer",
-						Title:      s.Title,
-						Artist:     s.Artist.Name,
-						Album:      s.Album.Title,
-						FileID:     strconv.Itoa(s.ID),
-						Filename:   s.Title + ".flac",
-						Format:     "FLAC 1411kbps",
-						Length:     strconv.Itoa(s.Duration),
-						Quality:    80,
-						Lossless:   true,
-						PreviewURL: fmt.Sprintf("/api/import/preview?source=deezer&id=%d", s.ID),
-					})
+		if hasProvider(provider, "deezer") {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				dzSongs, err := deezer.SearchTracks(ctx, onlineQuery, 15)
+				var hits []SongHit
+				if err == nil {
+					for _, s := range dzSongs {
+						hits = append(hits, SongHit{
+							Source:     "deezer",
+							Title:      s.Title,
+							Artist:     s.Artist.Name,
+							Album:      s.Album.Title,
+							FileID:     strconv.Itoa(s.ID),
+							Filename:   s.Title + ".flac",
+							Format:     "FLAC 1411kbps",
+							Length:     strconv.Itoa(s.Duration),
+							Quality:    80,
+							Lossless:   true,
+							PreviewURL: fmt.Sprintf("/api/import/preview?source=deezer&id=%d", s.ID),
+						})
+					}
 				}
-			}
-			collect(hits, err, "Deezer Lossless")
-		}()
+				collect(hits, err, "Deezer Lossless")
+			}()
+		}
 
 		// Concurrently search Zing MP3
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			zingSongs, err := imp.searchZingSongs(ctx, onlineQuery)
-			collect(zingSongs, err, "Zing MP3")
-		}()
+		if hasProvider(provider, "zing") {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				zingSongs, err := imp.searchZingSongs(ctx, onlineQuery)
+				collect(zingSongs, err, "Zing MP3")
+			}()
+		}
 	}
 
 	wg.Wait()

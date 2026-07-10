@@ -19,4 +19,6 @@ binaries
 cache
 music
 music.old
+android
+ios
 !Dockerfile

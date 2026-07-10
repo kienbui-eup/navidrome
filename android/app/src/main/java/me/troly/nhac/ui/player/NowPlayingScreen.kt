@@ -61,59 +61,75 @@ import me.troly.nhac.playback.AudioPathReport
 import me.troly.nhac.ui.LocalPlayer
 import me.troly.nhac.ui.LocalRepo
 import me.troly.nhac.ui.LocalRecManager
+import me.troly.nhac.ui.LocalIsTv
+import me.troly.nhac.ui.tvFocusable
+import me.troly.nhac.ui.rememberInteractionSource
 import me.troly.nhac.ui.components.formatDuration
 
 /**
- * Animated audio visualizer bars using Compose InfiniteTransition.
+ * High-Fidelity 16-Band FFT Real-Time Spectrum Analyzer with spring dynamics.
+ * Smoothly falls back to procedural ambient waves if direct USB bypass mode is active.
  */
 @Composable
 fun AudioVisualizer(isPlaying: Boolean, modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition(label = "visualizer")
+    val realAmplitudes by me.troly.nhac.playback.AudioVisualizerHelper.amplitudes.collectAsState()
     
-    val h1 by transition.animateFloat(
-        initialValue = 0.2f, targetValue = 0.9f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(450, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = "h1"
-    )
-    val h2 by transition.animateFloat(
-        initialValue = 0.3f, targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(350, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = "h2"
-    )
-    val h3 by transition.animateFloat(
-        initialValue = 0.1f, targetValue = 0.8f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = "h3"
-    )
-    val h4 by transition.animateFloat(
-        initialValue = 0.2f, targetValue = 0.7f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ), label = "h4"
-    )
+    // Create gorgeous procedural bouncing heights for fallback / silent DAC output
+    val transition = rememberInfiniteTransition(label = "visualizer_procedural")
+    val proceduralHeights = remember {
+        (0 until 16).map { i ->
+            val duration = 280 + (i * 37) % 320
+            val target = 0.55f + (i % 3) * 0.14f
+            duration to target
+        }
+    }.mapIndexed { i, (duration, target) ->
+        transition.animateFloat(
+            initialValue = 0.15f,
+            targetValue = target,
+            animationSpec = infiniteRepeatable(
+                animation = tween(duration, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "p_h_$i"
+        )
+    }
 
     Row(
-        modifier = modifier.height(14.dp),
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        modifier = modifier.height(18.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.Bottom
     ) {
         val activeColor = MaterialTheme.colorScheme.primary
         val inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
         
-        listOf(h1, h2, h3, h4).forEach { heightVal ->
-            val h = if (isPlaying) heightVal else 0.2f
+        // Check if any native amplitude values are actively pulsing (non-flat)
+        val isNativeActive = realAmplitudes.any { it > 0.12f }
+
+        for (i in 0 until 16) {
+            val rawHeight = if (isNativeActive) {
+                realAmplitudes.getOrElse(i) { 0.1f }
+            } else {
+                proceduralHeights[i].value
+            }
+
+            // Animate height changes with gentle physics-based springs
+            val animatedHeight by animateFloatAsState(
+                targetValue = if (isPlaying) rawHeight else 0.1f,
+                animationSpec = spring(
+                    dampingRatio = 0.85f,
+                    stiffness = 250f
+                ),
+                label = "bar_h_$i"
+            )
+
             Box(
                 Modifier
                     .width(3.dp)
-                    .fillMaxHeight(h)
-                    .background(if (isPlaying) activeColor else inactiveColor, RoundedCornerShape(1.5.dp))
+                    .fillMaxHeight(animatedHeight)
+                    .background(
+                        color = if (isPlaying) activeColor else inactiveColor,
+                        shape = RoundedCornerShape(1.5.dp)
+                    )
             )
         }
     }
@@ -371,8 +387,8 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
     // Responsive design detection (Folded vs. Unfolded Cover screen)
     val configuration = LocalConfiguration.current
-    val isTv = false // Fallback
-    val isWideScreen = !isTv && configuration.screenWidthDp >= 600
+    val isTv = LocalIsTv.current
+    val isWideScreen = isTv || configuration.screenWidthDp >= 600
 
     Box(Modifier.fillMaxSize()) {
         // Ambient Fluid moving artwork background
@@ -553,9 +569,17 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 16.dp),
                         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        IconButton(onClick = { player.previous() }, modifier = Modifier.size(56.dp)) {
+                        val prevSource = rememberInteractionSource()
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .then(if (isTv) Modifier.tvFocusable(prevSource) else Modifier)
+                                .clickable(interactionSource = prevSource, indication = null) { player.previous() },
+                            contentAlignment = Alignment.Center
+                        ) {
                             Icon(Icons.Filled.SkipPrevious, "Bài trước", modifier = Modifier.size(36.dp), tint = Color.White)
                         }
+
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier.padding(horizontal = 16.dp).size(80.dp)
@@ -572,10 +596,12 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
                                 )
                             }
+                            val playPauseSource = rememberInteractionSource()
                             Box(
                                 Modifier.size(64.dp)
                                     .clip(CircleShape).background(MaterialTheme.colorScheme.primary)
-                                    .clickable { player.togglePlay() },
+                                    .then(if (isTv) Modifier.tvFocusable(playPauseSource) else Modifier)
+                                    .clickable(interactionSource = playPauseSource, indication = null) { player.togglePlay() },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
@@ -585,7 +611,15 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                                 )
                             }
                         }
-                        IconButton(onClick = { player.next() }, modifier = Modifier.size(56.dp)) {
+
+                        val nextSource = rememberInteractionSource()
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .then(if (isTv) Modifier.tvFocusable(nextSource) else Modifier)
+                                .clickable(interactionSource = nextSource, indication = null) { player.next() },
+                            contentAlignment = Alignment.Center
+                        ) {
                             Icon(Icons.Filled.SkipNext, "Bài sau", modifier = Modifier.size(36.dp), tint = Color.White)
                         }
                     }

@@ -179,6 +179,12 @@ const wrapperDataProvider = {
     if (resource === 'user') {
       return updateUser(params)
     }
+    if (['song', 'album', 'artist'].includes(resource)) {
+      return httpClient(`${REST_URL}/metadata/${resource}/${params.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(params.data),
+      }).then(({ json }) => ({ data: json }))
+    }
     const [r, p] = mapResource(resource, params)
     return dataProvider.update(r, p)
   },

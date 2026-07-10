@@ -56,7 +56,7 @@ type Importer interface {
 	ImportDriveFile(ctx context.Context, fileID, name string, libraryID int) (*ImportResult, error)
 	// SearchSongs searches Archive.org (and optionally a public Google Drive
 	// folder) at the individual-song level, ranking hi-end formats first.
-	SearchSongs(ctx context.Context, query, driveFolder string, losslessOnly bool) (*SongSearchResult, error)
+	SearchSongs(ctx context.Context, query, driveFolder string, losslessOnly bool, provider string) (*SongSearchResult, error)
 	// PreviewDrive streams a Drive file for in-browser preview (Range supported).
 	// The caller must close the response body.
 	PreviewDrive(ctx context.Context, fileID, rangeHeader string) (*http.Response, error)

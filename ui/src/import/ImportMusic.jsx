@@ -256,6 +256,24 @@ const ImportMusic = () => {
       .catch(() => {})
   }, [])
 
+  // Recovery active import job on mount (prevent tab-switching state loss)
+  useEffect(() => {
+    const activeJobId = localStorage.getItem('activeImportJobId')
+    if (activeJobId) {
+      httpClient(`/api/import/job/${activeJobId}`)
+        .then(({ json }) => {
+          if (json && json.status === 'running') {
+            setJob(json)
+          } else {
+            localStorage.removeItem('activeImportJobId')
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('activeImportJobId')
+        })
+    }
+  }, [])
+
   // Poll the running job for progress.
   useEffect(() => {
     if (!job || job.status !== 'running') return undefined
@@ -269,9 +287,13 @@ const ImportMusic = () => {
               json.failed > 0 ? 'warning' : 'info',
             )
             loadHistory()
+            localStorage.removeItem('activeImportJobId')
           }
         })
-        .catch(() => setJob((j) => (j ? { ...j, status: 'error' } : j)))
+        .catch(() => {
+          setJob((j) => (j ? { ...j, status: 'error' } : j))
+          localStorage.removeItem('activeImportJobId')
+        })
     }, 1200)
     return () => clearTimeout(t)
   }, [job, notify, loadHistory])
@@ -302,6 +324,7 @@ const ImportMusic = () => {
         skipped: 0,
         errors: [],
       })
+      localStorage.setItem('activeImportJobId', json.jobId)
     } catch (e) {
       notify(`Không bắt đầu được: ${errMsg(e)}`, 'warning')
     } finally {
@@ -310,7 +333,10 @@ const ImportMusic = () => {
   }
 
   const cancelJob = () => {
-    if (job) httpClient(`/api/import/job/${job.id}/cancel`, { method: 'POST' })
+    if (job) {
+      httpClient(`/api/import/job/${job.id}/cancel`, { method: 'POST' })
+      localStorage.removeItem('activeImportJobId')
+    }
   }
 
   const importFromUrl = async (target, id) => {
@@ -401,6 +427,7 @@ const ImportMusic = () => {
       skipped: 0,
       errors: [],
     })
+    localStorage.setItem('activeImportJobId', jobId)
   }
 
 

@@ -70,7 +70,7 @@ struct AppShellView: View {
             HomeView(repository: repository, onAlbumSelected: { id in
                 activeDetailAlbumId = id
             }, onNavigateToSettings: {
-                selectedTab = 3
+                selectedTab = 4
             })
             .tabItem {
                 Label("Khám phá", systemImage: "music.note.house.fill")
@@ -93,11 +93,24 @@ struct AppShellView: View {
                 activeDetailPlaylistId = playlist.id
             }, onSongSelected: { song in
                 playerManager.play([song], startIndex: 0)
-            })
+            }, initialTab: 1)
+            .tabItem {
+                Image("brand_logo")
+                Text("Danh sách")
+            }
+            .tag(2)
+            
+            LibraryView(repository: repository, onArtistSelected: { artist in
+                activeDetailArtist = artist
+            }, onPlaylistSelected: { playlist in
+                activeDetailPlaylistId = playlist.id
+            }, onSongSelected: { song in
+                playerManager.play([song], startIndex: 0)
+            }, initialTab: 0)
             .tabItem {
                 Label("Thư viện", systemImage: "music.note.list")
             }
-            .tag(2)
+            .tag(3)
             
             SettingsView(repository: repository, onLogout: {
                 // Done inside repository, state will auto-trigger LoginView
@@ -105,7 +118,7 @@ struct AppShellView: View {
             .tabItem {
                 Label("Cài đặt", systemImage: "gearshape.fill")
             }
-            .tag(3)
+            .tag(4)
         }
         .accentColor(.appPrimary)
     }

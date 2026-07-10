@@ -6,7 +6,15 @@ struct LibraryView: View {
     var onPlaylistSelected: (Playlist) -> Void
     var onSongSelected: (Song) -> Void
     
-    @State private var selectedTab = 0
+    @State private var selectedTab: Int
+    
+    init(repository: SubsonicRepository, onArtistSelected: @escaping (Artist) -> Void, onPlaylistSelected: @escaping (Playlist) -> Void, onSongSelected: @escaping (Song) -> Void, initialTab: Int = 0) {
+        self.repository = repository
+        self.onArtistSelected = onArtistSelected
+        self.onPlaylistSelected = onPlaylistSelected
+        self.onSongSelected = onSongSelected
+        self._selectedTab = State(initialValue: initialTab)
+    }
     @State private var playlists: [Playlist] = []
     @State private var artists: [Artist] = []
     @State private var starredSongs: [Song] = []

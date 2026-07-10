@@ -96,6 +96,7 @@ func (api *Router) routes() http.Handler {
 			api.addUpgradeRoute(r)
 			api.addDeletionRoute(r)
 			api.addServerStatusRoute(r)
+			api.addAdminMetadataRoute(r)
 			api.RX(r, "/library", api.libs.NewRepository, true)
 		})
 	})
