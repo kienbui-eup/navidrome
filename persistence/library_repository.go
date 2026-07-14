@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -316,7 +317,11 @@ func (r *libraryRepository) Read(id string) (any, error) {
 		log.Trace(r.ctx, "invalid library id: %s", id, err)
 		return nil, rest.ErrNotFound
 	}
-	return r.Get(idInt)
+	lib, err := r.Get(idInt)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
+	return lib, err
 }
 
 func (r *libraryRepository) ReadAll(options ...rest.QueryOptions) (any, error) {

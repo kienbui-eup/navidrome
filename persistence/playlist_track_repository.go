@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"database/sql"
+	"errors"
 
 	. "github.com/Masterminds/squirrel"
 	"github.com/deluan/rest"
@@ -105,6 +106,9 @@ func (r *playlistTrackRepository) Read(id string) (any, error) {
 		Where(And{Eq{"playlist_id": r.playlistId}, Eq{"playlist_tracks.id": id}})
 	var trk dbPlaylistTrack
 	err := r.queryOne(sel, &trk)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
 	return trk.PlaylistTrack, err
 }
 

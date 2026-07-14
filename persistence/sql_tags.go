@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -146,6 +147,9 @@ func (r *baseTagRepository) Read(id string) (any, error) {
 	query := r.newSelect().Where(Eq{"id": id})
 	var res model.Tag
 	err := r.queryOne(query, &res)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
 	return &res, err
 }
 

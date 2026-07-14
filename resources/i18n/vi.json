@@ -190,6 +190,19 @@
         "adminAutoLibraries": "Quản trị viên tự động có quyền truy cập tất cả thư viện"
       }
     },
+    "device": {
+      "name": "Thiết bị độc lập |||| Thiết bị độc lập",
+      "fields": {
+        "name": "Tên thiết bị",
+        "transcodingId": "Chuyển mã",
+        "maxBitRate": "Bitrate tối đa",
+        "client": "Ứng dụng",
+        "userName": "Tài khoản kết nối",
+        "lastSeen": "Hoạt động lần cuối",
+        "reportRealPath": "Báo cáo đường dẫn thực",
+        "scrobbleEnabled": "Gửi lượt nghe đến dịch vụ bên ngoài"
+      }
+    },
     "player": {
       "name": "Trình phát |||| Trình phát",
       "fields": {

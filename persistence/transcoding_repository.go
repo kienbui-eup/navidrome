@@ -54,6 +54,9 @@ func (r *transcodingRepository) Count(options ...rest.QueryOptions) (int64, erro
 
 func (r *transcodingRepository) Read(id string) (any, error) {
 	res, err := r.Get(id)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}

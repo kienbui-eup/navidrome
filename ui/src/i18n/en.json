@@ -190,6 +190,19 @@
         "adminAutoLibraries": "Admin users automatically have access to all libraries"
       }
     },
+    "device": {
+      "name": "Standalone Device |||| Standalone Devices",
+      "fields": {
+        "name": "Device Name",
+        "transcodingId": "Transcoding",
+        "maxBitRate": "Max. Bit Rate",
+        "client": "App Client",
+        "userName": "Linked Account",
+        "lastSeen": "Last Seen At",
+        "reportRealPath": "Report Real Path",
+        "scrobbleEnabled": "Send Scrobbles"
+      }
+    },
     "player": {
       "name": "Player |||| Players",
       "fields": {

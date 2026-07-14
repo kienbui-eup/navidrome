@@ -314,7 +314,11 @@ func (r *playlistRepository) Count(options ...rest.QueryOptions) (int64, error) 
 }
 
 func (r *playlistRepository) Read(id string) (any, error) {
-	return r.Get(id)
+	playlist, err := r.Get(id)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
+	return playlist, err
 }
 
 func (r *playlistRepository) ReadAll(options ...rest.QueryOptions) (any, error) {

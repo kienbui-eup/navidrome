@@ -181,6 +181,9 @@ func (r *shareRepository) Read(id string) (any, error) {
 	sel := r.selectShare().Where(Eq{"share.id": id})
 	var res model.Share
 	err := r.queryOne(sel, &res)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
 	return &res, err
 }
 

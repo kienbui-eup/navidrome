@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -221,9 +224,9 @@ fun AlbumDetailScreen(
                         .border(0.5.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(24.dp))
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Actions Header
+                    // Actions Header (Fixed at the top)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -262,72 +265,79 @@ fun AlbumDetailScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    // Floating cover art with spot glow shadow
-                    CoverImage(
-                        url = coverUrl, contentDescription = a.name, corner = 20.dp,
+                    // Middle content scrollable block: Cover art & metadata (Scrollable when height is restricted, e.g. Fold 5)
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .aspectRatio(1f)
-                            .shadow(24.dp, RoundedCornerShape(20.dp))
-                    )
-
-                    Text(
-                        text = a.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(top = 20.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    // Interactive clickable Artist name
-                    if (a.artist != null) {
-                        val artistSource = rememberInteractionSource()
-                        Text(
-                            text = a.artist,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFFC4BBA6),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .padding(vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        // Floating cover art with spot glow shadow
+                        CoverImage(
+                            url = coverUrl, contentDescription = a.name, corner = 20.dp,
                             modifier = Modifier
-                                .padding(top = 8.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .clickable(
-                                    interactionSource = artistSource,
-                                    indication = androidx.compose.foundation.LocalIndication.current,
-                                    onClick = {
-                                        a.artistId?.let { onArtistClick?.invoke(it) }
-                                    }
-                                )
-                                .then(if (isTv) Modifier.tvFocusable(artistSource) else Modifier)
-                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .fillMaxWidth(0.85f)
+                                .aspectRatio(1f)
+                                .shadow(24.dp, RoundedCornerShape(20.dp))
+                        )
+
+                        Text(
+                            text = a.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(top = 16.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        // Interactive clickable Artist name
+                        if (a.artist != null) {
+                            val artistSource = rememberInteractionSource()
+                            Text(
+                                text = a.artist,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFFC4BBA6),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .padding(top = 8.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .clickable(
+                                        interactionSource = artistSource,
+                                        indication = androidx.compose.foundation.LocalIndication.current,
+                                        onClick = {
+                                            a.artistId?.let { onArtistClick?.invoke(it) }
+                                        }
+                                    )
+                                    .then(if (isTv) Modifier.tvFocusable(artistSource) else Modifier)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+
+                        // Format indicator badge
+                        AlbumQualityBadge(songs = a.song, modifier = Modifier.padding(top = 8.dp))
+
+                        Text(
+                            text = listOfNotNull(
+                                a.year?.toString(),
+                                if (a.song.isNotEmpty()) "${a.song.size} bài • $durationText" else a.songCount?.let { "$it bài" }
+                            ).joinToString(" • "),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.6f),
+                            modifier = Modifier.padding(top = 8.dp),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                     }
 
-                    // Format indicator badge
-                    AlbumQualityBadge(songs = a.song, modifier = Modifier.padding(top = 10.dp))
-
-                    Text(
-                        text = listOfNotNull(
-                            a.year?.toString(),
-                            if (a.song.isNotEmpty()) "${a.song.size} bài • $durationText" else a.songCount?.let { "$it bài" }
-                        ).joinToString(" • "),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(top = 10.dp),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.weight(1.5f))
-
-                    // Action buttons
+                    // Action buttons (Fixed at the bottom)
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         val playSource = rememberInteractionSource()

@@ -345,6 +345,56 @@ func TestUpgraderCancelScan(t *testing.T) {
 	}
 }
 
+func TestUpgraderScanCache(t *testing.T) {
+	withTestUpgradeConfig(t)
+	conf.Server.Upgrade.Sources = "drive,rss,archive"
+	conf.Server.Upgrade.DriveFolders = []string{"gdrive://folder1"}
+	conf.Server.Upgrade.RSSFeeds = []string{"https://example.com/rss.xml"}
+
+	ds, mfRepo, _ := newTestUpgradeDS()
+	mfRepo.SetData(model.MediaFiles{
+		{ID: "mf1", LibraryID: 1, Artist: "Queen", Title: "Bohemian Rhapsody", Suffix: "mp3", BitRate: 128},
+		{ID: "mf2", LibraryID: 1, Artist: "Pink Floyd", Title: "Money", Suffix: "mp3", BitRate: 128},
+	})
+
+	var driveCalls, rssCalls, archiveCalls int
+	imp := &stubImporter{
+		searchArchiveFunc: func(_ context.Context, query string, _ int) ([]ArchiveItem, error) {
+			// Both queries return the same identifier to test item-level caching
+			return []ArchiveItem{{Identifier: "shared-archive-id"}}, nil
+		},
+		archiveFilesFunc: func(_ context.Context, identifier string) ([]ArchiveFile, error) {
+			archiveCalls++
+			return []ArchiveFile{{Name: "song.flac", Format: "Flac", Title: "Song"}}, nil
+		},
+		listDriveFunc: func(_ context.Context, driveURL string) ([]DriveFile, error) {
+			driveCalls++
+			return []DriveFile{{ID: "drive1", Name: "bohemian_rhapsody.flac"}}, nil
+		},
+		parseFeedFunc: func(_ context.Context, feedURL string) ([]FeedItem, error) {
+			rssCalls++
+			return []FeedItem{{Title: "Money.flac", URL: "https://example.com/money.flac"}}, nil
+		},
+	}
+
+	u := NewUpgrader(ds, imp, nil)
+
+	if err := u.StartScan(context.Background(), 0, nil); err != nil {
+		t.Fatalf("StartScan() error = %v", err)
+	}
+	waitScanDone(t, u, time.Second)
+
+	if driveCalls != 1 {
+		t.Errorf("ListDrive was called %d times, want exactly 1 (cached)", driveCalls)
+	}
+	if rssCalls != 1 {
+		t.Errorf("ParseFeed was called %d times, want exactly 1 (cached)", rssCalls)
+	}
+	if archiveCalls != 1 {
+		t.Errorf("ArchiveFiles was called %d times, want exactly 1 (cached)", archiveCalls)
+	}
+}
+
 func TestUpgraderSoulseekScan(t *testing.T) {
 	withTestUpgradeConfig(t)
 	conf.Server.Upgrade.Sources = "soulseek"

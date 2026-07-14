@@ -556,10 +556,11 @@ private fun CompactBottomBar(current: Tab, onSelect: (Tab) -> Unit, onOpenPlayli
                         .clickable(onClick = onOpenPlaylists),
                     contentAlignment = Alignment.Center,
                 ) {
-                    androidx.compose.foundation.Image(
-                        painter = androidx.compose.ui.res.painterResource(id = me.troly.nhac.R.mipmap.ic_launcher),
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.QueueMusic,
                         contentDescription = "Playlist",
-                        modifier = Modifier.size(if (isVeryNarrow) 26.dp else 34.dp),
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(if (isVeryNarrow) 24.dp else 28.dp),
                     )
                 }
             }

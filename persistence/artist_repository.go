@@ -695,7 +695,11 @@ func (r *artistRepository) Count(options ...rest.QueryOptions) (int64, error) {
 }
 
 func (r *artistRepository) Read(id string) (any, error) {
-	return r.Get(id)
+	artist, err := r.Get(id)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
+	return artist, err
 }
 
 func (r *artistRepository) ReadAll(options ...rest.QueryOptions) (any, error) {

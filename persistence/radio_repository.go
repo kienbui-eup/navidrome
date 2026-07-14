@@ -88,7 +88,11 @@ func (r *radioRepository) NewInstance() any {
 }
 
 func (r *radioRepository) Read(id string) (any, error) {
-	return r.Get(id)
+	rad, err := r.Get(id)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
+	return rad, err
 }
 
 func (r *radioRepository) ReadAll(options ...rest.QueryOptions) (any, error) {

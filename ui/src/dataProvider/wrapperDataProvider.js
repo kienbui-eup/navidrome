@@ -53,6 +53,16 @@ const applyLibraryFilter = (resource, params) => {
 
 const mapResource = (resource, params) => {
   switch (resource) {
+    case 'device': {
+      params.filter = params.filter || {}
+      params.filter.client = 'TroLyNhac'
+      return ['player', params]
+    }
+    case 'player': {
+      params.filter = params.filter || {}
+      params.filter.client_neq = 'TroLyNhac'
+      return ['player', params]
+    }
     // /api/playlistTrack?playlist_id=123  => /api/playlist/123/tracks
     case 'playlistTrack': {
       params.filter = params.filter || {}

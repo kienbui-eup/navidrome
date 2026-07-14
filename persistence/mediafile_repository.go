@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"iter"
 	"slices"
@@ -491,7 +492,11 @@ func (r *mediaFileRepository) Count(options ...rest.QueryOptions) (int64, error)
 }
 
 func (r *mediaFileRepository) Read(id string) (any, error) {
-	return r.Get(id)
+	mf, err := r.Get(id)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
+	return mf, err
 }
 
 func (r *mediaFileRepository) ReadAll(options ...rest.QueryOptions) (any, error) {

@@ -134,7 +134,11 @@ func (r *pluginRepository) NewInstance() any {
 }
 
 func (r *pluginRepository) Read(id string) (any, error) {
-	return r.Get(id)
+	p, err := r.Get(id)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
+	return p, err
 }
 
 func (r *pluginRepository) ReadAll(options ...rest.QueryOptions) (any, error) {

@@ -20,6 +20,10 @@ func NewPlayerRepository(ctx context.Context, db dbx.Builder) model.PlayerReposi
 	r.db = db
 	r.registerModel(&model.Player{}, map[string]filterFunc{
 		"name": containsFilter("player.name"),
+		"client": eqFilter,
+		"client_neq": func(field string, value any) Sqlizer {
+			return NotEq{"client": value}
+		},
 	})
 	r.setSortMappings(map[string]string{
 		"user_name": "username", //TODO rename all user_name and userName to username
@@ -95,6 +99,9 @@ func (r *playerRepository) Read(id string) (any, error) {
 	sel := r.newRestSelect().Where(Eq{"player.id": id})
 	var res model.Player
 	err := r.queryOne(sel, &res)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
 	return &res, err
 }
 

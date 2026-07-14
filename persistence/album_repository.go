@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
 	"maps"
@@ -390,7 +391,11 @@ func (r *albumRepository) Count(options ...rest.QueryOptions) (int64, error) {
 }
 
 func (r *albumRepository) Read(id string) (any, error) {
-	return r.Get(id)
+	album, err := r.Get(id)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
+	return album, err
 }
 
 func (r *albumRepository) ReadAll(options ...rest.QueryOptions) (any, error) {

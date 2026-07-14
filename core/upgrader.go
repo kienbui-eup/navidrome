@@ -225,6 +225,12 @@ func (u *upgrader) SweepStaging(ctx context.Context) {
 	u.sweepStaging(ctx)
 }
 
+type scanCache struct {
+	drive   map[string][]DriveFile
+	rss     map[string][]FeedItem
+	archive map[string][]ArchiveFile
+}
+
 // runScan performs steps 1-4 of the design doc's "Luồng xử lý": select
 // upgradable tracks, search enabled sources for candidates (with a delay
 // between search calls), score/gate them, and queue the survivors.
@@ -249,6 +255,12 @@ func (u *upgrader) runScan(ctx context.Context, libraryID int, mediaFileIDs []st
 	maxCandidates := conf.Server.Upgrade.MaxCandidatesPerScan
 	inserted := 0
 
+	cache := &scanCache{
+		drive:   make(map[string][]DriveFile),
+		rss:     make(map[string][]FeedItem),
+		archive: make(map[string][]ArchiveFile),
+	}
+
 	log.Info(ctx, "Upgrader: starting scan", "tracks", len(tracks), "sources", sources, "libraryId", libraryID)
 
 scan:
@@ -264,7 +276,7 @@ scan:
 				break scan
 			}
 
-			matches, err := u.searchSource(ctx, source, mf)
+			matches, err := u.searchSource(ctx, source, mf, cache)
 			if err != nil {
 				log.Warn(ctx, "Upgrader: source failed, skipping for this track", "source", source, "mediaFileId", mf.ID, err)
 			}
@@ -389,16 +401,16 @@ type upgradeMatch struct {
 	matchScore int
 }
 
-func (u *upgrader) searchSource(ctx context.Context, source string, mf model.MediaFile) ([]upgradeMatch, error) {
+func (u *upgrader) searchSource(ctx context.Context, source string, mf model.MediaFile, cache *scanCache) ([]upgradeMatch, error) {
 	switch source {
 	case UpgradeSourceArchive:
-		return u.searchArchive(ctx, mf)
+		return u.searchArchive(ctx, mf, cache)
 	case UpgradeSourceDrive:
-		return u.searchDrive(ctx, mf)
+		return u.searchDrive(ctx, mf, cache)
 	case UpgradeSourceRSS:
-		return u.searchRSS(ctx, mf)
+		return u.searchRSS(ctx, mf, cache)
 	case UpgradeSourceSoulseek:
-		return u.searchSoulseek(ctx, mf)
+		return u.searchSoulseek(ctx, mf, cache)
 	default:
 		return nil, fmt.Errorf("unknown upgrade source %q", source)
 	}
@@ -407,7 +419,7 @@ func (u *upgrader) searchSource(ctx context.Context, source string, mf model.Med
 // searchArchive looks for mf on the Internet Archive: SearchArchive("artist
 // title", mediatype:audio) then ArchiveFiles per hit, matched by name +
 // duration (±5s) and gated by the stage-1 quality rule.
-func (u *upgrader) searchArchive(ctx context.Context, mf model.MediaFile) ([]upgradeMatch, error) {
+func (u *upgrader) searchArchive(ctx context.Context, mf model.MediaFile, cache *scanCache) ([]upgradeMatch, error) {
 	query := strings.TrimSpace(mf.Artist + " " + mf.Title)
 	if query == "" {
 		return nil, nil
@@ -422,10 +434,15 @@ func (u *upgrader) searchArchive(ctx context.Context, mf model.MediaFile) ([]upg
 		if ctx.Err() != nil {
 			return matches, ctx.Err()
 		}
-		files, err := u.imp.ArchiveFiles(ctx, item.Identifier)
-		if err != nil {
-			log.Warn(ctx, "Upgrader: could not list Internet Archive item files, skipping item", "identifier", item.Identifier, err)
-			continue
+		var files []ArchiveFile
+		var cached bool
+		if files, cached = cache.archive[item.Identifier]; !cached {
+			files, err = u.imp.ArchiveFiles(ctx, item.Identifier)
+			if err != nil {
+				log.Warn(ctx, "Upgrader: could not list Internet Archive item files, skipping item", "identifier", item.Identifier, err)
+				continue
+			}
+			cache.archive[item.Identifier] = files
 		}
 		for _, f := range files {
 			title := displayTitle(f.Title, f.Name)
@@ -455,7 +472,7 @@ func (u *upgrader) searchArchive(ctx context.Context, mf model.MediaFile) ([]upg
 	return matches, nil
 }
 
-func (u *upgrader) searchSoulseek(ctx context.Context, mf model.MediaFile) ([]upgradeMatch, error) {
+func (u *upgrader) searchSoulseek(ctx context.Context, mf model.MediaFile, _ *scanCache) ([]upgradeMatch, error) {
 	if !conf.Server.Soulseek.Enabled {
 		return nil, nil
 	}
@@ -549,7 +566,7 @@ func (u *upgrader) searchSoulseek(ctx context.Context, mf model.MediaFile) ([]up
 // An empty DriveFolders list silently skips this source even when it's
 // listed in Upgrade.Sources (see conf/configuration.go and the deviation note
 // in this package's design handoff).
-func (u *upgrader) searchDrive(ctx context.Context, mf model.MediaFile) ([]upgradeMatch, error) {
+func (u *upgrader) searchDrive(ctx context.Context, mf model.MediaFile, cache *scanCache) ([]upgradeMatch, error) {
 	folders := conf.Server.Upgrade.DriveFolders
 	if len(folders) == 0 {
 		return nil, nil
@@ -560,10 +577,16 @@ func (u *upgrader) searchDrive(ctx context.Context, mf model.MediaFile) ([]upgra
 		if ctx.Err() != nil {
 			return matches, ctx.Err()
 		}
-		files, err := u.imp.ListDrive(ctx, folder)
-		if err != nil {
-			log.Warn(ctx, "Upgrader: could not list Google Drive folder, skipping", "folder", folder, err)
-			continue
+		var files []DriveFile
+		var cached bool
+		var err error
+		if files, cached = cache.drive[folder]; !cached {
+			files, err = u.imp.ListDrive(ctx, folder)
+			if err != nil {
+				log.Warn(ctx, "Upgrader: could not list Google Drive folder, skipping", "folder", folder, err)
+				continue
+			}
+			cache.drive[folder] = files
 		}
 		for _, f := range files {
 			if f.Name == "" {
@@ -592,7 +615,7 @@ func (u *upgrader) searchDrive(ctx context.Context, mf model.MediaFile) ([]upgra
 // searchRSS looks for mf in each configured RSS/podcast feed
 // (Upgrade.RSSFeeds), matching item titles. An empty RSSFeeds list silently
 // skips this source even when listed in Upgrade.Sources.
-func (u *upgrader) searchRSS(ctx context.Context, mf model.MediaFile) ([]upgradeMatch, error) {
+func (u *upgrader) searchRSS(ctx context.Context, mf model.MediaFile, cache *scanCache) ([]upgradeMatch, error) {
 	feeds := conf.Server.Upgrade.RSSFeeds
 	if len(feeds) == 0 {
 		return nil, nil
@@ -603,10 +626,16 @@ func (u *upgrader) searchRSS(ctx context.Context, mf model.MediaFile) ([]upgrade
 		if ctx.Err() != nil {
 			return matches, ctx.Err()
 		}
-		items, err := u.imp.ParseFeed(ctx, feed)
-		if err != nil {
-			log.Warn(ctx, "Upgrader: could not parse RSS feed, skipping", "feed", feed, err)
-			continue
+		var items []FeedItem
+		var cached bool
+		var err error
+		if items, cached = cache.rss[feed]; !cached {
+			items, err = u.imp.ParseFeed(ctx, feed)
+			if err != nil {
+				log.Warn(ctx, "Upgrader: could not parse RSS feed, skipping", "feed", feed, err)
+				continue
+			}
+			cache.rss[feed] = items
 		}
 		for _, it := range items {
 			score := matchScore(mf.Artist, mf.Title, it.Title, false, 0)

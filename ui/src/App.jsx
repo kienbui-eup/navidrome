@@ -13,6 +13,7 @@ import authProvider from './authProvider'
 import { Layout, Login, Logout } from './layout'
 import transcoding from './transcoding'
 import player from './player'
+import device from './device'
 import user from './user'
 import song from './song'
 import album from './album'
@@ -29,6 +30,7 @@ import customRoutes from './routes'
 import LibraryMusicIcon from '@material-ui/icons/LibraryMusic'
 import PeopleIcon from '@material-ui/icons/People'
 import DevicesIcon from '@material-ui/icons/Devices'
+import HeadsetIcon from '@material-ui/icons/Headset'
 import TransformIcon from '@material-ui/icons/Transform'
 import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline'
 import ExtensionIcon from '@material-ui/icons/Extension'
@@ -157,8 +159,13 @@ const Admin = (props) => {
         <Resource name="user" icon={PeopleIcon} {...user} />,
         <Resource
           name="player"
-          icon={DevicesIcon}
+          icon={HeadsetIcon}
           {...player}
+        />,
+        <Resource
+          name="device"
+          icon={DevicesIcon}
+          {...device}
         />,
         permissions === 'admin' ? (
           <Resource

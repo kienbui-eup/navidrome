@@ -185,7 +185,7 @@ const Menu = ({ dense = false }) => {
   }
 
   const libraryResourceNames = ['library', 'missing', 'share']
-  const systemResourceNames = ['user', 'player', 'transcoding', 'plugin']
+  const systemResourceNames = ['user', 'device', 'player', 'transcoding', 'plugin']
 
   const libraryResources = resources.filter(
     (resource) =>

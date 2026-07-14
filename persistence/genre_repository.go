@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"errors"
 
 	. "github.com/Masterminds/squirrel"
 	"github.com/deluan/rest"
@@ -36,6 +37,9 @@ func (r *genreRepository) Read(id string) (any, error) {
 	sel := r.selectGenre().Where(Eq{"tag.id": id})
 	var res model.Genre
 	err := r.queryOne(sel, &res)
+	if errors.Is(err, model.ErrNotFound) {
+		return nil, rest.ErrNotFound
+	}
 	return &res, err
 }
 
