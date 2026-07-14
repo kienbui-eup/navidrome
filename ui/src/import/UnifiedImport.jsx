@@ -1307,7 +1307,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
             items: [{
               type: song.source,
               id: song.id,
-              name: song.title,
+              name: song.artist ? `${song.artist} - ${song.title}` : song.title,
             }],
             libraryId,
           }),
@@ -1347,7 +1347,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
           return {
             type: song.source,
             id: song.id,
-            name: song.title,
+            name: song.artist ? `${song.artist} - ${song.title}` : song.title,
           }
         } else {
           return {

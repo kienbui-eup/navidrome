@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -153,4 +154,142 @@ func SearchSongs(ctx context.Context, query string, limit int) ([]YTSong, error)
 	}
 
 	return songs, nil
+}
+
+// tempFileReadCloser wraps an os.File and a temporary directory path,
+// ensuring the directory and all its files are cleaned up upon Close().
+type tempFileReadCloser struct {
+	file    *os.File
+	tempDir string
+}
+
+func (t *tempFileReadCloser) Read(p []byte) (n int, err error) {
+	return t.file.Read(p)
+}
+
+func (t *tempFileReadCloser) Close() error {
+	fileErr := t.file.Close()
+	removeErr := os.RemoveAll(t.tempDir)
+	if fileErr != nil {
+		return fileErr
+	}
+	return removeErr
+}
+
+// DownloadAndTagAudio downloads audio via yt-dlp, transcodes to high-quality MP3,
+// embeds the official video thumbnail as cover artwork, injects standard ID3v2 tags,
+// and returns a ReadCloser that streams the file and self-cleans on close.
+func DownloadAndTagAudio(ctx context.Context, targetURL, title, artist, album string) (io.ReadCloser, string, error) {
+	tempDir, err := os.MkdirTemp("", "nd_import_")
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to create temp dir: %w", err)
+	}
+
+	downloadPath := filepath.Join(tempDir, "download.mp3")
+	taggedPath := filepath.Join(tempDir, "tagged.mp3")
+
+	// Attempt download with --embed-thumbnail
+	args := []string{
+		"-x",
+		"--audio-format", "mp3",
+		"--audio-quality", "0",
+		"--embed-thumbnail",
+		"-o", downloadPath,
+	}
+
+	if ytUser := os.Getenv("ND_YOUTUBE_USERNAME"); ytUser != "" {
+		args = append(args, "--username", ytUser)
+	}
+	if ytPass := os.Getenv("ND_YOUTUBE_PASSWORD"); ytPass != "" {
+		args = append(args, "--password", ytPass)
+	}
+	if ytCookies := os.Getenv("ND_YOUTUBE_COOKIES_FILE"); ytCookies != "" {
+		args = append(args, "--cookies", ytCookies)
+	}
+	if zingUser := os.Getenv("ND_ZING_USERNAME"); zingUser != "" {
+		args = append(args, "--username", zingUser)
+	}
+	if zingPass := os.Getenv("ND_ZING_PASSWORD"); zingPass != "" {
+		args = append(args, "--password", zingPass)
+	}
+
+	args = append(args, targetURL)
+
+	cmd := exec.CommandContext(ctx, "yt-dlp", args...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		// Fallback without thumbnail embedding if failed
+		argsNoThumb := []string{
+			"-x",
+			"--audio-format", "mp3",
+			"--audio-quality", "0",
+			"-o", downloadPath,
+		}
+
+		if ytUser := os.Getenv("ND_YOUTUBE_USERNAME"); ytUser != "" {
+			argsNoThumb = append(argsNoThumb, "--username", ytUser)
+		}
+		if ytPass := os.Getenv("ND_YOUTUBE_PASSWORD"); ytPass != "" {
+			argsNoThumb = append(argsNoThumb, "--password", ytPass)
+		}
+		if ytCookies := os.Getenv("ND_YOUTUBE_COOKIES_FILE"); ytCookies != "" {
+			argsNoThumb = append(argsNoThumb, "--cookies", ytCookies)
+		}
+		if zingUser := os.Getenv("ND_ZING_USERNAME"); zingUser != "" {
+			argsNoThumb = append(argsNoThumb, "--username", zingUser)
+		}
+		if zingPass := os.Getenv("ND_ZING_PASSWORD"); zingPass != "" {
+			argsNoThumb = append(argsNoThumb, "--password", zingPass)
+		}
+
+		argsNoThumb = append(argsNoThumb, targetURL)
+
+		cmdFallback := exec.CommandContext(ctx, "yt-dlp", argsNoThumb...)
+		var stderrFallback bytes.Buffer
+		cmdFallback.Stderr = &stderrFallback
+		if errFallback := cmdFallback.Run(); errFallback != nil {
+			_ = os.RemoveAll(tempDir)
+			return nil, "", fmt.Errorf("failed to download audio via yt-dlp: %v (fallback stderr: %s)", errFallback, stderrFallback.String())
+		}
+	}
+
+	// Ingress and overwrite metadata tags using ffmpeg
+	ffmpegArgs := []string{
+		"-y",
+		"-i", downloadPath,
+		"-map", "0",
+		"-c", "copy",
+		"-metadata", "title=" + title,
+		"-metadata", "artist=" + artist,
+		"-metadata", "album=" + album,
+		taggedPath,
+	}
+
+	ffmpegCmd := exec.CommandContext(ctx, "ffmpeg", ffmpegArgs...)
+	if err := ffmpegCmd.Run(); err != nil {
+		// Fallback to simple tagging without map option if it fails
+		ffmpegArgsSimple := []string{
+			"-y",
+			"-i", downloadPath,
+			"-c", "copy",
+			"-metadata", "title=" + title,
+			"-metadata", "artist=" + artist,
+			"-metadata", "album=" + album,
+			taggedPath,
+		}
+		ffmpegCmdSimple := exec.CommandContext(ctx, "ffmpeg", ffmpegArgsSimple...)
+		if errSimple := ffmpegCmdSimple.Run(); errSimple != nil {
+			taggedPath = downloadPath
+		}
+	}
+
+	file, err := os.Open(taggedPath)
+	if err != nil {
+		_ = os.RemoveAll(tempDir)
+		return nil, "", fmt.Errorf("failed to open tagged mp3 file: %w", err)
+	}
+
+	return &tempFileReadCloser{file: file, tempDir: tempDir}, "mp3", nil
 }

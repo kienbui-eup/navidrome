@@ -170,7 +170,7 @@ fun AlbumDetailScreen(
 
     val isTv = LocalIsTv.current
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val isWideScreen = isTv || configuration.screenWidthDp >= 600
+    val isWideScreen = isTv || (configuration.screenWidthDp >= 600 && configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE)
 
     LaunchedEffect(repo) {
         isAdmin = repo.checkAdminStatus()

@@ -527,7 +527,7 @@ func (imp *importer) PreviewDrive(ctx context.Context, fileID, rangeHeader strin
 func (imp *importer) DownloadZingAudio(ctx context.Context, songID, title, artist string) (io.ReadCloser, string, error) {
 	// Thử tải trực tiếp từ Zing MP3 qua yt-dlp
 	targetURL := fmt.Sprintf("https://zingmp3.vn/bai-hat/%s.html", songID)
-	stream, ext, err := ytdlp.DownloadAudio(ctx, targetURL)
+	stream, ext, err := ytdlp.DownloadAndTagAudio(ctx, targetURL, title, artist, "Zing MP3")
 	if err == nil {
 		return stream, ext, nil
 	}
@@ -539,7 +539,7 @@ func (imp *importer) DownloadZingAudio(ctx context.Context, songID, title, artis
 	ytSongs, errSearch := ytdlp.SearchSongs(ctx, fallbackQuery, 1)
 	if errSearch == nil && len(ytSongs) > 0 {
 		log.Info(ctx, "Zing fallback matched YouTube track", "yt_id", ytSongs[0].ID, "yt_title", ytSongs[0].Title)
-		return ytdlp.DownloadAudio(ctx, ytSongs[0].ID)
+		return ytdlp.DownloadAndTagAudio(ctx, "https://www.youtube.com/watch?v="+ytSongs[0].ID, title, artist, "Zing Fallback")
 	}
 
 	return nil, "", fmt.Errorf("Zing download failed and YouTube fallback failed: %w", err)

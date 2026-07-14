@@ -1066,15 +1066,24 @@ func (imp *importer) ImportYouTubeTrack(ctx context.Context, videoID, name strin
 		return nil, fmt.Errorf("empty YouTube video id")
 	}
 
-	stream, ext, err := ytdlp.DownloadAudio(ctx, videoID)
+	if name == "" {
+		name = videoID
+	}
+
+	title := name
+	artist := ""
+	album := "YouTube Music"
+	if idx := strings.Index(name, " - "); idx != -1 {
+		artist = strings.TrimSpace(name[:idx])
+		title = strings.TrimSpace(name[idx+3:])
+	}
+
+	stream, ext, err := ytdlp.DownloadAndTagAudio(ctx, "https://www.youtube.com/watch?v="+videoID, title, artist, album)
 	if err != nil {
 		return nil, err
 	}
 	defer stream.Close()
 
-	if name == "" {
-		name = videoID
-	}
 	finalName := name
 	if !strings.HasSuffix(strings.ToLower(finalName), "."+ext) {
 		finalName = finalName + "." + ext
@@ -1369,8 +1378,8 @@ func (imp *importer) ImportZingTrack(ctx context.Context, songID, name string, l
 	title := name
 	artist := ""
 	if idx := strings.Index(name, " - "); idx != -1 {
-		title = name[:idx]
-		artist = name[idx+3:]
+		artist = strings.TrimSpace(name[:idx])
+		title = strings.TrimSpace(name[idx+3:])
 	}
 
 	stream, ext, err := imp.DownloadZingAudio(ctx, songID, title, artist)
