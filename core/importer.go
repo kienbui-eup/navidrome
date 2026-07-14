@@ -16,6 +16,7 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -27,6 +28,7 @@ import (
 	"github.com/vi2play/vi2play/adapters/deezer"
 	"github.com/vi2play/vi2play/adapters/ytdlp"
 	"github.com/vi2play/vi2play/conf"
+	"github.com/vi2play/vi2play/db"
 	"github.com/vi2play/vi2play/log"
 	"github.com/vi2play/vi2play/model"
 	"github.com/vi2play/vi2play/model/request"
@@ -255,7 +257,7 @@ func NewImporter(ds model.DataStore, scanner model.Scanner) Importer {
 	// A cookie jar is needed for Google Drive's large-file download confirmation
 	// flow (it sets a download_warning cookie that the confirm request must echo).
 	jar, _ := cookiejar.New(nil)
-	return &importer{
+	imp := &importer{
 		ds:          ds,
 		scanner:     scanner,
 		download:    &http.Client{Timeout: downloadTimeout, Jar: jar},
@@ -264,6 +266,8 @@ func NewImporter(ds model.DataStore, scanner model.Scanner) Importer {
 		driveBase:   "https://www.googleapis.com",
 		zingBase:    zingBaseURL,
 	}
+	imp.StartRetroactiveFixer(context.Background())
+	return imp
 }
 
 // ---------------------------------------------------------------------------
@@ -851,7 +855,33 @@ func (imp *importer) persist(ctx context.Context, r io.Reader, name string, meta
 	// Content-level dedup: if this exact content was already imported, discard.
 	imp.mu.Lock()
 	dup := imp.seenHashes[sum]
+	var dupRecord *ImportRecord
+	if dup {
+		// Search backward through history to find the record that matches the sum and was successfully imported.
+		for i := len(imp.history) - 1; i >= 0; i-- {
+			if imp.history[i].SHA256 == sum && imp.history[i].Status == "imported" {
+				dupRecord = &imp.history[i]
+				break
+			}
+		}
+	}
 	imp.mu.Unlock()
+
+	if dup && dupRecord != nil {
+		// Verify that the file actually exists in the library directory.
+		dupDir, err := imp.importDir(ctx, dupRecord.Library)
+		if err == nil {
+			dupPath := filepath.Join(dupDir, dupRecord.SavedName)
+			if _, err := os.Stat(dupPath); os.IsNotExist(err) {
+				// The file was deleted or is missing! Clear duplicate status.
+				imp.mu.Lock()
+				delete(imp.seenHashes, sum)
+				imp.mu.Unlock()
+				dup = false
+			}
+		}
+	}
+
 	if dup {
 		_ = os.Remove(tmpPath)
 		imp.recordImport(ctx, meta, name, written, sum, "duplicate")
@@ -859,6 +889,7 @@ func (imp *importer) persist(ctx context.Context, r io.Reader, name string, meta
 	}
 
 	finalPath, finalName := uniqueDest(filepath.Join(destDir, name))
+	imp.injectTagsFromFilename(ctx, tmpPath, finalName)
 	if err := os.Rename(tmpPath, finalPath); err != nil {
 		_ = os.Remove(tmpPath)
 		return nil, err
@@ -1403,5 +1434,121 @@ func (imp *importer) ImportZingTrack(ctx context.Context, songID, name string, l
 	}
 	log.Info(ctx, "Imported audio file from Zing MP3", "name", res.SavedName, "bytes", res.Bytes, "duplicate", res.Duplicate, "id", songID)
 	return res, nil
+}
+
+func (imp *importer) injectTagsFromFilename(ctx context.Context, filePath, filename string) {
+	ext := filepath.Ext(filename)
+	base := strings.TrimSuffix(filename, ext)
+
+	artist := ""
+	title := base
+	if idx := strings.Index(base, " - "); idx != -1 {
+		artist = strings.TrimSpace(base[:idx])
+		title = strings.TrimSpace(base[idx+3:])
+	} else if idx := strings.Index(base, "- "); idx != -1 {
+		artist = strings.TrimSpace(base[:idx])
+		title = strings.TrimSpace(base[idx+2:])
+	}
+
+	if artist == "" {
+		return
+	}
+
+	tempPath := filePath + ".tagged" + ext
+	args := []string{
+		"-y",
+		"-i", filePath,
+		"-map", "0",
+		"-c", "copy",
+		"-metadata", "title=" + title,
+		"-metadata", "artist=" + artist,
+		tempPath,
+	}
+
+	cmd := exec.CommandContext(ctx, "ffmpeg", args...)
+	if err := cmd.Run(); err != nil {
+		argsFallback := []string{
+			"-y",
+			"-i", filePath,
+			"-c", "copy",
+			"-metadata", "title=" + title,
+			"-metadata", "artist=" + artist,
+			tempPath,
+		}
+		cmdFallback := exec.CommandContext(ctx, "ffmpeg", argsFallback...)
+		if errFallback := cmdFallback.Run(); errFallback != nil {
+			log.Warn(ctx, "Failed to tag file via ffmpeg", "file", filePath, "error", errFallback)
+			_ = os.Remove(tempPath)
+			return
+		}
+	}
+
+	if err := os.Rename(tempPath, filePath); err != nil {
+		log.Error(ctx, "Failed to replace file with tagged version", "file", filePath, "error", err)
+		_ = os.Remove(tempPath)
+	} else {
+		log.Info(ctx, "Successfully tagged file from filename", "file", filename, "artist", artist, "title", title)
+	}
+}
+
+func (imp *importer) StartRetroactiveFixer(ctx context.Context) {
+	go func() {
+		time.Sleep(10 * time.Second)
+		log.Info(ctx, "Starting retroactive imported tag fixing process...")
+
+		destDir, err := imp.importDir(ctx, model.DefaultLibraryID)
+		if err != nil {
+			log.Error(ctx, "Retroactive fixer: failed to resolve import dir", err)
+			return
+		}
+
+		files, err := os.ReadDir(destDir)
+		if err != nil {
+			log.Error(ctx, "Retroactive fixer: failed to read import dir", err)
+			return
+		}
+
+		taggedCount := 0
+		for _, file := range files {
+			if file.IsDir() {
+				continue
+			}
+			filename := file.Name()
+			if strings.HasPrefix(filename, ".") {
+				continue
+			}
+
+			ext := filepath.Ext(filename)
+			if !audioExtensions[strings.ToLower(ext)] {
+				continue
+			}
+
+			base := strings.TrimSuffix(filename, ext)
+			if idx := strings.Index(base, " - "); idx != -1 {
+				artist := strings.TrimSpace(base[:idx])
+				title := strings.TrimSpace(base[idx+3:])
+
+				if artist != "" && title != "" {
+					filePath := filepath.Join(destDir, filename)
+
+					var dbArtist string
+					errQuery := db.Db().QueryRow("SELECT artist FROM media_file WHERE path LIKE ?", "%"+filename).Scan(&dbArtist)
+
+					if errQuery == nil && (dbArtist == "" || dbArtist == "[Unknown Artist]" || strings.ToLower(dbArtist) == "unknown artist" || strings.ToLower(dbArtist) == "unknown") {
+						log.Info(ctx, "Retroactive fixer: found file lacking tags in DB", "file", filename, "dbArtist", dbArtist)
+						imp.injectTagsFromFilename(ctx, filePath, filename)
+						taggedCount++
+					}
+				}
+			}
+		}
+
+		if taggedCount > 0 {
+			log.Info(ctx, "Retroactive fixer: Finished tagging files. Triggering scan...", "count", taggedCount)
+			imp.TriggerScan(ctx)
+		} else {
+			log.Info(ctx, "Retroactive fixer: No untagged files found.")
+		}
+	}()
 }
 

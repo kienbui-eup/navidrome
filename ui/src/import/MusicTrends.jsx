@@ -789,14 +789,14 @@ const MusicTrends = () => {
                     <LinearProgress style={{ borderRadius: 4, height: 8 }} />
                   </Box>
                 </>
-              ) : importJob.status === 'failed' || importJob.status === 'error' ? (
+              ) : importJob.status === 'failed' || importJob.status === 'error' || importJob.failed > 0 ? (
                 <>
                   <MdError size={64} style={{ color: '#f44336' }} />
                   <Typography variant="h6" style={{ fontWeight: 700, color: '#fff' }}>
                     Nhập nhạc không thành công
                   </Typography>
                   <Typography variant="body2" style={{ color: '#f44336' }}>
-                    Chi tiết lỗi: {importJob.error || 'Quá trình tải về thất bại.'}
+                    Chi tiết lỗi: {importJob.error || (importJob.errors && importJob.errors.join(', ')) || 'Quá trình tải về thất bại.'}
                   </Typography>
                 </>
               ) : (

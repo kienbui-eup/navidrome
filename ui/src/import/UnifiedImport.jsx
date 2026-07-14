@@ -55,6 +55,7 @@ import StorageIcon from '@material-ui/icons/Storage'
 import FolderIcon from '@material-ui/icons/Folder'
 import AccountTreeIcon from '@material-ui/icons/AccountTree'
 import FormatListBulletedIcon from '@material-ui/icons/FormatListBulleted'
+import CheckIcon from '@material-ui/icons/Check'
 
 import { httpClient } from '../dataProvider'
 import { formatBytes } from '../utils'
@@ -475,6 +476,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
   // Statuses
   const [busy, setBusy] = useState(null)
   const [warnings, setWarnings] = useState([])
+  const [importedIds, setImportedIds] = useState(new Set())
 
   // Raw Search Results
   const [rawSongs, setRawSongs] = useState([])
@@ -1314,6 +1316,11 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
         })
       }
       notify(`Đã xếp hàng tải "${song.title}"`, 'info')
+      setImportedIds(prev => {
+        const next = new Set(prev)
+        next.add(song.id)
+        return next
+      })
       if (res && res.json && res.json.savedName) {
         onImported(res.json.savedName)
       }
@@ -2006,8 +2013,14 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                                                       style={{ margin: 0 }}
                                                     />
                                                     <Box display="flex" alignItems="center" style={{ marginLeft: 4 }}>
-                                                      <IconButton size="small" disabled={isSongBusy} onClick={() => handleImportSingle(song)} style={{ padding: 4 }}>
-                                                        {isSongBusy ? <CircularProgress size={12} /> : <GetAppIcon style={{ fontSize: '1.1rem' }} />}
+                                                      <IconButton size="small" disabled={isSongBusy || importedIds.has(song.id)} onClick={() => handleImportSingle(song)} style={{ padding: 4 }}>
+                                                        {isSongBusy ? (
+                                                          <CircularProgress size={12} />
+                                                        ) : importedIds.has(song.id) ? (
+                                                          <CheckIcon style={{ fontSize: '1.1rem', color: '#4caf50' }} />
+                                                        ) : (
+                                                          <GetAppIcon style={{ fontSize: '1.1rem' }} />
+                                                        )}
                                                       </IconButton>
                                                     </Box>
                                                   </ListItem>
@@ -2064,8 +2077,14 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                         }
                       />
                       <Box display="flex" alignItems="center" style={{ marginLeft: 8 }}>
-                        <IconButton disabled={isBusy} onClick={() => handleImportSingle(song)}>
-                          {isBusy ? <CircularProgress size={18} /> : <GetAppIcon />}
+                        <IconButton disabled={isBusy || importedIds.has(song.id)} onClick={() => handleImportSingle(song)}>
+                          {isBusy ? (
+                            <CircularProgress size={18} />
+                          ) : importedIds.has(song.id) ? (
+                            <CheckIcon style={{ color: '#4caf50' }} />
+                          ) : (
+                            <GetAppIcon />
+                          )}
                         </IconButton>
                       </Box>
                     </ListItem>
