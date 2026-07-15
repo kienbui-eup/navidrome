@@ -240,8 +240,6 @@ private fun HiResSignalCapsule(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AudioVisualizer(isPlaying = isPlaying, modifier = Modifier.padding(end = 4.dp))
-
             if (!suffix.isNullOrBlank()) {
                 val isDsd = suffix.lowercase() in setOf("dsf", "dff", "dsd")
                 val isFlac = suffix.lowercase() == "flac"
@@ -338,6 +336,138 @@ private fun HiResSignalCapsule(
                 fontWeight = FontWeight.Bold,
                 color = ledColor
             )
+        }
+    }
+}
+
+
+/**
+ * A majestic, pro-grade Real-Time 16-Band FFT Spectrum Analyzer.
+ * Displays real-time audio frequencies from 30Hz to 16kHz with glowing bar gradients,
+ * horizontal decibel reference grids, and gentle spring physics.
+ */
+@Composable
+fun RealTimeSpectrumAnalyzer(
+    isPlaying: Boolean,
+    ledColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val realAmplitudes by me.troly.nhac.playback.AudioVisualizerHelper.amplitudes.collectAsState()
+    
+    // Fallback animated procedural heights for when paused/no native active data
+    val transition = rememberInfiniteTransition(label = "rt_procedural")
+    val proceduralHeights = remember {
+        (0 until 16).map { i ->
+            val duration = 280 + (i * 47) % 350
+            val target = 0.35f + (i % 4) * 0.15f
+            duration to target
+        }
+    }.mapIndexed { i, (duration, target) ->
+        transition.animateFloat(
+            initialValue = 0.1f,
+            targetValue = target,
+            animationSpec = infiniteRepeatable(
+                animation = tween(duration, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "rt_p_h_$i"
+        )
+    }
+
+    // Check if there is any active real amplitude data pulsing (non-flat)
+    val isNativeActive = realAmplitudes.any { it > 0.12f }
+    val activeColor = ledColor
+
+    Column(
+        modifier = modifier
+            .background(Color(0x0AFFFFFF), RoundedCornerShape(12.dp))
+            .border(0.5.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+            .padding(vertical = 8.dp, horizontal = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        // Draw the 16 bars inside a Box to calculate widths and heights
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            // Draw horizontal subtle decibel lines inside Canvas
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val gridLines = listOf(0.25f, 0.5f, 0.75f)
+                gridLines.forEach { ratio ->
+                    val y = size.height * ratio
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.04f),
+                        start = androidx.compose.ui.geometry.Offset(0f, y),
+                        end = androidx.compose.ui.geometry.Offset(size.width, y),
+                        strokeWidth = 1f,
+                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                for (i in 0 until 16) {
+                    val rawHeight = if (isNativeActive) {
+                        realAmplitudes.getOrElse(i) { 0.1f }
+                    } else {
+                        proceduralHeights[i].value
+                    }
+
+                    // Smooth springs for reactive motion
+                    val animatedHeight by animateFloatAsState(
+                        targetValue = if (isPlaying) rawHeight else 0.05f,
+                        animationSpec = spring(
+                            dampingRatio = 0.8f,
+                            stiffness = 300f
+                        ),
+                        label = "rt_bar_h_$i"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(animatedHeight)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        activeColor.copy(alpha = 0.95f),
+                                        activeColor.copy(alpha = 0.4f),
+                                        activeColor.copy(alpha = 0.08f)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)
+                            )
+                    )
+                }
+            }
+        }
+
+        // Draw frequency labels (sub-bass to treble bands: 30Hz, 100Hz, 300Hz, 1kHz, 3kHz, 10kHz, 16kHz)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 2.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val labelStyle = MaterialTheme.typography.bodySmall.copy(
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFFC4BBA6).copy(alpha = 0.6f)
+            )
+            Text("30Hz", style = labelStyle)
+            Text("100Hz", style = labelStyle)
+            Text("300Hz", style = labelStyle)
+            Text("1kHz", style = labelStyle)
+            Text("3kHz", style = labelStyle)
+            Text("10kHz", style = labelStyle)
+            Text("16kHz", style = labelStyle)
         }
     }
 }
@@ -653,6 +783,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
     }
     
     var isScreensaverActive by remember { mutableStateOf(false) }
+    var isQueueExpanded by remember { mutableStateOf(false) }
     var lastInteractionTime by remember { mutableStateOf(System.currentTimeMillis()) }
 
     LaunchedEffect(state.isPlaying) {
@@ -950,11 +1081,21 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         )
                     }
 
+                    // Real-Time 16-Band FFT Spectrum Analyzer
+                    RealTimeSpectrumAnalyzer(
+                        isPlaying = state.isPlaying,
+                        ledColor = ledColor,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(72.dp)
+                            .padding(top = 10.dp, bottom = 2.dp)
+                    )
+
                     WaveformSeekbar(
                         songId = currentSongId ?: "",
                         progress = progress.coerceIn(0f, 1f),
                         onSeek = { player.seekTo((it * duration).toLong()) },
-                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 4.dp),
                     )
                     Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(formatMs(state.positionMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
@@ -1316,16 +1457,72 @@ fun NowPlayingScreen(onClose: () -> Unit) {
             }
         } else {
             // ── NARROW PORTRAIT STRUCTURAL LAYOUT (MOBILE COVER SCREEN) ──────────
+            val animatedArtHeight by animateDpAsState(
+                targetValue = if (isQueueExpanded) 0.dp else 180.dp,
+                animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
+                label = "art_height"
+            )
+            val animatedCapsuleHeight by animateDpAsState(
+                targetValue = if (isQueueExpanded) 0.dp else 36.dp,
+                animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
+                label = "capsule_height"
+            )
+            val animatedMetaHeight by animateDpAsState(
+                targetValue = if (isQueueExpanded) 0.dp else 56.dp,
+                animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
+                label = "meta_height"
+            )
+            val animatedSeekbarHeight by animateDpAsState(
+                targetValue = if (isQueueExpanded) 0.dp else 54.dp,
+                animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
+                label = "seekbar_height"
+            )
+            val animatedSpacing by animateDpAsState(
+                targetValue = if (isQueueExpanded) 0.dp else 12.dp,
+                animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
+                label = "vertical_spacing"
+            )
+            val artAlpha by animateFloatAsState(
+                targetValue = if (isQueueExpanded) 0f else 1f,
+                animationSpec = tween(durationMillis = 200),
+                label = "art_alpha"
+            )
+            val capsuleAlpha by animateFloatAsState(
+                targetValue = if (isQueueExpanded) 0f else 1f,
+                animationSpec = tween(durationMillis = 200),
+                label = "capsule_alpha"
+            )
+            val metaAlpha by animateFloatAsState(
+                targetValue = if (isQueueExpanded) 0f else 1f,
+                animationSpec = tween(durationMillis = 200),
+                label = "meta_alpha"
+            )
+            val seekbarAlpha by animateFloatAsState(
+                targetValue = if (isQueueExpanded) 0f else 1f,
+                animationSpec = tween(durationMillis = 200),
+                label = "seekbar_alpha"
+            )
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .systemBarsPadding()
                     .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .swipeGestures(
+                        onSwipeUp = { isQueueExpanded = true },
+                        onSwipeDown = {
+                            if (isQueueExpanded) {
+                                isQueueExpanded = false
+                            } else {
+                                onClose()
+                            }
+                        }
+                    )
             ) {
                 // PART 1: STICKY CONTROL CONSOLE (STATIONARY AT THE TOP)
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(animatedSpacing)
                 ) {
                     // Header row (Back / close button)
                     Row(
@@ -1345,86 +1542,119 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         )
                     }
 
-                    // Album Art - beautifully compacted to fit all screens including Fold cover
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                            .swipeGestures(
-                                onSwipeDown = onClose,
-                                onSwipeLeft = { player.next() },
-                                onSwipeRight = { player.previous() }
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        AsyncImage(
-                            model = art, contentDescription = null, contentScale = ContentScale.Crop,
+                    // Album Art - beautifully compacted with animated height & alpha transitions
+                    if (animatedArtHeight > 10.dp) {
+                        Box(
                             modifier = Modifier
-                                .fillMaxHeight()
-                                .aspectRatio(1f)
-                                .graphicsLayer {
-                                    scaleX = artScale
-                                    scaleY = artScale
-                                }
-                                .shadow(
-                                    elevation = artShadow,
-                                    shape = RoundedCornerShape(artCorner),
-                                    clip = false,
-                                    ambientColor = ledColor.copy(alpha = 0.45f),
-                                    spotColor = ledColor
-                                )
-                                .clip(RoundedCornerShape(artCorner))
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
-                        )
-                    }
-
-                    // Meta details (Title & Artist)
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            meta?.title?.toString() ?: "",
-                            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                            color = Color.White, textAlign = TextAlign.Center, maxLines = 1,
-                            modifier = Modifier.fillMaxWidth().basicMarquee(),
-                        )
-                        Text(
-                            meta?.artist?.toString() ?: "",
-                            style = MaterialTheme.typography.bodyMedium, color = Color(0xFFC4BBA6),
-                            textAlign = TextAlign.Center, maxLines = 1,
-                            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-                        )
-                    }
-
-                    // Redesigned Hi-Res Signal Capsule Badge (Responsive, wrap-resistant, technical density)
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        HiResSignalCapsule(
-                            isPlaying = state.isPlaying,
-                            suffix = suffix,
-                            bitRate = bitRate,
-                            bitDepth = bitDepth,
-                            samplingRate = samplingRate,
-                            activeDevice = activeDevice,
-                            ledColor = ledColor
-                        )
-                    }
-
-                    // Progress WaveformSeekbar & times
-                    Column {
-                        WaveformSeekbar(
-                            songId = currentSongId ?: "",
-                            progress = progress.coerceIn(0f, 1f),
-                            onSeek = { player.seekTo((it * duration).toLong()) },
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        )
-                        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(formatMs(state.positionMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
-                            Text(formatMs(state.durationMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
+                                .fillMaxWidth()
+                                .height(animatedArtHeight)
+                                .graphicsLayer { alpha = artAlpha }
+                                .swipeGestures(
+                                    onSwipeDown = { isQueueExpanded = false },
+                                    onSwipeLeft = { player.next() },
+                                    onSwipeRight = { player.previous() }
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            AsyncImage(
+                                model = art, contentDescription = null, contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .aspectRatio(1f)
+                                    .graphicsLayer {
+                                        scaleX = artScale
+                                        scaleY = artScale
+                                    }
+                                    .shadow(
+                                        elevation = artShadow,
+                                        shape = RoundedCornerShape(artCorner),
+                                        clip = false,
+                                        ambientColor = ledColor.copy(alpha = 0.45f),
+                                        spotColor = ledColor
+                                    )
+                                    .clip(RoundedCornerShape(artCorner))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                            )
                         }
                     }
 
-                    // Playback Buttons
+                    // Meta details (Title & Artist)
+                    if (animatedMetaHeight > 10.dp) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(animatedMetaHeight)
+                                .graphicsLayer { alpha = metaAlpha },
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                meta?.title?.toString() ?: "",
+                                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
+                                color = Color.White, textAlign = TextAlign.Center, maxLines = 1,
+                                modifier = Modifier.fillMaxWidth().basicMarquee(),
+                            )
+                            Text(
+                                meta?.artist?.toString() ?: "",
+                                style = MaterialTheme.typography.bodyMedium, color = Color(0xFFC4BBA6),
+                                textAlign = TextAlign.Center, maxLines = 1,
+                                modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
+                            )
+                        }
+                    }
+
+                    // Redesigned Hi-Res Signal Capsule Badge (Responsive, wrap-resistant, technical density)
+                    if (animatedCapsuleHeight > 5.dp) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(animatedCapsuleHeight)
+                                .graphicsLayer { alpha = capsuleAlpha },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            HiResSignalCapsule(
+                                isPlaying = state.isPlaying,
+                                suffix = suffix,
+                                bitRate = bitRate,
+                                bitDepth = bitDepth,
+                                samplingRate = samplingRate,
+                                activeDevice = activeDevice,
+                                ledColor = ledColor
+                            )
+                        }
+                    }
+
+                    // Real-Time 16-Band FFT Spectrum Analyzer (Always Pinned)
+                    RealTimeSpectrumAnalyzer(
+                        isPlaying = state.isPlaying,
+                        ledColor = ledColor,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(58.dp)
+                            .padding(top = 2.dp, bottom = 2.dp)
+                    )
+
+                    // Progress WaveformSeekbar & times
+                    if (animatedSeekbarHeight > 10.dp) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(animatedSeekbarHeight)
+                                .graphicsLayer { alpha = seekbarAlpha }
+                        ) {
+                            WaveformSeekbar(
+                                songId = currentSongId ?: "",
+                                progress = progress.coerceIn(0f, 1f),
+                                onSeek = { player.seekTo((it * duration).toLong()) },
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            )
+                            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(formatMs(state.positionMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
+                                Text(formatMs(state.durationMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
+                            }
+                        }
+                    }
+
+                    // Playback Buttons (Always Pinned)
                     Row(
                         Modifier.fillMaxWidth().padding(vertical = 2.dp),
                         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
@@ -1467,9 +1697,21 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = Color(0xFF231F27))
-                Spacer(modifier = Modifier.height(12.dp))
+                // Interactive click-to-toggle Swipe Drag Handle
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isQueueExpanded = !isQueueExpanded }
+                        .padding(vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(42.dp)
+                            .height(5.dp)
+                            .background(Color.White.copy(alpha = 0.28f), RoundedCornerShape(2.5.dp))
+                    )
+                }
 
                 // PART 2: SCROLLABLE SHEET FOR ALL OTHER SUPPEMENTARY VIEWS
                 LazyColumn(
@@ -2330,9 +2572,11 @@ fun AmbientScreensaverMode(
             verticalAlignment = Alignment.Bottom
         ) {
             val activeColor = Color(0xFFC4BBA6).copy(alpha = 0.65f)
+            val realAmplitudes by me.troly.nhac.playback.AudioVisualizerHelper.amplitudes.collectAsState()
+            val isNativeActive = realAmplitudes.any { it > 0.12f }
             
             val visualizerTransition = rememberInfiniteTransition(label = "screensaver_vis")
-            val heights = remember {
+            val proceduralHeights = remember {
                 (0 until 16).map { i ->
                     val duration = 400 + (i * 59) % 450
                     val target = 0.4f + (i % 4) * 0.15f
@@ -2351,10 +2595,25 @@ fun AmbientScreensaverMode(
             }
 
             for (i in 0 until 16) {
+                val rawHeight = if (isNativeActive) {
+                    realAmplitudes.getOrElse(i) { 0.1f }
+                } else {
+                    proceduralHeights[i].value
+                }
+
+                val animatedHeight by animateFloatAsState(
+                    targetValue = rawHeight,
+                    animationSpec = spring(
+                        dampingRatio = 0.8f,
+                        stiffness = 250f
+                    ),
+                    label = "ss_spring_h_$i"
+                )
+
                 Box(
                     modifier = Modifier
                         .width(6.dp)
-                        .fillMaxHeight(heights[i].value)
+                        .fillMaxHeight(animatedHeight)
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(activeColor, activeColor.copy(alpha = 0.1f))
