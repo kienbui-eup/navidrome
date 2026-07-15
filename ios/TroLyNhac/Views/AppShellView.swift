@@ -231,6 +231,24 @@ struct AppShellView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
+            .gesture(
+                DragGesture(minimumDistance: 30)
+                    .onEnded { value in
+                        let threshold: CGFloat = 60
+                        let horizontalDistance = value.translation.width
+                        let verticalDistance = value.translation.height
+                        
+                        if abs(verticalDistance) > abs(horizontalDistance) {
+                            if verticalDistance > threshold {
+                                withAnimation {
+                                    activeDetailAlbumId = nil
+                                    activeDetailArtist = nil
+                                    activeDetailPlaylistId = nil
+                                }
+                            }
+                        }
+                    }
+            )
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Đóng") {

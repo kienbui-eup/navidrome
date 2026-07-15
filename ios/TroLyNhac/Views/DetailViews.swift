@@ -52,6 +52,16 @@ struct AlbumDetailView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         albumHeader(album)
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(minimumDistance: 30)
+                                    .onEnded { value in
+                                        let threshold: CGFloat = 60
+                                        if value.translation.height > threshold && abs(value.translation.height) > abs(value.translation.width) {
+                                            presentationMode.wrappedValue.dismiss()
+                                        }
+                                    }
+                            )
                         actionButtons(album)
                         tracksList(album)
                         Spacer().frame(height: 80)
@@ -315,6 +325,7 @@ struct ArtistDetailView: View {
     let artist: Artist
     @ObservedObject var repository: SubsonicRepository
     var onAlbumSelected: (String) -> Void
+    @Environment(\.presentationMode) var presentationMode
     
     @State private var albums: [Album] = []
     @State private var isLoading = true
@@ -330,6 +341,16 @@ struct ArtistDetailView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         artistHeader
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(minimumDistance: 30)
+                                    .onEnded { value in
+                                        let threshold: CGFloat = 60
+                                        if value.translation.height > threshold && abs(value.translation.height) > abs(value.translation.width) {
+                                            presentationMode.wrappedValue.dismiss()
+                                        }
+                                    }
+                            )
                         
                         Text("Album")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
@@ -462,6 +483,16 @@ struct PlaylistDetailView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         playlistHeader(playlist)
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(minimumDistance: 30)
+                                    .onEnded { value in
+                                        let threshold: CGFloat = 60
+                                        if value.translation.height > threshold && abs(value.translation.height) > abs(value.translation.width) {
+                                            presentationMode.wrappedValue.dismiss()
+                                        }
+                                    }
+                            )
                         playlistActions
                         playlistSongsList
                         Spacer().frame(height: 80)

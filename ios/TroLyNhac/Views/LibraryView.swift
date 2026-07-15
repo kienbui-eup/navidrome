@@ -49,6 +49,32 @@ struct LibraryView: View {
                     }
                 }
             }
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 40)
+                    .onEnded { value in
+                        let threshold: CGFloat = 50
+                        let horizontalDistance = value.translation.width
+                        let verticalDistance = value.translation.height
+                        
+                        if abs(horizontalDistance) > abs(verticalDistance) {
+                            if horizontalDistance < -threshold {
+                                // Swipe Left -> select next tab
+                                if selectedTab < 2 {
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                        selectedTab += 1
+                                    }
+                                }
+                            } else if horizontalDistance > threshold {
+                                // Swipe Right -> select previous tab
+                                if selectedTab > 0 {
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                        selectedTab -= 1
+                                    }
+                                }
+                            }
+                        }
+                    }
+            )
             .navigationTitle("Thư viện")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
