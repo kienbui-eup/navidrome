@@ -40,7 +40,7 @@ func DownloadAudio(ctx context.Context, videoID string) (io.ReadCloser, string, 
 	}
 
 	// Build arguments dynamically
-	args := []string{"-f", "bestaudio", "-o", "-"}
+	args := []string{"-f", "bestaudio", "-o", "-", "--js-runtimes", "node"}
 
 	// YouTube Credentials
 	if ytUser := os.Getenv("ND_YOUTUBE_USERNAME"); ytUser != "" {
@@ -90,6 +90,7 @@ func SearchSongs(ctx context.Context, query string, limit int) ([]YTSong, error)
 	args := []string{
 		"--flat-playlist",
 		"--dump-single-json",
+		"--js-runtimes", "node",
 	}
 
 	// YouTube Credentials for Search
@@ -194,6 +195,7 @@ func DownloadAndTagAudio(ctx context.Context, targetURL, title, artist, album st
 		"--audio-format", "mp3",
 		"--audio-quality", "0",
 		"--embed-thumbnail",
+		"--js-runtimes", "node",
 		"-o", downloadPath,
 	}
 
@@ -225,6 +227,7 @@ func DownloadAndTagAudio(ctx context.Context, targetURL, title, artist, album st
 			"-x",
 			"--audio-format", "mp3",
 			"--audio-quality", "0",
+			"--js-runtimes", "node",
 			"-o", downloadPath,
 		}
 
