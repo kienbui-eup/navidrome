@@ -27,6 +27,7 @@ import {
   syncQueue,
 } from '../actions'
 import PlayerToolbar from './PlayerToolbar'
+import AudiophileConsole from './AudiophileConsole'
 import { sendNotification } from '../utils'
 import subsonic from '../subsonic'
 import locale from './locale'
@@ -138,32 +139,44 @@ const Player = () => {
   )
   const gainInfo = useSelector((state) => state.replayGain)
   const [context, setContext] = useState(null)
+  const [analyser, setAnalyser] = useState(null)
   const [gainNode, setGainNode] = useState(null)
+  const [consoleOpen, setConsoleOpen] = useState(false)
+
+  const toggleConsole = useCallback(() => {
+    setConsoleOpen((prev) => !prev)
+  }, [])
 
   useEffect(() => {
     if (
       context === null &&
       audioInstance &&
-      config.enableReplayGain &&
-      'AudioContext' in window &&
-      (gainInfo.gainMode === 'album' || gainInfo.gainMode === 'track')
+      'AudioContext' in window
     ) {
-      const ctx = new AudioContext()
-      // we need this to support radios in firefox
-      audioInstance.crossOrigin = 'anonymous'
-      const source = ctx.createMediaElementSource(audioInstance)
-      const gain = ctx.createGain()
-
-      source.connect(gain)
-      gain.connect(ctx.destination)
-
-      setContext(ctx)
-      setGainNode(gain)
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)()
+        audioInstance.crossOrigin = 'anonymous'
+        const source = ctx.createMediaElementSource(audioInstance)
+        
+        const gain = ctx.createGain()
+        const anal = ctx.createAnalyser()
+        anal.fftSize = 64
+        
+        source.connect(anal)
+        anal.connect(gain)
+        gain.connect(ctx.destination)
+        
+        setContext(ctx)
+        setGainNode(gain)
+        setAnalyser(anal)
+      } catch (e) {
+        console.error('Failed to initialize Web Audio API context:', e)
+      }
     }
-  }, [audioInstance, context, gainInfo.gainMode])
+  }, [audioInstance, context])
 
   useEffect(() => {
-    if (gainNode) {
+    if (gainNode && context) {
       const current = playerState.current || {}
       const song = current.song || {}
 
@@ -251,7 +264,13 @@ const Player = () => {
         playerState.autoPlay !== false &&
         (playerState.clear || playerState.playIndex === 0),
       clearPriorAudioLists: playerState.clear,
-      extendsContent: <PlayerToolbar isRadio={current.isRadio} />,
+      extendsContent: (
+        <PlayerToolbar
+          isRadio={current.isRadio}
+          consoleOpen={consoleOpen}
+          onToggleConsole={toggleConsole}
+        />
+      ),
       defaultVolume: isMobilePlayer ? 1 : playerState.volume,
       showMediaSession: !current.isRadio,
     }
@@ -470,6 +489,15 @@ const Player = () => {
         onBeforeDestroy={onBeforeDestroy}
         getAudioInstance={setAudioInstance}
       />
+      {visible && (
+        <AudiophileConsole
+          open={consoleOpen}
+          onClose={() => setConsoleOpen(false)}
+          analyser={analyser}
+          isPlaying={audioInstance && !audioInstance.paused}
+          currentSong={playerState.current?.song}
+        />
+      )}
       <GlobalHotKeys handlers={handlers} keyMap={keyMap} allowChanges />
       {/* Screen-reader announcement of the current track, updated politely so it
           does not interrupt whatever the user is currently reading. */}

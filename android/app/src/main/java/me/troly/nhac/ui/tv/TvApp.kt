@@ -29,6 +29,8 @@ import me.troly.nhac.ui.screens.ArtistDetailScreen
 import me.troly.nhac.ui.screens.LibraryScreen
 import me.troly.nhac.ui.screens.PlaylistDetailScreen
 import me.troly.nhac.ui.screens.SearchScreen
+import me.troly.nhac.ui.screens.SettingsScreen
+import androidx.compose.material.icons.filled.Settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -63,13 +65,22 @@ fun TvApp() {
     val openAlbum: (String) -> Unit = { albumId = it }
     val openNow = { showNowPlaying = true }
     
+    val changeTab: (Int) -> Unit = { targetTab ->
+        tab = targetTab
+        albumId = null
+        artistId = null
+        playlistId = null
+    }
+    
     val tabs = listOf(
         TvTabItem("Trang chủ", Icons.Filled.Home),
         TvTabItem("Tìm kiếm", Icons.Filled.Search),
-        TvTabItem("Thư viện", Icons.Filled.LibraryMusic)
+        TvTabItem("Thư viện", Icons.Filled.LibraryMusic),
+        TvTabItem("Cài đặt", Icons.Filled.Settings)
     )
 
-    val isOverlayActive = artistId != null || playlistId != null || albumId != null || showNowPlaying
+    // On TV, the Sidebar is always focusable unless the Full Player (showNowPlaying) is open!
+    val isOverlayActive = showNowPlaying
 
     Box(Modifier.fillMaxSize()) {
         Surface(color = MaterialTheme.colorScheme.background) {
@@ -107,7 +118,7 @@ fun TvApp() {
                         val selected = tab == i
                         NavigationRailItem(
                             selected = selected,
-                            onClick = { tab = i },
+                            onClick = { changeTab(i) },
                             icon = { Icon(t.icon, contentDescription = t.label) },
                             label = { Text(t.label, fontSize = 11.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
                             colors = NavigationRailItemDefaults.colors(
@@ -121,64 +132,69 @@ fun TvApp() {
                     }
                 }
                 
-                // Right main content area
+                // Right main content area with nested scoped detail panels
                 Box(Modifier.weight(1f)) {
                     when (tab) {
                         0 -> TvTheme { TvHome(onAlbum = openAlbum) }
                         1 -> SearchScreen(onAlbum = { openAlbum(it.id) }, onNowPlaying = openNow)
-                        else -> LibraryScreen(
+                        2 -> LibraryScreen(
                             onAlbum = openAlbum,
                             onArtist = { artistId = it },
                             onPlaylist = { playlistId = it },
                         )
+                        else -> SettingsScreen()
+                    }
+
+                    // Scoped detail panels rendered INSIDE the right content area
+                    // This leaves the Left Sidebar completely focusable and visible, 
+                    // allowing users to switch tabs smoothly at any time!
+                    artistId?.let { id ->
+                        val focusRequester = remember(id) { FocusRequester() }
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .focusRequester(focusRequester),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            ArtistDetailScreen(id, onBack = { artistId = null }, onAlbum = openAlbum)
+                        }
+                        LaunchedEffect(id) {
+                            focusRequester.requestFocus()
+                        }
+                    }
+                    playlistId?.let { id ->
+                        val focusRequester = remember(id) { FocusRequester() }
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .focusRequester(focusRequester),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            PlaylistDetailScreen(id, onBack = { playlistId = null }, onNowPlaying = openNow)
+                        }
+                        LaunchedEffect(id) {
+                            focusRequester.requestFocus()
+                        }
+                    }
+                    albumId?.let { id ->
+                        val focusRequester = remember(id) { FocusRequester() }
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .focusRequester(focusRequester),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            AlbumDetailScreen(id, onBack = { albumId = null }, onNowPlaying = openNow, onArtistClick = { artistId = it })
+                        }
+                        LaunchedEffect(id) {
+                            focusRequester.requestFocus()
+                        }
                     }
                 }
             }
         }
 
-        // Overlay screens
-        artistId?.let { id ->
-            val focusRequester = remember(id) { FocusRequester() }
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .focusRequester(focusRequester),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                ArtistDetailScreen(id, onBack = { artistId = null }, onAlbum = openAlbum)
-            }
-            LaunchedEffect(id) {
-                focusRequester.requestFocus()
-            }
-        }
-        playlistId?.let { id ->
-            val focusRequester = remember(id) { FocusRequester() }
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .focusRequester(focusRequester),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                PlaylistDetailScreen(id, onBack = { playlistId = null }, onNowPlaying = openNow)
-            }
-            LaunchedEffect(id) {
-                focusRequester.requestFocus()
-            }
-        }
-        albumId?.let { id ->
-            val focusRequester = remember(id) { FocusRequester() }
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .focusRequester(focusRequester),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                AlbumDetailScreen(id, onBack = { albumId = null }, onNowPlaying = openNow, onArtistClick = { artistId = it })
-            }
-            LaunchedEffect(id) {
-                focusRequester.requestFocus()
-            }
-        }
+        // Full Screen Player Overlay (Covers everything including sidebar)
         if (showNowPlaying) {
             val focusRequester = remember { FocusRequester() }
             Box(
@@ -186,7 +202,13 @@ fun TvApp() {
                     .fillMaxSize()
                     .focusRequester(focusRequester)
             ) {
-                NowPlayingScreen(onClose = { showNowPlaying = false })
+                NowPlayingScreen(
+                    onClose = { showNowPlaying = false },
+                    onNavigateToSettings = {
+                        showNowPlaying = false
+                        changeTab(3)
+                    }
+                )
             }
             LaunchedEffect(Unit) {
                 focusRequester.requestFocus()

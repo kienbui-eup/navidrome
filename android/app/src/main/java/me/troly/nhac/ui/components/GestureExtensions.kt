@@ -51,3 +51,55 @@ fun Modifier.swipeGestures(
         }
     )
 }
+
+/**
+ * A highly optimized edge-swipe back gesture modifier.
+ * Allows swiping from the left edge of the screen to go back,
+ * completely bypasses and does not interfere with vertical scrolling list containers like LazyColumn.
+ */
+fun Modifier.swipeBackGesture(
+    edgeWidthPx: Float = 150f,
+    minDragDistancePx: Float = 180f,
+    onBack: () -> Unit
+): Modifier = this.pointerInput(Unit) {
+    var startX = 0f
+    var startY = 0f
+    var totalDragX = 0f
+    var totalDragY = 0f
+    var isGestureActive = false
+    
+    detectDragGestures(
+        onDragStart = { offset ->
+            startX = offset.x
+            startY = offset.y
+            totalDragX = 0f
+            totalDragY = 0f
+            // Only trigger if starting from the left edge of the screen
+            isGestureActive = startX <= edgeWidthPx
+        },
+        onDrag = { change, dragAmount ->
+            if (isGestureActive) {
+                totalDragX += dragAmount.x
+                totalDragY += dragAmount.y
+                
+                // Intelligently handle scroll lists: if vertical dragging is stronger than horizontal,
+                // deactivate the gesture to allow normal vertical scroll of the list containers.
+                if (abs(totalDragY) > abs(totalDragX) && abs(totalDragY) > 50f) {
+                    isGestureActive = false
+                } else {
+                    change.consume()
+                }
+            }
+        },
+        onDragEnd = {
+            if (isGestureActive && totalDragX > minDragDistancePx) {
+                onBack()
+            }
+            isGestureActive = false
+        },
+        onDragCancel = {
+            isGestureActive = false
+        }
+    )
+}
+

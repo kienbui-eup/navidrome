@@ -71,6 +71,30 @@ class PlayerConnection(private val context: Context, private val config: ServerC
         _activeModulator.value = modulator
     }
 
+    private val _bitPerfectEnabled = MutableStateFlow(dspPrefs.getBoolean("bitPerfectEnabled", true))
+    val bitPerfectEnabled: StateFlow<Boolean> = _bitPerfectEnabled.asStateFlow()
+
+    private val _aaudioEnabled = MutableStateFlow(dspPrefs.getBoolean("aaudioEnabled", false))
+    val aaudioEnabled: StateFlow<Boolean> = _aaudioEnabled.asStateFlow()
+
+    private val _bufferSize = MutableStateFlow(dspPrefs.getString("bufferSize", "Balanced Standard") ?: "Balanced Standard")
+    val bufferSize: StateFlow<String> = _bufferSize.asStateFlow()
+
+    fun setBitPerfectEnabled(enabled: Boolean) {
+        dspPrefs.edit().putBoolean("bitPerfectEnabled", enabled).apply()
+        _bitPerfectEnabled.value = enabled
+    }
+
+    fun setAaudioEnabled(enabled: Boolean) {
+        dspPrefs.edit().putBoolean("aaudioEnabled", enabled).apply()
+        _aaudioEnabled.value = enabled
+    }
+
+    fun setBufferSize(size: String) {
+        dspPrefs.edit().putString("bufferSize", size).apply()
+        _bufferSize.value = size
+    }
+
     private var controller: MediaController? = null
 
     private val listener = object : Player.Listener {
@@ -78,6 +102,11 @@ class PlayerConnection(private val context: Context, private val config: ServerC
             _state.value = snapshot(player)
             if (events.contains(Player.EVENT_MEDIA_ITEM_TRANSITION)) {
                 checkAndTriggerAutoRadio(player)
+                val extras = player.currentMediaItem?.mediaMetadata?.extras
+                val samplingRate = extras?.getInt("samplingRate") ?: 0
+                val bitDepth = extras?.getInt("bitDepth") ?: 0
+                val suffix = extras?.getString("suffix")
+                AudioVisualizerHelper.setTrackSpecs(samplingRate, bitDepth, suffix)
             }
         }
 
@@ -119,7 +148,16 @@ class PlayerConnection(private val context: Context, private val config: ServerC
         val token = SessionToken(context, ComponentName(context, PlaybackService::class.java))
         val future = MediaController.Builder(context, token).buildAsync()
         future.addListener({
-            controller = future.get().also { it.addListener(listener) }
+            controller = future.get().also { player ->
+                player.addListener(listener)
+                val extras = player.currentMediaItem?.mediaMetadata?.extras
+                if (extras != null) {
+                    val samplingRate = extras.getInt("samplingRate")
+                    val bitDepth = extras.getInt("bitDepth")
+                    val suffix = extras.getString("suffix")
+                    AudioVisualizerHelper.setTrackSpecs(samplingRate, bitDepth, suffix)
+                }
+            }
         }, MoreExecutors.directExecutor())
     }
 

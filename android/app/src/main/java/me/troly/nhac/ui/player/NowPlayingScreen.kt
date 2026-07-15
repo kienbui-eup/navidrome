@@ -11,6 +11,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.border
 import androidx.compose.foundation.lazy.LazyColumn
@@ -81,6 +83,14 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.filled.Audiotrack
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.border
 
@@ -240,6 +250,38 @@ private fun HiResSignalCapsule(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val player = LocalPlayer.current
+            val bitPerfectEnabled by player.bitPerfectEnabled.collectAsState()
+            val isUsbDac = activeDevice.typeLabel == "USB DAC" || activeDevice.name.contains("USB", ignoreCase = true)
+            
+            if (bitPerfectEnabled && isUsbDac) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0x2E00E676)) // Emerald green glow background
+                        .border(0.7.dp, Color(0xFF00E676).copy(alpha = 0.8f), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(4.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF00E676))
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "BIT-PERFECT",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 8.sp,
+                            color = Color(0xFF00E676),
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                }
+            }
+
             if (!suffix.isNullOrBlank()) {
                 val isDsd = suffix.lowercase() in setOf("dsf", "dff", "dsd")
                 val isFlac = suffix.lowercase() == "flac"
@@ -341,10 +383,443 @@ private fun HiResSignalCapsule(
 }
 
 
+@Composable
+private fun RoonSignalPathDialog(
+    songId: String,
+    songTitle: String,
+    artistName: String,
+    suffix: String?,
+    bitRate: Int,
+    bitDepth: Int,
+    samplingRate: Int,
+    activeDevice: me.troly.nhac.playback.ActiveDeviceDetails,
+    activeFilter: String,
+    activeDither: String,
+    activeModulator: String,
+    bitPerfectEnabled: Boolean,
+    onDismiss: () -> Unit
+) {
+    val repo = LocalRepo.current
+    var audiophileData by remember(songId) { mutableStateOf<me.troly.nhac.data.subsonic.AudiophileResponse?>(null) }
+    var isLoading by remember(songId) { mutableStateOf(true) }
+    var loadError by remember(songId) { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(songId) {
+        isLoading = true
+        loadError = null
+        try {
+            val response = repo.getSongAudiophile(songId)
+            audiophileData = response
+        } catch (e: Exception) {
+            loadError = e.localizedMessage ?: "Không thể kết nối đến máy chủ"
+        } finally {
+            isLoading = false
+        }
+    }
+
+    val isRealLossless = audiophileData?.realLossless ?: (suffix?.lowercase() in setOf("flac", "dsf", "dff", "dsd", "wav", "m4a", "alac"))
+    val cutoff = audiophileData?.cutoffFrequency ?: 22.0
+    val drScore = audiophileData?.dynamicRangeScore ?: 10
+
+    val isUsbDac = activeDevice.typeLabel == "USB DAC" || activeDevice.name.contains("USB", ignoreCase = true)
+    val isDspActive = activeFilter != "Bypass" || activeDither != "None" || activeModulator != "PCM (Bit-Perfect)"
+
+    val signalQuality = when {
+        !isRealLossless -> "Low-Quality / Degraded (Phát hiện Fake Lossless)"
+        drScore < 6 -> "Low-Quality (Nén dải động cực lớn)"
+        bitPerfectEnabled && isUsbDac -> "Lossless (Bit-Perfect)"
+        isDspActive -> "Enhanced (Xử lý DSP chất lượng cao)"
+        else -> "Lossless (Tiêu chuẩn)"
+    }
+
+    val glowColor = when {
+        !isRealLossless || drScore < 6 -> Color(0xFFE57373) // Coral Red
+        signalQuality.contains("Enhanced") -> Color(0xFF81C784) // Emerald Green
+        signalQuality.contains("Bit-Perfect") -> Color(0xFFBA68C8) // Royal Purple (Roon Purple)
+        else -> Color(0xFF64B5F6) // Cyan Blue
+    }
+
+    val pulseTransition = rememberInfiniteTransition(label = "signal_pulse")
+    val pulseScale by pulseTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.25f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
+                .wrapContentHeight(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFA121212)),
+            border = BorderStroke(1.dp, glowColor.copy(alpha = 0.3f))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "SƠ ĐỒ ĐƯỜNG ĐI TÍN HIỆU",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFFC4BBA6),
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = signalQuality.uppercase(),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = glowColor,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "Đóng",
+                            tint = Color.White.copy(alpha = 0.6f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Interactive vertical signal path representation
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Node 1: Source File
+                    SignalNode(
+                        title = "Tệp gốc (Source)",
+                        subtitle = "${suffix?.uppercase() ?: "AUDIO"} • ${if (bitDepth > 0) "${bitDepth}-bit" else "${bitRate} kbps"} / ${samplingRate / 1000.0} kHz",
+                        indicatorColor = glowColor,
+                        isPulse = true,
+                        pulseScale = pulseScale,
+                        icon = Icons.Filled.Audiotrack
+                    ) {
+                        // Details underneath Source
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 12.dp, top = 4.dp, bottom = 4.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x08FFFFFF))
+                                .padding(8.dp)
+                        ) {
+                            Text(
+                                text = "Tiêu đề: $songTitle",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "Nghệ sĩ: $artistName",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White.copy(alpha = 0.7f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            if (isLoading) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(10.dp),
+                                        strokeWidth = 1.dp,
+                                        color = glowColor
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = "Đang quét dải tần siêu cao (GCP VM)...",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFFC4BBA6),
+                                        fontSize = 9.sp
+                                    )
+                                }
+                            } else if (loadError != null) {
+                                Text(
+                                    text = "Quét máy chủ: ${loadError}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color(0xFFE57373),
+                                    fontSize = 9.sp
+                                )
+                            } else if (audiophileData != null) {
+                                val data = audiophileData!!
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Tần số cắt: ${data.cutoffFrequency} kHz",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (data.realLossless) Color(0xFF81C784) else Color(0xFFE57373),
+                                            fontSize = 9.sp
+                                        )
+                                        Text(
+                                            text = "Nhận diện: " + if (data.realLossless) "✓ Lossless thật" else "⚠️ Fake Lossless / Mp3 upscale",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (data.realLossless) Color(0xFF81C784) else Color(0xFFE57373),
+                                            fontSize = 9.sp
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(if (data.dynamicRangeScore >= 10) Color(0x2EBA68C8) else Color(0x2EE57373))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "ĐỘ ĐỘNG DR${data.dynamicRangeScore}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            color = if (data.dynamicRangeScore >= 10) Color(0xFFBA68C8) else Color(0xFFE57373),
+                                            fontSize = 8.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Connection Line 1
+                    SignalWire(color = glowColor)
+
+                    // Node 2: Decoder Engine
+                    val isTranscoding = me.troly.nhac.data.subsonic.isServerTranscodeSuffix(suffix)
+                    SignalNode(
+                        title = "Bộ giải mã (Decoder)",
+                        subtitle = if (isTranscoding) "Transcode trên GCP VM ➔ 24-bit FLAC PCM" else "Media3 Native Codec Engine",
+                        indicatorColor = if (isTranscoding) Color(0xFFFFB300) else glowColor,
+                        isPulse = false,
+                        pulseScale = 1f,
+                        icon = Icons.Filled.Check
+                    )
+
+                    // Connection Line 2
+                    SignalWire(color = glowColor)
+
+                    // Node 3: DSP Processing (Resampler, Dither, Modulator)
+                    SignalNode(
+                        title = "Mạch xử lý số (DSP Engine)",
+                        subtitle = if (isDspActive) "Đang hoạt động (Enhanced)" else "Bypass (Đường truyền thuần khiết)",
+                        indicatorColor = if (isDspActive) Color(0xFF81C784) else Color.White.copy(alpha = 0.3f),
+                        isPulse = isDspActive,
+                        pulseScale = pulseScale,
+                        icon = Icons.Filled.Edit
+                    ) {
+                        if (isDspActive) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 12.dp, top = 4.dp, bottom = 4.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0x08FFFFFF))
+                                    .padding(8.dp)
+                            ) {
+                                if (activeFilter != "Bypass") {
+                                    Text(
+                                        text = "• Resampler: $activeFilter",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF81C784),
+                                        fontSize = 10.sp
+                                    )
+                                }
+                                if (activeDither != "None") {
+                                    Text(
+                                        text = "• Dither: $activeDither",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF81C784),
+                                        fontSize = 10.sp
+                                    )
+                                }
+                                if (activeModulator != "PCM (Bit-Perfect)") {
+                                    Text(
+                                        text = "• Modulator: $activeModulator",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFF81C784),
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Connection Line 3
+                    SignalWire(color = glowColor)
+
+                    // Node 4: Output Driver / Device
+                    val outputTitle = if (bitPerfectEnabled && isUsbDac) "Bit-Perfect Output (Direct USB)" else "Android Audio Mixer"
+                    SignalNode(
+                        title = outputTitle,
+                        subtitle = "${activeDevice.name} (${activeDevice.typeLabel})",
+                        indicatorColor = glowColor,
+                        isPulse = true,
+                        pulseScale = pulseScale,
+                        icon = Icons.Filled.VolumeUp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Footer description
+                Text(
+                    text = when {
+                        !isRealLossless -> "Chú ý: File nhạc hiện tại đã bị phát hiện là nhạc giả Lossless (Fake Lossless). Dải tần số siêu cao bị cắt bỏ hoàn toàn tại ngưỡng ${cutoff} kHz do nén lossy trước đó."
+                        bitPerfectEnabled && isUsbDac -> "Đường truyền Bit-Perfect hoàn hảo, tín hiệu âm thanh được bỏ qua hoàn toàn mixer của Android và truyền trực tiếp đến DAC phần cứng của bạn không hao hụt."
+                        isDspActive -> "Tín hiệu âm thanh được tối ưu hoá thông qua bộ lọc nội suy chất lượng cao và bộ phân dither để tăng cường độ chi tiết dải động."
+                        else -> "Tín hiệu âm thanh truyền dẫn dạng lossless tiêu chuẩn đến thiết bị phát."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFC4BBA6),
+                    textAlign = TextAlign.Center,
+                    fontSize = 10.sp,
+                    lineHeight = 14.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SignalNode(
+    title: String,
+    subtitle: String,
+    indicatorColor: Color,
+    isPulse: Boolean,
+    pulseScale: Float,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    content: @Composable (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        // Dot indicator
+        Box(
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .size(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isPulse) {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .graphicsLayer {
+                            scaleX = pulseScale
+                            scaleY = pulseScale
+                        }
+                        .clip(CircleShape)
+                        .background(indicatorColor.copy(alpha = 0.25f))
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(indicatorColor)
+                    .border(1.dp, Color.White.copy(alpha = 0.4f), CircleShape)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = indicatorColor,
+                    modifier = Modifier.size(13.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFFC4BBA6),
+                fontSize = 11.sp
+            )
+            content?.invoke()
+        }
+    }
+}
+
+@Composable
+private fun SignalWire(color: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(20.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(start = 7.dp)
+                .width(2.dp)
+                .fillMaxHeight()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(color, color.copy(alpha = 0.4f), color)
+                    )
+                )
+        )
+    }
+}
+
+
+private fun getFrequencyXRatio(freq: Float, bounds: FloatArray): Float {
+    if (bounds.size < 33) return 0.5f
+    for (i in 0 until 32) {
+        val low = bounds[i]
+        val high = bounds[i + 1]
+        if (freq >= low && freq <= high) {
+            val bandFraction = (freq - low) / (high - low)
+            return (i + bandFraction) / 32f
+        }
+    }
+    if (freq > bounds[32]) return 1f
+    return 0f
+}
+
 /**
- * A majestic, pro-grade Real-Time 16-Band FFT Spectrum Analyzer.
- * Displays real-time audio frequencies from 30Hz to 16kHz with glowing bar gradients,
- * horizontal decibel reference grids, and gentle spring physics.
+ * A majestic, pro-grade Real-Time 16/32-Band FFT Spectrum Analyzer.
+ * Displays real-time audio frequencies with glowing bar gradients and gentle spring physics.
+ * Can be tapped to expand into a High-Resolution 32-Band Spectrogram featuring high-frequency
+ * markers and real-time lossy compression vs. true lossless/Hi-Res integrity diagnostics.
  */
 @Composable
 fun RealTimeSpectrumAnalyzer(
@@ -352,9 +827,27 @@ fun RealTimeSpectrumAnalyzer(
     ledColor: Color,
     modifier: Modifier = Modifier
 ) {
-    val realAmplitudes by me.troly.nhac.playback.AudioVisualizerHelper.amplitudes.collectAsState()
+    val configuration = LocalConfiguration.current
+    val isSmallScreen = configuration.screenWidthDp < 360 || configuration.screenHeightDp < 650
+    var isExpanded by remember(isSmallScreen) { mutableStateOf(!isSmallScreen) }
+    var visualizerMode by remember { mutableStateOf(0) } // 0 = Spectrum + Curves, 1 = Oscilloscope, 2 = VU Meter
     
-    // Fallback animated procedural heights for when paused/no native active data
+    val realAmplitudes by me.troly.nhac.playback.AudioVisualizerHelper.amplitudes.collectAsState()
+    val realAmplitudes32 by me.troly.nhac.playback.AudioVisualizerHelper.amplitudes32.collectAsState()
+    val rawWaveform by me.troly.nhac.playback.AudioVisualizerHelper.rawWaveform.collectAsState()
+    val rmsLevel by me.troly.nhac.playback.AudioVisualizerHelper.rmsLevel.collectAsState()
+    
+    val losslessVerdict by me.troly.nhac.playback.AudioVisualizerHelper.losslessVerdict.collectAsState()
+    val losslessConfidence by me.troly.nhac.playback.AudioVisualizerHelper.losslessConfidence.collectAsState()
+    val cutoffFrequency by me.troly.nhac.playback.AudioVisualizerHelper.cutoffFrequency.collectAsState()
+    
+    val trackSR by me.troly.nhac.playback.AudioVisualizerHelper.trackSamplingRate.collectAsState()
+    val trackBD by me.troly.nhac.playback.AudioVisualizerHelper.trackBitDepth.collectAsState()
+    val trackSuffix by me.troly.nhac.playback.AudioVisualizerHelper.trackSuffix.collectAsState()
+    val captureSR by me.troly.nhac.playback.AudioVisualizerHelper.captureSamplingRate.collectAsState()
+    val dynamicBounds by me.troly.nhac.playback.AudioVisualizerHelper.dynamicBoundaries.collectAsState()
+
+    // Fallback animated procedural heights for when paused/no native active data (16 bands)
     val transition = rememberInfiniteTransition(label = "rt_procedural")
     val proceduralHeights = remember {
         (0 until 16).map { i ->
@@ -374,41 +867,59 @@ fun RealTimeSpectrumAnalyzer(
         )
     }
 
+    // Fallback animated procedural heights for 32 bands
+    val proceduralHeights32 = remember {
+        (0 until 32).map { i ->
+            val duration = 250 + (i * 31) % 280
+            val target = 0.3f + (i % 5) * 0.12f
+            duration to target
+        }
+    }.mapIndexed { i, (duration, target) ->
+        transition.animateFloat(
+            initialValue = 0.1f,
+            targetValue = target,
+            animationSpec = infiniteRepeatable(
+                animation = tween(duration, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "rt_p_h32_$i"
+        )
+    }
+
     // Check if there is any active real amplitude data pulsing (non-flat)
     val isNativeActive = realAmplitudes.any { it > 0.12f }
     val activeColor = ledColor
 
-    Column(
-        modifier = modifier
-            .background(Color(0x0AFFFFFF), RoundedCornerShape(12.dp))
-            .border(0.5.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
-            .padding(vertical = 8.dp, horizontal = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        // Draw the 16 bars inside a Box to calculate widths and heights
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.BottomCenter
-        ) {
-            // Draw horizontal subtle decibel lines inside Canvas
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val gridLines = listOf(0.25f, 0.5f, 0.75f)
-                gridLines.forEach { ratio ->
-                    val y = size.height * ratio
-                    drawLine(
-                        color = Color.White.copy(alpha = 0.04f),
-                        start = androidx.compose.ui.geometry.Offset(0f, y),
-                        end = androidx.compose.ui.geometry.Offset(size.width, y),
-                        strokeWidth = 1f,
-                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 8f), 0f)
-                    )
-                }
-            }
+    // Animate container height and layout when expanded (slight height boost to fit multiple modes and selectors)
+    val animatedHeightDp by animateDpAsState(
+        targetValue = if (isExpanded) 260.dp else 72.dp,
+        animationSpec = spring(dampingRatio = 0.82f, stiffness = 250f),
+        label = "rt_container_h"
+    )
 
+    val baseModifier = modifier
+        .height(animatedHeightDp)
+
+    val clickableModifier = if (!isExpanded) {
+        baseModifier.clickable { isExpanded = true }
+    } else {
+        baseModifier
+    }
+
+    val containerPadding = if (isExpanded) {
+        PaddingValues(0.dp)
+    } else {
+        PaddingValues(vertical = 8.dp, horizontal = 0.dp)
+    }
+
+    Column(
+        modifier = clickableModifier.padding(containerPadding),
+        verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        if (!isExpanded) {
+            // --- COLLAPSED VIEW: Classic 16-Band ---
             Row(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxWidth().weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.Bottom
             ) {
@@ -419,13 +930,9 @@ fun RealTimeSpectrumAnalyzer(
                         proceduralHeights[i].value
                     }
 
-                    // Smooth springs for reactive motion
                     val animatedHeight by animateFloatAsState(
                         targetValue = if (isPlaying) rawHeight else 0.05f,
-                        animationSpec = spring(
-                            dampingRatio = 0.8f,
-                            stiffness = 300f
-                        ),
+                        animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
                         label = "rt_bar_h_$i"
                     )
 
@@ -446,30 +953,764 @@ fun RealTimeSpectrumAnalyzer(
                     )
                 }
             }
-        }
+            Spacer(Modifier.height(4.dp))
+            // Collapsed text hint & quick info
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "30Hz",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 8.sp, color = Color(0xFFC4BBA6).copy(alpha = 0.5f))
+                )
+                Text(
+                    "Bấm để soi Phổ âm Lossless & Hi-Res (32-Band FFT)",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 8.sp, color = ledColor.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
+                )
+                Text(
+                    if (trackSR > 48000) "${trackSR / 1000f}k" else "20k+",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 8.sp, color = Color(0xFFC4BBA6).copy(alpha = 0.5f))
+                )
+            }
+        } else {
+            // --- EXPANDED VIEW: Multi-Mode Audiophile Suite (Full Screen Edge-to-Edge) ---
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { 
+                        // Cycling through visualizer modes when tapped directly
+                        visualizerMode = (visualizerMode + 1) % 3 
+                    }
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Floating top indicator row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val modeLabel = when (visualizerMode) {
+                            0 -> "BỘ SOI PHỔ TẦN & EQ CURVES"
+                            1 -> "DAO ĐỘNG KÝ (OSCILLOSCOPE)"
+                            else -> "ĐỒNG HỒ VU CƠ HỌC (ANALOG)"
+                        }
+                        Text(
+                            text = modeLabel,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 8.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = ledColor,
+                                letterSpacing = 1.sp
+                            )
+                        )
 
-        // Draw frequency labels (sub-bass to treble bands: 30Hz, 100Hz, 300Hz, 1kHz, 3kHz, 10kHz, 16kHz)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 2.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val labelStyle = MaterialTheme.typography.bodySmall.copy(
-                fontSize = 8.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFFC4BBA6).copy(alpha = 0.6f)
-            )
-            Text("30Hz", style = labelStyle)
-            Text("100Hz", style = labelStyle)
-            Text("300Hz", style = labelStyle)
-            Text("1kHz", style = labelStyle)
-            Text("3kHz", style = labelStyle)
-            Text("10kHz", style = labelStyle)
-            Text("16kHz", style = labelStyle)
+                        // Elegant collapse badge
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.White.copy(alpha = 0.08f))
+                                .clickable { isExpanded = false }
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Thu nhỏ ↘",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 8.sp,
+                                    color = Color.White.copy(alpha = 0.6f)
+                                )
+                            )
+                        }
+                    }
+
+                    // Main content box based on visualizerMode
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                    when (visualizerMode) {
+                        0 -> {
+                            // --- MODE 0: 32-Band FFT Spectrum with Overlaid 8 Parametric Curves ---
+                            // 1. Grid reference lines (horizontal) & Cut-off guidelines
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                val lines = listOf(0.33f, 0.66f)
+                                lines.forEach { ratio ->
+                                    val y = size.height * ratio
+                                    drawLine(
+                                        color = Color.White.copy(alpha = 0.05f),
+                                        start = androidx.compose.ui.geometry.Offset(0f, y),
+                                        end = androidx.compose.ui.geometry.Offset(size.width, y),
+                                        strokeWidth = 1f,
+                                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(6f, 6f), 0f)
+                                    )
+                                }
+
+                                val bounds = dynamicBounds
+                                val isNativeHiRes = trackSR > 48000 || trackSuffix.lowercase() in listOf("dsf", "dff", "dsd")
+
+                                if (isNativeHiRes) {
+                                    val limitF = if (trackSR > 96000) 80000f else 40000f
+                                    val x20k = size.width * getFrequencyXRatio(20000f, bounds)
+                                    val xHiRes = size.width * getFrequencyXRatio(limitF, bounds)
+
+                                    drawLine(
+                                        color = Color(0xFF00E676).copy(alpha = 0.25f), // Green CD limit (20kHz)
+                                        start = androidx.compose.ui.geometry.Offset(x20k, 0f),
+                                        end = androidx.compose.ui.geometry.Offset(x20k, size.height),
+                                        strokeWidth = 1.5f,
+                                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(4f, 4f), 0f)
+                                    )
+                                    drawLine(
+                                        color = Color(0xFFFFC107).copy(alpha = 0.35f), // Gold Hi-Res Peak (40kHz or 80kHz)
+                                        start = androidx.compose.ui.geometry.Offset(xHiRes, 0f),
+                                        end = androidx.compose.ui.geometry.Offset(xHiRes, size.height),
+                                        strokeWidth = 1.5f,
+                                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(4f, 4f), 0f)
+                                    )
+                                } else {
+                                    val x16k = size.width * getFrequencyXRatio(16000f, bounds)
+                                    val x20k = size.width * getFrequencyXRatio(20000f, bounds)
+
+                                    drawLine(
+                                        color = Color(0xFFFF3D00).copy(alpha = 0.25f), // Red 16k MP3 limit
+                                        start = androidx.compose.ui.geometry.Offset(x16k, 0f),
+                                        end = androidx.compose.ui.geometry.Offset(x16k, size.height),
+                                        strokeWidth = 1.5f,
+                                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(4f, 4f), 0f)
+                                    )
+                                    drawLine(
+                                        color = Color(0xFF00E676).copy(alpha = 0.25f), // Green 20k CD limit
+                                        start = androidx.compose.ui.geometry.Offset(x20k, 0f),
+                                        end = androidx.compose.ui.geometry.Offset(x20k, size.height),
+                                        strokeWidth = 1.5f,
+                                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(4f, 4f), 0f)
+                                    )
+                                }
+                            }
+
+                            // 2. Draw 32 Bars
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                val bounds = dynamicBounds
+                                val isNativeHiRes = trackSR > 48000 || trackSuffix.lowercase() in listOf("dsf", "dff", "dsd")
+
+                                for (i in 0 until 32) {
+                                    val rawHeight = if (isNativeActive) {
+                                        realAmplitudes32.getOrElse(i) { 0.1f }
+                                    } else {
+                                        proceduralHeights32[i].value
+                                    }
+
+                                    val animatedHeight by animateFloatAsState(
+                                        targetValue = if (isPlaying) rawHeight else 0.05f,
+                                        animationSpec = spring(dampingRatio = 0.85f, stiffness = 280f),
+                                        label = "rt_bar32_h_$i"
+                                    )
+
+                                    val barColor = if (isNativeHiRes) {
+                                        val currentF = bounds.getOrElse(i) { 0f }
+                                        when {
+                                            currentF >= 20000f -> Color(0xFFFFD54F) // Golden glow for ultra high-res (>20kHz)
+                                            currentF >= 10000f -> Color(0xFF00E676) // Green for mid-high presence
+                                            else -> activeColor
+                                        }
+                                    } else {
+                                        when {
+                                            i >= 27 -> Color(0xFF00E676) // >20kHz (True Lossless Peak)
+                                            i >= 23 -> Color(0xFF00B0FF) // 16kHz - 20kHz (High presence)
+                                            else -> activeColor
+                                        }
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight(animatedHeight)
+                                            .background(
+                                                brush = Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        barColor.copy(alpha = 0.95f),
+                                                        barColor.copy(alpha = 0.4f),
+                                                        barColor.copy(alpha = 0.05f)
+                                                    )
+                                                ),
+                                                shape = RoundedCornerShape(topStart = 1.5.dp, topEnd = 1.5.dp)
+                                            )
+                                    )
+                                }
+                            }
+
+                            // 3. Drawing Overlaid 8 Parametric Colored Curves (Bell-shaped EQ Filters)
+                            Canvas(modifier = Modifier.fillMaxSize()) {
+                                val curves = listOf(
+                                    Pair(2, Color(0xFFE53935)),   // Bass - Red
+                                    Pair(6, Color(0xFFFB8C00)),   // Low-Mid - Orange
+                                    Pair(10, Color(0xFFFFD54F)),  // Mid 1 - Yellow/Gold
+                                    Pair(14, Color(0xFF4CAF50)),  // Mid 2 - Green
+                                    Pair(18, Color(0xFF00B0FF)),  // Hi-Mid 1 - Cyan
+                                    Pair(22, Color(0xFF1E88E5)),  // Hi-Mid 2 - Blue
+                                    Pair(26, Color(0xFF8E24AA)),  // Treble - Purple
+                                    Pair(30, Color(0xFFF06292))   // Ultra Treble - Pink
+                                )
+
+                                curves.forEach { (bandIdx, color) ->
+                                    val rawHeight = if (isNativeActive) {
+                                        realAmplitudes32.getOrElse(bandIdx) { 0.1f }
+                                    } else {
+                                        proceduralHeights32[bandIdx].value
+                                    }
+                                    
+                                    val animAmp = if (isPlaying) rawHeight else 0.05f
+                                    val path = Path()
+                                    
+                                    val peakX = size.width * ((bandIdx + 0.5f) / 32f)
+                                    val peakY = size.height - (animAmp * size.height * 0.85f).coerceAtLeast(4.dp.toPx())
+                                    val sigma = size.width * 0.11f // Bell width
+
+                                    path.moveTo(0f, size.height)
+                                    for (x in 0..size.width.toInt() step 4) {
+                                        val dx = x - peakX
+                                        val factor = Math.exp((- (dx * dx) / (2.0 * sigma * sigma)).toDouble()).toFloat()
+                                        val y = size.height - (animAmp * size.height * 0.85f) * factor
+                                        path.lineTo(x.toFloat(), y)
+                                    }
+                                    path.lineTo(size.width, size.height)
+                                    path.close()
+
+                                    // Filled glassmorphic filter curves
+                                    drawPath(
+                                        path = path,
+                                        color = color.copy(alpha = 0.06f)
+                                    )
+                                    // Smooth colored outline stroke
+                                    drawPath(
+                                        path = path,
+                                        color = color.copy(alpha = 0.65f),
+                                        style = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round)
+                                    )
+                                }
+                            }
+                        }
+
+                        1 -> {
+                            // --- MODE 1: High-Fi Oscilloscope (Waveform) ---
+                            val timeOffset by transition.animateFloat(
+                                initialValue = 0f,
+                                targetValue = 2 * Math.PI.toFloat(),
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(2500, easing = LinearEasing),
+                                    repeatMode = RepeatMode.Restart
+                                ),
+                                label = "oscilloscope_time"
+                            )
+                            
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Icon(
+                                    imageVector = Icons.Default.VolumeUp,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFF4081).copy(alpha = 0.5f),
+                                    modifier = Modifier
+                                        .align(Alignment.TopStart)
+                                        .padding(8.dp)
+                                        .size(14.dp)
+                                )
+                                
+                                Canvas(modifier = Modifier.fillMaxSize()) {
+                                    val width = size.width
+                                    val height = size.height
+                                    val centerY = height / 2f
+                                    
+                                    // Draw horizontal grid lines
+                                    val gridLinesCount = 6
+                                    for (j in 1 until gridLinesCount) {
+                                        val y = height * (j.toFloat() / gridLinesCount)
+                                        drawLine(
+                                            color = Color.White.copy(alpha = 0.07f),
+                                            start = androidx.compose.ui.geometry.Offset(0f, y),
+                                            end = androidx.compose.ui.geometry.Offset(width, y),
+                                            strokeWidth = 1f
+                                        )
+                                    }
+                                    
+                                    // Draw vertical grid lines
+                                    val vertLinesCount = 10
+                                    for (j in 1 until vertLinesCount) {
+                                        val x = width * (j.toFloat() / vertLinesCount)
+                                        drawLine(
+                                            color = Color.White.copy(alpha = 0.04f),
+                                            start = androidx.compose.ui.geometry.Offset(x, 0f),
+                                            end = androidx.compose.ui.geometry.Offset(x, height),
+                                            strokeWidth = 1f
+                                        )
+                                    }
+                                    
+                                    // Draw dashed center line
+                                    drawLine(
+                                        color = Color.White.copy(alpha = 0.16f),
+                                        start = androidx.compose.ui.geometry.Offset(0f, centerY),
+                                        end = androidx.compose.ui.geometry.Offset(width, centerY),
+                                        strokeWidth = 1.5f,
+                                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 6f), 0f)
+                                    )
+                                    
+                                    // Compute path
+                                    val points = 128
+                                    val path = Path()
+                                    
+                                    for (idx in 0 until points) {
+                                        val x = width * (idx.toFloat() / (points - 1))
+                                        val waveVal = if (isNativeActive && isPlaying) {
+                                            rawWaveform.getOrElse(idx) { 0f }
+                                        } else if (isPlaying) {
+                                            // Fallback procedural waveform (composite harmonics)
+                                            val normX = (idx.toFloat() / points) * 2f * Math.PI.toFloat()
+                                            (0.35f * Math.sin((normX * 4f + timeOffset).toDouble()) +
+                                             0.15f * Math.sin((normX * 9f - timeOffset * 1.5f).toDouble()) +
+                                             0.08f * Math.sin((normX * 18f + timeOffset * 2f).toDouble())).toFloat()
+                                        } else {
+                                            // Subtle background white noise
+                                            (Math.random() * 0.02 - 0.01).toFloat()
+                                        }
+                                        
+                                        val y = centerY + waveVal * centerY * 0.85f
+                                        if (idx == 0) {
+                                            path.moveTo(x, y)
+                                        } else {
+                                            path.lineTo(x, y)
+                                        }
+                                    }
+                                    
+                                    // Outer neon glow
+                                    drawPath(
+                                        path = path,
+                                        color = Color(0xFFFF4081).copy(alpha = 0.15f),
+                                        style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                    )
+                                    // Main solid wave line
+                                    drawPath(
+                                        path = path,
+                                        color = Color(0xFFFF4081).copy(alpha = 0.85f),
+                                        style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                                    )
+                                }
+                            }
+                        }
+
+                        2 -> {
+                            // --- MODE 2: Retro Analog VU Meter ---
+                            val needleSpringSpec = spring<Float>(
+                                dampingRatio = 0.58f, // Classic spring overshoot
+                                stiffness = 160f      // Mechanical ballistic momentum
+                            )
+                            
+                            val proceduralRms = if (isPlaying) {
+                                transition.animateFloat(
+                                    initialValue = 0.15f,
+                                    targetValue = 0.85f,
+                                    animationSpec = infiniteRepeatable(
+                                        animation = keyframes {
+                                            durationMillis = 1800
+                                            0.2f at 0 with FastOutSlowInEasing
+                                            0.75f at 300 with LinearOutSlowInEasing
+                                            0.4f at 600 with FastOutLinearInEasing
+                                            0.85f at 1000 with LinearOutSlowInEasing
+                                            0.15f at 1400 with FastOutSlowInEasing
+                                        },
+                                        repeatMode = RepeatMode.Reverse
+                                    ),
+                                    label = "vu_fallback_val"
+                                ).value
+                            } else {
+                                0f
+                            }
+                            
+                            val targetLevel = if (isNativeActive && isPlaying) {
+                                rmsLevel
+                            } else if (isPlaying) {
+                                proceduralRms
+                            } else {
+                                0f
+                            }
+                            
+                            val animatedLevel by animateFloatAsState(
+                                targetValue = targetLevel.coerceIn(0f, 1f),
+                                animationSpec = needleSpringSpec,
+                                label = "vu_needle_level"
+                            )
+                            
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(0xFF111111), RoundedCornerShape(10.dp))
+                                    .border(0.5.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
+                            ) {
+                                // Retro warm backlight glow
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            brush = Brush.radialGradient(
+                                                colors = listOf(
+                                                    Color(0x35FFA726), // Orange incandescent glow
+                                                    Color.Transparent
+                                                ),
+                                                radius = 300f
+                                            )
+                                        )
+                                )
+                                
+                                Canvas(modifier = Modifier.fillMaxSize().padding(top = 10.dp)) {
+                                    val width = size.width
+                                    val height = size.height
+                                    val pivotX = width / 2f
+                                    val pivotY = height * 0.98f
+                                    val maxRadius = height * 0.82f
+                                    
+                                    val startAngle = 230f
+                                    val endAngle = 310f
+                                    val sweepAngle = endAngle - startAngle
+                                    
+                                    // Scale background path
+                                    drawArc(
+                                        color = Color.White.copy(alpha = 0.15f),
+                                        startAngle = startAngle,
+                                        sweepAngle = sweepAngle,
+                                        useCenter = false,
+                                        style = Stroke(width = 1.dp.toPx()),
+                                        topLeft = androidx.compose.ui.geometry.Offset(pivotX - maxRadius, pivotY - maxRadius),
+                                        size = androidx.compose.ui.geometry.Size(maxRadius * 2, maxRadius * 2)
+                                    )
+                                    
+                                    // Red warn zone (>0dB)
+                                    val redZoneStart = startAngle + sweepAngle * 0.78f
+                                    val redZoneSweep = sweepAngle * 0.22f
+                                    drawArc(
+                                        color = Color(0xFFE53935).copy(alpha = 0.75f),
+                                        startAngle = redZoneStart,
+                                        sweepAngle = redZoneSweep,
+                                        useCenter = false,
+                                        style = Stroke(width = 3.dp.toPx()),
+                                        topLeft = androidx.compose.ui.geometry.Offset(pivotX - maxRadius, pivotY - maxRadius),
+                                        size = androidx.compose.ui.geometry.Size(maxRadius * 2, maxRadius * 2)
+                                    )
+                                    
+                                    // Render ticks
+                                    val ticksCount = 20
+                                    for (j in 0..ticksCount) {
+                                        val fraction = j.toFloat() / ticksCount
+                                        val tickAngle = startAngle + fraction * sweepAngle
+                                        val rad = Math.toRadians(tickAngle.toDouble())
+                                        
+                                        val isMajor = j % 2 == 0
+                                        val tickLen = if (isMajor) 9.dp.toPx() else 4.5.dp.toPx()
+                                        val isRed = tickAngle >= redZoneStart
+                                        val tickColor = if (isRed) Color(0xFFE53935) else Color(0xFFD4CDBC).copy(alpha = 0.65f)
+                                        
+                                        val startX = pivotX + (maxRadius - tickLen) * Math.cos(rad).toFloat()
+                                        val startY = pivotY + (maxRadius - tickLen) * Math.sin(rad).toFloat()
+                                        val endX = pivotX + maxRadius * Math.cos(rad).toFloat()
+                                        val endY = pivotY + maxRadius * Math.sin(rad).toFloat()
+                                        
+                                        drawLine(
+                                            color = tickColor,
+                                            start = androidx.compose.ui.geometry.Offset(startX, startY),
+                                            end = androidx.compose.ui.geometry.Offset(endX, endY),
+                                            strokeWidth = (if (isMajor) 1.5.dp else 0.8.dp).toPx()
+                                        )
+                                        
+                                        // Tick labels
+                                        if (isMajor && j % 4 == 0) {
+                                            val labelVal = when (j) {
+                                                0 -> "-20"
+                                                4 -> "-10"
+                                                8 -> "-5"
+                                                12 -> "-1"
+                                                16 -> "0"
+                                                20 -> "+3"
+                                                else -> ""
+                                            }
+                                            val labelRadius = maxRadius - 18.dp.toPx()
+                                            val labelX = pivotX + labelRadius * Math.cos(rad).toFloat()
+                                            val labelY = pivotY + labelRadius * Math.sin(rad).toFloat()
+                                            
+                                            drawContext.canvas.nativeCanvas.drawText(
+                                                labelVal,
+                                                labelX,
+                                                labelY,
+                                                android.graphics.Paint().apply {
+                                                    color = tickColor.toArgb()
+                                                    textSize = 7.5.sp.toPx()
+                                                    typeface = android.graphics.Typeface.create("sans-serif-condensed", android.graphics.Typeface.BOLD)
+                                                    textAlign = android.graphics.Paint.Align.CENTER
+                                                }
+                                            )
+                                        }
+                                    }
+                                    
+                                    // Text inside VU face
+                                    drawContext.canvas.nativeCanvas.drawText(
+                                        "VU LEVEL / CH-SYNC",
+                                        pivotX,
+                                        pivotY - maxRadius * 0.45f,
+                                        android.graphics.Paint().apply {
+                                            color = Color.White.copy(alpha = 0.25f).toArgb()
+                                            textSize = 8.sp.toPx()
+                                            typeface = android.graphics.Typeface.create("sans-serif-condensed", android.graphics.Typeface.NORMAL)
+                                            textAlign = android.graphics.Paint.Align.CENTER
+                                        }
+                                    )
+                                    drawContext.canvas.nativeCanvas.drawText(
+                                        "ANALOG BALLISTICS",
+                                        pivotX,
+                                        pivotY - maxRadius * 0.3f,
+                                        android.graphics.Paint().apply {
+                                            color = Color(0xFFFF5722).copy(alpha = 0.4f).toArgb()
+                                            textSize = 6.5.sp.toPx()
+                                            typeface = android.graphics.Typeface.create("sans-serif-condensed", android.graphics.Typeface.BOLD)
+                                            textAlign = android.graphics.Paint.Align.CENTER
+                                        }
+                                    )
+                                    
+                                    // Draw needle with shadow
+                                    val needleAngle = startAngle + animatedLevel * sweepAngle
+                                    val needleRad = Math.toRadians(needleAngle.toDouble())
+                                    val needleEndX = pivotX + (maxRadius - 3.dp.toPx()) * Math.cos(needleRad).toFloat()
+                                    val needleEndY = pivotY + (maxRadius - 3.dp.toPx()) * Math.sin(needleRad).toFloat()
+                                    
+                                    // Shadow
+                                    drawLine(
+                                        color = Color.Black.copy(alpha = 0.35f),
+                                        start = androidx.compose.ui.geometry.Offset(pivotX + 2.dp.toPx(), pivotY + 1.dp.toPx()),
+                                        end = androidx.compose.ui.geometry.Offset(needleEndX + 2.dp.toPx(), needleEndY + 1.dp.toPx()),
+                                        strokeWidth = 1.8.dp.toPx(),
+                                        cap = StrokeCap.Round
+                                    )
+                                    
+                                    // Mechanical needle (High-visibility Red-Orange)
+                                    drawLine(
+                                        color = Color(0xFFFF5722),
+                                        start = androidx.compose.ui.geometry.Offset(pivotX, pivotY),
+                                        end = androidx.compose.ui.geometry.Offset(needleEndX, needleEndY),
+                                        strokeWidth = 1.5.dp.toPx(),
+                                        cap = StrokeCap.Round
+                                    )
+                                    
+                                    // Pivot Cap
+                                    drawCircle(
+                                        color = Color(0xFF1E1E12),
+                                        radius = 11.dp.toPx(),
+                                        center = androidx.compose.ui.geometry.Offset(pivotX, pivotY)
+                                    )
+                                    drawCircle(
+                                        color = Color(0xFF333333),
+                                        radius = 11.dp.toPx(),
+                                        center = androidx.compose.ui.geometry.Offset(pivotX, pivotY),
+                                        style = Stroke(width = 1.5.dp.toPx())
+                                    )
+                                    drawCircle(
+                                        color = Color(0xFFFF5722),
+                                        radius = 3.5.dp.toPx(),
+                                        center = androidx.compose.ui.geometry.Offset(pivotX, pivotY)
+                                    )
+                                }
+                                
+                                // Close button "X" inside VU Face
+                                IconButton(
+                                    onClick = { visualizerMode = 0 }, // Switches back to spectrum analyzer
+                                    modifier = Modifier
+                                        .align(Alignment.BottomStart)
+                                        .padding(4.dp)
+                                        .size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Thoát",
+                                        tint = Color.White.copy(alpha = 0.4f),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                                
+                                // Metallic Sensitivity Potentiometer
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(8.dp)
+                                        .size(18.dp)
+                                        .background(
+                                            brush = Brush.sweepGradient(
+                                                colors = listOf(
+                                                    Color(0xFF666666),
+                                                    Color(0xFFCCCCCC),
+                                                    Color(0xFF333333),
+                                                    Color(0xFFCCCCCC),
+                                                    Color(0xFF666666)
+                                                )
+                                            ),
+                                            shape = CircleShape
+                                        )
+                                        .border(0.5.dp, Color.White.copy(alpha = 0.25f), CircleShape)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopCenter)
+                                            .width(1.dp)
+                                            .height(5.dp)
+                                            .background(Color.Black.copy(alpha = 0.8f))
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Show frequency labels only in spectrum mode (Mode 0) to avoid crowding
+                if (visualizerMode == 0) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 1.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val labelStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 7.5.sp, color = Color(0xFFC4BBA6).copy(alpha = 0.4f))
+                        val isNativeHiRes = trackSR > 48000 || trackSuffix.lowercase() in listOf("dsf", "dff", "dsd")
+
+                        if (isNativeHiRes) {
+                            val limitLabel = if (trackSR > 96000) "80kHz" else "40kHz"
+                            Text("20Hz", style = labelStyle)
+                            Text("2kHz", style = labelStyle)
+                            Text("10kHz", style = labelStyle)
+                            Text("20kHz (CD)", style = labelStyle.copy(color = Color(0xFF00E676).copy(alpha = 0.6f), fontWeight = FontWeight.Bold))
+                            Text("$limitLabel (Hi-Res)", style = labelStyle.copy(color = Color(0xFFFFC107).copy(alpha = 0.7f), fontWeight = FontWeight.Bold))
+                            Text("${trackSR / 2000f}kHz", style = labelStyle)
+                        } else {
+                            Text("20Hz", style = labelStyle)
+                            Text("1kHz", style = labelStyle)
+                            Text("8kHz", style = labelStyle)
+                            Text("16kHz (MP3-Cut)", style = labelStyle.copy(color = Color.Red.copy(alpha = 0.6f), fontWeight = FontWeight.Bold))
+                            Text("20kHz (CD)", style = labelStyle.copy(color = Color.Green.copy(alpha = 0.6f), fontWeight = FontWeight.Bold))
+                            Text("24kHz", style = labelStyle)
+                        }
+                    }
+                }
+
+                Divider(color = Color.White.copy(alpha = 0.05f), thickness = 0.5.dp)
+
+                // Lossless Inspection Info Row (Displayed consistently for pro-grade diagnostics across all modes)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 1. Quality badge
+                    val badgeColor = when (losslessVerdict) {
+                        "VERIFIED HI-RES AUDIO" -> Color(0xFFFFA000) // Beautiful Gold
+                        "ANDROID RESAMPLED (LIMIT 48k)" -> Color(0xFF00B0FF) // Cyan / Blue
+                        "UPSCALED / FAKE HI-RES" -> Color(0xFFFF3D00) // Red
+                        "VERIFIED PURE LOSSLESS" -> Color(0xFF00C853) // Green
+                        "PROBABLE LOSSLESS" -> Color(0xFFFFAB00) // Amber
+                        "COMPRESSED / LOSS_CUT" -> Color(0xFFFF3D00) // Red
+                        else -> Color(0xFF00B0FF)
+                    }
+                    val badgeText = when (losslessVerdict) {
+                        "VERIFIED HI-RES AUDIO" -> "✦ TRUE HI-RES GOLD"
+                        "ANDROID RESAMPLED (LIMIT 48k)" -> "✦ RESAMPLED HI-RES"
+                        "UPSCALED / FAKE HI-RES" -> "⚠ FAKE HI-RES (CD UPSCALED)"
+                        "VERIFIED PURE LOSSLESS" -> "✓ REAL CD LOSSLESS"
+                        "PROBABLE LOSSLESS" -> "⚠ PROBABLE LOSSLESS"
+                        "COMPRESSED / LOSS_CUT" -> "⚠ FAKE / COMPRESSED"
+                        else -> "⚡ ANALYZING..."
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(badgeColor.copy(alpha = 0.15f))
+                            .border(0.5.dp, badgeColor.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = badgeText,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontSize = 8.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = badgeColor
+                            )
+                        )
+                    }
+
+                    // 2. Statistics details
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Column {
+                            Text(
+                                "EST. CUTOFF",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.5.sp, color = Color.White.copy(alpha = 0.35f))
+                            )
+                            Text(
+                                if (cutoffFrequency > 0) "${(cutoffFrequency / 1000f)} kHz" else "Analyzing...",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            )
+                        }
+
+                        Column {
+                            Text(
+                                "MIXER CAP",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.5.sp, color = Color.White.copy(alpha = 0.35f))
+                            )
+                            Text(
+                                "${captureSR / 1000f} kHz",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            )
+                        }
+
+                        Column {
+                            Text(
+                                "INTEGRITY",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.5.sp, color = Color.White.copy(alpha = 0.35f))
+                            )
+                            Text(
+                                if (losslessConfidence > 0) "${losslessConfidence.toInt()}%" else "Analyzing...",
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 9.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                            )
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "REAL-TIME DIAGNOSIS",
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 6.5.sp, color = Color.White.copy(alpha = 0.35f))
+                            )
+                            val desc = when (losslessVerdict) {
+                                "VERIFIED HI-RES AUDIO" -> "Sóng siêu âm hoạt động mạnh >20kHz. Hi-Res chuẩn phòng thu master."
+                                "ANDROID RESAMPLED (LIMIT 48k)" -> "Mixer Android giới hạn ở 48kHz. Hãy cắm USB DAC để nghe Hi-Res gốc!"
+                                "UPSCALED / FAKE HI-RES" -> "Phát hiện giả Hi-Res. File được nâng khống từ nguồn CD hoặc lossy."
+                                "VERIFIED PURE LOSSLESS" -> "Phổ âm mạnh >18kHz. Lossless xịn chuẩn CD."
+                                "PROBABLE LOSSLESS" -> "Dải tần tốt. Có dấu hiệu lossless chuẩn."
+                                "COMPRESSED / LOSS_CUT" -> "Bị giới hạn tần số. File fake nâng từ MP3."
+                                else -> "Đang đo mẫu thử tần số cao..."
+                            }
+                            Text(
+                                desc,
+                                style = MaterialTheme.typography.bodySmall.copy(fontSize = 8.5.sp, color = Color(0xFFC4BBA6), fontWeight = FontWeight.Medium),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
+}
 }
 
 
@@ -597,6 +1838,20 @@ fun AnimatedAmbientBackground(artworkUri: Any?, modifier: Modifier = Modifier) {
                         this.alpha = pulseAlpha
                     }
                     .blur(24.dp, edgeTreatment = androidx.compose.ui.draw.BlurredEdgeTreatment.Unbounded),
+            )
+        }
+
+        // Submerged crisp high-resolution artwork layer
+        if (artworkUri != null) {
+            AsyncImage(
+                model = artworkUri,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        this.alpha = 0.16f
+                    }
             )
         }
 
@@ -764,7 +2019,7 @@ fun isUsbDacConnected(context: Context): Boolean {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun NowPlayingScreen(onClose: () -> Unit) {
+fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {}) {
     // Intercept back presses to slide down player smoothly instead of exiting application
     BackHandler(onBack = onClose)
 
@@ -853,6 +2108,10 @@ fun NowPlayingScreen(onClose: () -> Unit) {
         }
     }
     
+    val bitPerfectEnabled by player.bitPerfectEnabled.collectAsState()
+    var showSignalPathDialog by remember { mutableStateOf(false) }
+
+    
     val extras = meta?.extras
     val currentSongId = remember(meta) { extras?.getString("songId") }
     val suffix = extras?.getString("suffix")
@@ -939,7 +2198,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
     // Responsive design detection (Folded vs. Unfolded Cover screen)
     val configuration = LocalConfiguration.current
-    val isWideScreen = isTv || configuration.screenWidthDp >= 600
+    val isWideScreen = isTv || (configuration.screenWidthDp >= 600 && configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE)
 
     val focusRequester = remember { FocusRequester() }
     if (isTv) {
@@ -977,12 +2236,17 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     .padding(24.dp),
                 horizontalArrangement = Arrangement.spacedBy(28.dp)
             ) {
-                // COL 1: Left panel (Artwork, Controls, Signal Path, Hardware notes, Review card)
+                // COL 1: Left panel (Controls, Signal Path, Hardware notes, Review card)
                 Column(
                     modifier = Modifier
                         .weight(1.1f)
                         .fillMaxHeight()
                         .verticalScroll(rememberScrollState())
+                        .swipeGestures(
+                            onSwipeDown = onClose,
+                            onSwipeLeft = { player.next() },
+                            onSwipeRight = { player.previous() }
+                        )
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -992,13 +2256,26 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Đóng",
                                 tint = Color.White, modifier = Modifier.size(28.dp))
                         }
-                        Text(
-                            text = "ĐANG PHÁT (NOW PLAYING)",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                        Column(
                             modifier = Modifier.weight(1f).padding(start = 8.dp)
-                        )
+                        ) {
+                            Text(
+                                text = meta?.title?.toString() ?: "",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.basicMarquee()
+                            )
+                            Text(
+                                text = meta?.artist?.toString() ?: "",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFC4BBA6),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                         if (isTv) {
                             val ssSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
                             IconButton(
@@ -1019,57 +2296,16 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
                     Spacer(Modifier.height(16.dp))
 
+                    // Hi-Res Signal Capsule Badge (Widescreen)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(1.6f)
-                            .swipeGestures(
-                                onSwipeDown = onClose,
-                                onSwipeLeft = { player.next() },
-                                onSwipeRight = { player.previous() }
-                            ),
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { showSignalPathDialog = true },
                         contentAlignment = Alignment.Center
                     ) {
-                        AsyncImage(
-                            model = art, contentDescription = null, contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .aspectRatio(1f)
-                                .graphicsLayer {
-                                    scaleX = artScale
-                                    scaleY = artScale
-                                }
-                                .shadow(
-                                    elevation = artShadow,
-                                    shape = RoundedCornerShape(artCorner),
-                                    clip = false,
-                                    ambientColor = ledColor.copy(alpha = 0.45f),
-                                    spotColor = ledColor
-                                )
-                                .clip(RoundedCornerShape(artCorner))
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
-                        )
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Text(
-                        meta?.title?.toString() ?: "",
-                        style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold,
-                        color = Color.White, textAlign = TextAlign.Center, maxLines = 1,
-                        modifier = Modifier.fillMaxWidth().basicMarquee(),
-                    )
-                    Text(
-                        meta?.artist?.toString() ?: "",
-                        style = MaterialTheme.typography.titleMedium, color = Color(0xFFC4BBA6),
-                        textAlign = TextAlign.Center, maxLines = 1,
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    // Hi-Res Signal Capsule Badge (Widescreen)
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         HiResSignalCapsule(
                             isPlaying = state.isPlaying,
                             suffix = suffix,
@@ -1087,8 +2323,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         ledColor = ledColor,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(72.dp)
-                            .padding(top = 10.dp, bottom = 2.dp)
+                            .padding(top = 16.dp, bottom = 8.dp)
                     )
 
                     WaveformSeekbar(
@@ -1164,7 +2399,6 @@ fun NowPlayingScreen(onClose: () -> Unit) {
 
                     Spacer(Modifier.height(16.dp))
 
-                    // Embedded Signal Path Steps inside Left Column scroll
                     Text(
                         text = "ĐƯỜNG TRUYỀN TÍN HIỆU (SIGNAL PATH)",
                         style = MaterialTheme.typography.titleSmall,
@@ -1178,63 +2412,60 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(Color(0x0AFFFFFF))
-                            .padding(16.dp)
+                            .border(0.5.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        SignalPathStep(
-                            title = "1. NGUỒN NHẠC GỐC (ORIGINAL FILE)",
-                            value = formatName,
-                            subValue = originalSpecs,
-                            isFirst = true,
-                            color = ledColor
-                        )
-
-                        val isTranscoded = remember(suffix) { isServerTranscodeSuffix(suffix) }
-                        val streamingValue = if (isTranscoded) "Server Transcoded (FLAC 24-bit)" else "Direct Stream (Nguyên bản)"
-                        val streamingSub = if (isTranscoded) {
-                            "Dữ liệu gốc định dạng $suffix được máy chủ tự động chuyển mã không hao tổn sang FLAC 24-bit PCM giúp Android giải mã tối ưu."
-                        } else {
-                            "Truyền phát trực tiếp ở chất lượng nguyên gốc từ máy chủ, không qua xử lý hay tái nén."
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color(0x0DFFFFFF))
+                                .border(0.5.dp, ledColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(ledColor)
+                            )
+                            Text(
+                                text = "${suffix?.uppercase() ?: "FLAC"} ${if (bitDepth > 0) "${bitDepth}-bit / " else ""}${if (samplingRate > 0) "${samplingRate / 1000.0} kHz" else "44.1 kHz"} • ${audioReport.statusLabel}",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
-                        SignalPathStep(
-                            title = "2. PHƯƠNG THỨC TRUYỀN PHÁT (STREAMING)",
-                            value = streamingValue,
-                            subValue = streamingSub,
-                            color = ledColor
+
+                        Spacer(Modifier.height(12.dp))
+
+                        Text(
+                            text = "Bộ lọc DSP: $activeFilter • Thiết bị: ${activeDevice.name}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFC4BBA6),
+                            textAlign = TextAlign.Center
                         )
 
-                        val engineValue = if (isDspEnabled) "HQPlayer-grade Audiophile DSP" else "ExoPlayer Engine (Float 32-bit)"
-                        SignalPathStep(
-                            title = "3. BỘ GIẢI MÃ SỐ (AUDIO ENGINE / DSP)",
-                            value = engineValue,
-                            subValue = audioReport.dspEngineStatus,
-                            color = ledColor,
-                            content = {
-                                InteractiveDspSelectors(
-                                    activeFilter = activeFilter,
-                                    activeDither = activeDither,
-                                    activeModulator = activeModulator,
-                                    onFilterSelected = { player.setFilter(it) },
-                                    onDitherSelected = { player.setDither(it) },
-                                    onModulatorSelected = { player.setModulator(it) }
-                                )
-                            }
-                        )
+                        Spacer(Modifier.height(16.dp))
 
-                        val deviceDetails = "${activeDevice.techLabel} • Định dạng thực tế: ${audioReport.actualOutputFormat}\n${activeDevice.description}"
-                        SignalPathStep(
-                            title = "4. THIẾT BỊ ĐẦU RA (OUTPUT HARDWARE)",
-                            value = activeDevice.name,
-                            subValue = deviceDetails,
-                            color = ledColor
-                        )
-
-                        SignalPathStep(
-                            title = "5. DỰ BÁO CHẤT LƯỢNG (AUDIO FORECAST)",
-                            value = audioReport.statusLabel,
-                            subValue = audioReport.statusDesc,
-                            isLast = true,
-                            color = ledColor
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                                .clickable { onNavigateToSettings() }
+                                .padding(vertical = 10.dp, horizontal = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Xem chi tiết đường truyền & Cấu hình thiết bị ➜",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
 
                     Spacer(Modifier.height(16.dp))
@@ -1507,7 +2738,7 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                 modifier = Modifier
                     .fillMaxSize()
                     .systemBarsPadding()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(vertical = 8.dp)
                     .swipeGestures(
                         onSwipeUp = { isQueueExpanded = true },
                         onSwipeDown = {
@@ -1520,179 +2751,166 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     )
             ) {
                 // PART 1: STICKY CONTROL CONSOLE (STATIONARY AT THE TOP)
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(animatedSpacing)
-                ) {
-                    // Header row (Back / close button)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(onClick = onClose) {
-                            Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Đóng",
-                                tint = Color.White, modifier = Modifier.size(28.dp))
-                        }
-                        Text(
-                            text = "ĐANG PHÁT (NOW PLAYING)",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(start = 8.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
+                        .background(Color(0x1F141218))
+                        .border(
+                            1.dp,
+                            Color.White.copy(alpha = 0.08f),
+                            RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
                         )
-                    }
-
-                    // Album Art - beautifully compacted with animated height & alpha transitions
-                    if (animatedArtHeight > 10.dp) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(animatedArtHeight)
-                                .graphicsLayer { alpha = artAlpha }
-                                .swipeGestures(
-                                    onSwipeDown = { isQueueExpanded = false },
-                                    onSwipeLeft = { player.next() },
-                                    onSwipeRight = { player.previous() }
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            AsyncImage(
-                                model = art, contentDescription = null, contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .aspectRatio(1f)
-                                    .graphicsLayer {
-                                        scaleX = artScale
-                                        scaleY = artScale
-                                    }
-                                    .shadow(
-                                        elevation = artShadow,
-                                        shape = RoundedCornerShape(artCorner),
-                                        clip = false,
-                                        ambientColor = ledColor.copy(alpha = 0.45f),
-                                        spotColor = ledColor
-                                    )
-                                    .clip(RoundedCornerShape(artCorner))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                            )
-                        }
-                    }
-
-                    // Meta details (Title & Artist)
-                    if (animatedMetaHeight > 10.dp) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(animatedMetaHeight)
-                                .graphicsLayer { alpha = metaAlpha },
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                meta?.title?.toString() ?: "",
-                                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold,
-                                color = Color.White, textAlign = TextAlign.Center, maxLines = 1,
-                                modifier = Modifier.fillMaxWidth().basicMarquee(),
-                            )
-                            Text(
-                                meta?.artist?.toString() ?: "",
-                                style = MaterialTheme.typography.bodyMedium, color = Color(0xFFC4BBA6),
-                                textAlign = TextAlign.Center, maxLines = 1,
-                                modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-                            )
-                        }
-                    }
-
-                    // Redesigned Hi-Res Signal Capsule Badge (Responsive, wrap-resistant, technical density)
-                    if (animatedCapsuleHeight > 5.dp) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(animatedCapsuleHeight)
-                                .graphicsLayer { alpha = capsuleAlpha },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            HiResSignalCapsule(
-                                isPlaying = state.isPlaying,
-                                suffix = suffix,
-                                bitRate = bitRate,
-                                bitDepth = bitDepth,
-                                samplingRate = samplingRate,
-                                activeDevice = activeDevice,
-                                ledColor = ledColor
-                            )
-                        }
-                    }
-
-                    // Real-Time 16-Band FFT Spectrum Analyzer (Always Pinned)
-                    RealTimeSpectrumAnalyzer(
-                        isPlaying = state.isPlaying,
-                        ledColor = ledColor,
+                ) {
+                    // Darkening scrim gradient
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(58.dp)
-                            .padding(top = 2.dp, bottom = 2.dp)
+                            .matchParentSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color(0x11000000),
+                                        Color(0x77000000)
+                                    )
+                                )
+                            )
                     )
 
-                    // Progress WaveformSeekbar & times
-                    if (animatedSeekbarHeight > 10.dp) {
-                        Column(
+                    // Control content overlay
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(animatedSpacing)
+                    ) {
+                        // Header row (Back / close button) with compact title and artist details
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(onClick = onClose) {
+                                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Đóng",
+                                    tint = Color.White, modifier = Modifier.size(28.dp))
+                            }
+                            Column(
+                                modifier = Modifier.weight(1f).padding(start = 8.dp)
+                            ) {
+                                Text(
+                                    text = meta?.title?.toString() ?: "",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.basicMarquee()
+                                )
+                                Text(
+                                    text = meta?.artist?.toString() ?: "",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFC4BBA6),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        // Redesigned Hi-Res Signal Capsule Badge (Responsive, wrap-resistant, technical density)
+                        if (animatedCapsuleHeight > 5.dp) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(animatedCapsuleHeight)
+                                    .graphicsLayer { alpha = capsuleAlpha }
+                                    .padding(horizontal = 20.dp)
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) { showSignalPathDialog = true },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                HiResSignalCapsule(
+                                    isPlaying = state.isPlaying,
+                                    suffix = suffix,
+                                    bitRate = bitRate,
+                                    bitDepth = bitDepth,
+                                    samplingRate = samplingRate,
+                                    activeDevice = activeDevice,
+                                    ledColor = ledColor
+                                )
+                            }
+                        }
+
+                        // Real-Time 32-Band FFT Spectrum Analyzer (Always Pinned) - NO HORIZONTAL PADDING = TRÂN WIDTH!
+                        RealTimeSpectrumAnalyzer(
+                            isPlaying = state.isPlaying,
+                            ledColor = ledColor,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(animatedSeekbarHeight)
-                                .graphicsLayer { alpha = seekbarAlpha }
-                        ) {
-                            WaveformSeekbar(
-                                songId = currentSongId ?: "",
-                                progress = progress.coerceIn(0f, 1f),
-                                onSeek = { player.seekTo((it * duration).toLong()) },
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            )
-                            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text(formatMs(state.positionMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
-                                Text(formatMs(state.durationMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
+                                .padding(top = 2.dp, bottom = 2.dp)
+                        )
+
+                        // Progress WaveformSeekbar & times
+                        if (animatedSeekbarHeight > 10.dp) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(animatedSeekbarHeight)
+                                    .graphicsLayer { alpha = seekbarAlpha }
+                                    .padding(horizontal = 20.dp)
+                            ) {
+                                WaveformSeekbar(
+                                    songId = currentSongId ?: "",
+                                    progress = progress.coerceIn(0f, 1f),
+                                    onSeek = { player.seekTo((it * duration).toLong()) },
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                )
+                                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text(formatMs(state.positionMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
+                                    Text(formatMs(state.durationMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
+                                }
                             }
                         }
-                    }
 
-                    // Playback Buttons (Always Pinned)
-                    Row(
-                        Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        IconButton(onClick = { player.previous() }, modifier = Modifier.size(48.dp)) {
-                            Icon(Icons.Filled.SkipPrevious, "Bài trước", modifier = Modifier.size(32.dp), tint = Color.White)
-                        }
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.padding(horizontal = 12.dp).size(68.dp)
+                        // Playback Buttons (Always Pinned)
+                        Row(
+                            Modifier.fillMaxWidth().padding(vertical = 2.dp).padding(horizontal = 20.dp),
+                            horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            if (state.isPlaying) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .graphicsLayer {
-                                            scaleX = haloScale
-                                            scaleY = haloScale
-                                            alpha = haloAlpha
-                                        }
-                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
-                                )
+                            IconButton(onClick = { player.previous() }, modifier = Modifier.size(48.dp)) {
+                                Icon(Icons.Filled.SkipPrevious, "Bài trước", modifier = Modifier.size(32.dp), tint = Color.White)
                             }
                             Box(
-                                Modifier.size(56.dp)
-                                    .clip(CircleShape).background(MaterialTheme.colorScheme.primary)
-                                    .clickable { player.togglePlay() },
                                 contentAlignment = Alignment.Center,
+                                modifier = Modifier.padding(horizontal = 12.dp).size(68.dp)
                             ) {
-                                Icon(
-                                    if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                    contentDescription = "Phát/Dừng", modifier = Modifier.size(32.dp),
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                )
+                                if (state.isPlaying) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(56.dp)
+                                            .graphicsLayer {
+                                                scaleX = haloScale
+                                                scaleY = haloScale
+                                                alpha = haloAlpha
+                                            }
+                                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
+                                    )
+                                }
+                                Box(
+                                    Modifier.size(56.dp)
+                                        .clip(CircleShape).background(MaterialTheme.colorScheme.primary)
+                                        .clickable { player.togglePlay() },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                        contentDescription = "Phát/Dừng", modifier = Modifier.size(32.dp),
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                    )
+                                }
                             }
-                        }
-                        IconButton(onClick = { player.next() }, modifier = Modifier.size(48.dp)) {
-                            Icon(Icons.Filled.SkipNext, "Bài sau", modifier = Modifier.size(32.dp), tint = Color.White)
+                            IconButton(onClick = { player.next() }, modifier = Modifier.size(48.dp)) {
+                                Icon(Icons.Filled.SkipNext, "Bài sau", modifier = Modifier.size(32.dp), tint = Color.White)
+                            }
                         }
                     }
                 }
@@ -1702,7 +2920,8 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { isQueueExpanded = !isQueueExpanded }
-                        .padding(vertical = 10.dp),
+                        .padding(vertical = 10.dp)
+                        .padding(horizontal = 20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(
@@ -1717,20 +2936,10 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f),
+                        .weight(1f)
+                        .padding(horizontal = 20.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // ── PORTRAIT INLINE PLAYLIST QUEUE ─────────────────────────────────────
-                    item {
-                        Text(
-                            text = "DANH SÁCH PHÁT TIẾP THEO (QUEUE)",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-
                     if (queueItems.isEmpty()) {
                         item {
                             Text("Hàng đợi trống", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
@@ -1792,21 +3001,31 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         }
                     }
 
-                    // Autoplay Radio Card in scroll feed
+                    // Autoplay Radio Card in scroll feed - extremely simplified & elegant glassmorphism
                     item {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(Color(0x11FFFFFF))
-                                .padding(14.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(Icons.Filled.Radio, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                            Spacer(Modifier.width(12.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text("Nhạc Radio tự động (Autoplay)", style = MaterialTheme.typography.bodyMedium, color = Color.White, fontWeight = FontWeight.Bold)
-                                Text("Tự động tìm phát nhạc tương tự khi hết hàng đợi", style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    Icons.Filled.Radio,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(Modifier.width(12.dp))
+                                Text(
+                                    "Tự động gợi ý",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             }
                             Switch(
                                 checked = autoRadioEnabled,
@@ -1815,77 +3034,65 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                         }
                     }
 
-                    // ── PORTRAIT INLINE RECOMMENDATIONS ────────────────────────────────────
-                    item {
-                        Text(
-                            text = "GỢI Ý BÀI HÁT TƯƠNG TỰ (RADIO)",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
-
-                    if (isRecLoading) {
-                        item {
-                            Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                    } else if (recSongs.isEmpty()) {
-                        item {
-                            Text("Không có gợi ý tương tự", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                        }
-                    } else {
-                        itemsIndexed(recSongs) { index, song ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        player.appendSong(song)
-                                        queueItems = player.getQueue()
-                                        currentIndex = player.getCurrentIndex()
-                                        player.skipToQueueItem(player.getQueue().size - 1)
-                                    }
-                                    .padding(vertical = 6.dp, horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                AsyncImage(
-                                    model = repo.config.coverArtUrl(song.coverArt, 120),
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(Color(0xFF231F27)),
-                                    contentScale = ContentScale.Crop
-                                )
-                                Spacer(Modifier.width(12.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        song.title,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        song.artist ?: "Unknown Artist",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color(0xFFC4BBA6),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
+                    // Show recommendations directly underneath if auto-radio is enabled
+                    if (autoRadioEnabled) {
+                        if (isRecLoading) {
+                            item {
+                                Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.primary)
                                 }
-                                IconButton(
-                                    onClick = {
-                                        player.appendSong(song)
-                                        queueItems = player.getQueue()
-                                        currentIndex = player.getCurrentIndex()
-                                        Toast.makeText(context, "Đã thêm vào cuối hàng đợi", Toast.LENGTH_SHORT).show()
-                                    }
+                            }
+                        } else if (recSongs.isNotEmpty()) {
+                            itemsIndexed(recSongs) { index, song ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            player.appendSong(song)
+                                            queueItems = player.getQueue()
+                                            currentIndex = player.getCurrentIndex()
+                                            player.skipToQueueItem(player.getQueue().size - 1)
+                                        }
+                                        .padding(vertical = 6.dp, horizontal = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Filled.PlayArrow, "Thêm", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                    AsyncImage(
+                                        model = repo.config.coverArtUrl(song.coverArt, 120),
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(Color(0xFF231F27)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            song.title,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            song.artist ?: "Unknown Artist",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color(0xFFC4BBA6),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            player.appendSong(song)
+                                            queueItems = player.getQueue()
+                                            currentIndex = player.getCurrentIndex()
+                                            Toast.makeText(context, "Đã thêm vào cuối hàng đợi", Toast.LENGTH_SHORT).show()
+                                        }
+                                    ) {
+                                        Icon(Icons.Filled.PlayArrow, "Thêm", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                    }
                                 }
                             }
                         }
@@ -1908,63 +3115,60 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(Color(0x0AFFFFFF))
-                                .padding(16.dp)
+                                .border(0.5.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            SignalPathStep(
-                                title = "1. NGUỒN NHẠC GỐC (ORIGINAL FILE)",
-                                value = formatName,
-                                subValue = originalSpecs,
-                                isFirst = true,
-                                color = ledColor
-                            )
-
-                            val isTranscoded = remember(suffix) { isServerTranscodeSuffix(suffix) }
-                            val streamingValue = if (isTranscoded) "Server Transcoded (FLAC 24-bit)" else "Direct Stream (Nguyên bản)"
-                            val streamingSub = if (isTranscoded) {
-                                "Dữ liệu gốc định dạng $suffix được máy chủ tự động chuyển mã không hao tổn sang FLAC 24-bit PCM giúp Android giải mã tối ưu."
-                            } else {
-                                "Truyền phát trực tiếp ở chất lượng nguyên gốc từ máy chủ, không qua xử lý hay tái nén."
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color(0x0DFFFFFF))
+                                    .border(0.5.dp, ledColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(ledColor)
+                                )
+                                Text(
+                                    text = "${suffix?.uppercase() ?: "FLAC"} ${if (bitDepth > 0) "${bitDepth}-bit / " else ""}${if (samplingRate > 0) "${samplingRate / 1000.0} kHz" else "44.1 kHz"} • ${audioReport.statusLabel}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
                             }
-                            SignalPathStep(
-                                title = "2. PHƯƠNG THỨC TRUYỀN PHÁT (STREAMING)",
-                                value = streamingValue,
-                                subValue = streamingSub,
-                                color = ledColor
+
+                            Spacer(Modifier.height(12.dp))
+
+                            Text(
+                                text = "Bộ lọc DSP: $activeFilter • Thiết bị: ${activeDevice.name}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFC4BBA6),
+                                textAlign = TextAlign.Center
                             )
 
-                            val engineValue = if (isDspEnabled) "HQPlayer-grade Audiophile DSP" else "ExoPlayer Engine (Float 32-bit)"
-                            SignalPathStep(
-                                title = "3. BỘ GIẢI MÃ SỐ (AUDIO ENGINE / DSP)",
-                                value = engineValue,
-                                subValue = audioReport.dspEngineStatus,
-                                color = ledColor,
-                                content = {
-                                    InteractiveDspSelectors(
-                                        activeFilter = activeFilter,
-                                        activeDither = activeDither,
-                                        activeModulator = activeModulator,
-                                        onFilterSelected = { player.setFilter(it) },
-                                        onDitherSelected = { player.setDither(it) },
-                                        onModulatorSelected = { player.setModulator(it) }
-                                    )
-                                }
-                            )
+                            Spacer(Modifier.height(16.dp))
 
-                            val deviceDetails = "${activeDevice.techLabel} • Định dạng thực tế: ${audioReport.actualOutputFormat}\n${activeDevice.description}"
-                            SignalPathStep(
-                                title = "4. THIẾT BỊ ĐẦU RA (OUTPUT HARDWARE)",
-                                value = activeDevice.name,
-                                subValue = deviceDetails,
-                                color = ledColor
-                            )
-
-                            SignalPathStep(
-                                title = "5. DỰ BÁO CHẤT LƯỢNG (AUDIO FORECAST)",
-                                value = audioReport.statusLabel,
-                                subValue = audioReport.statusDesc,
-                                isLast = true,
-                                color = ledColor
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                                    .clickable { onNavigateToSettings() }
+                                    .padding(vertical = 10.dp, horizontal = 16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Xem chi tiết đường truyền & Cấu hình thiết bị ➜",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
                     }
 
@@ -2014,94 +3218,28 @@ fun NowPlayingScreen(onClose: () -> Unit) {
                 onDismiss = { isScreensaverActive = false }
             )
         }
+
+        if (showSignalPathDialog && currentSongId != null) {
+            RoonSignalPathDialog(
+                songId = currentSongId,
+                songTitle = meta?.title?.toString() ?: "",
+                artistName = meta?.artist?.toString() ?: "",
+                suffix = suffix ?: songDetails?.suffix,
+                bitRate = if (bitRate > 0) bitRate else (songDetails?.bitRate ?: 0),
+                bitDepth = if (bitDepth > 0) bitDepth else (songDetails?.bitDepth ?: 0),
+                samplingRate = if (samplingRate > 0) samplingRate else (songDetails?.samplingRate ?: 0),
+                activeDevice = activeDevice,
+                activeFilter = activeFilter,
+                activeDither = activeDither,
+                activeModulator = activeModulator,
+                bitPerfectEnabled = bitPerfectEnabled,
+                onDismiss = { showSignalPathDialog = false }
+            )
+        }
     }
 }
 
-@Composable
-private fun SignalPathStep(
-    title: String,
-    value: String,
-    subValue: String,
-    isFirst: Boolean = false,
-    isLast: Boolean = false,
-    color: Color,
-    content: @Composable (() -> Unit)? = null
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(vertical = 4.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        // Line and Node column
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(32.dp).fillMaxHeight()
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(16.dp).padding(top = 4.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(14.dp)
-                        .clip(CircleShape)
-                        .background(color.copy(alpha = 0.25f))
-                )
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(color)
-                )
-            }
-            if (!isLast) {
-                Box(
-                    modifier = Modifier
-                        .padding(vertical = 2.dp)
-                        .width(3.dp)
-                        .weight(1f)
-                        .clip(RoundedCornerShape(1.5.dp))
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(color.copy(alpha = 0.4f), color.copy(alpha = 0.1f))
-                            )
-                        )
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.width(10.dp))
-        
-        Column(modifier = Modifier.weight(1f).padding(bottom = 16.dp)) {
-            Text(
-                text = title.uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-                color = color.copy(alpha = 0.85f),
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 2.dp)
-            )
-            if (subValue.isNotEmpty()) {
-                Text(
-                    text = subValue,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFC4BBA6),
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-            if (content != null) {
-                Box(modifier = Modifier.padding(top = 8.dp)) {
-                    content()
-                }
-            }
-        }
-    }
-}
+
 
 
 private fun formatOriginalSpecs(suffix: String?, bitDepth: Int, samplingRate: Int, bitRate: Int): Pair<String, String> {

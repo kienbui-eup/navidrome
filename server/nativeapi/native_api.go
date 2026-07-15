@@ -2,6 +2,7 @@ package nativeapi
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"html"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"github.com/vi2play/vi2play/core"
 	"github.com/vi2play/vi2play/core/metrics"
 	playlistsvc "github.com/vi2play/vi2play/core/playlists"
+	"github.com/vi2play/vi2play/db"
 	"github.com/vi2play/vi2play/log"
 	"github.com/vi2play/vi2play/model"
 	"github.com/vi2play/vi2play/model/request"
@@ -68,6 +70,7 @@ func (api *Router) routes() http.Handler {
 		r.Use(server.UpdateLastAccessMiddleware(api.ds))
 		api.RX(r, "/user", api.users.NewRepository, true)
 		api.R(r, "/song", model.MediaFile{}, false)
+		r.With(server.URLParamsMiddleware).Get("/song/{id}/audiophile", api.getSongAudiophile)
 		api.R(r, "/album", model.Album{}, false)
 		api.addArtistRoute(r)
 		api.R(r, "/genre", model.Genre{}, false)
@@ -279,4 +282,45 @@ func adminOnlyMiddleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (api *Router) getSongAudiophile(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "missing song id", http.StatusBadRequest)
+		return
+	}
+
+	type AudiophileInfo struct {
+		MediaFileID       string    `json:"mediaFileId"`
+		RealLossless      bool      `json:"realLossless"`
+		CutoffFrequency   float64   `json:"cutoffFrequency"`
+		DynamicRangeScore int       `json:"dynamicRangeScore"`
+		AnalyzedAt        string    `json:"analyzedAt"`
+	}
+
+	var info AudiophileInfo
+	sqldb := db.Db()
+
+	query := `SELECT media_file_id, real_lossless, cutoff_frequency, dynamic_range_score, analyzed_at 
+	          FROM media_file_audiophile WHERE media_file_id = ?`
+	err := sqldb.QueryRowContext(r.Context(), query, id).Scan(
+		&info.MediaFileID, &info.RealLossless, &info.CutoffFrequency, &info.DynamicRangeScore, &info.AnalyzedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"status": "pending"}`))
+			return
+		}
+		log.Error(r.Context(), "Error querying audiophile details", "id", id, err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(info); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

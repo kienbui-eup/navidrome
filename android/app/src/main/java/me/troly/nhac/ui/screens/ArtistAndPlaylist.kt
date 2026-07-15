@@ -66,6 +66,7 @@ import me.troly.nhac.ui.tvFocusable
 import me.troly.nhac.ui.components.AddToPlaylistSheet
 import me.troly.nhac.ui.components.DeletePlaylistDialog
 import me.troly.nhac.ui.components.SongRow
+import me.troly.nhac.ui.components.swipeBackGesture
 
 // ── Artist detail ───────────────────────────────────────────────────────────
 class ArtistViewModel(private val repo: SubsonicRepository, private val id: String) : ViewModel() {
@@ -94,45 +95,47 @@ fun ArtistDetailScreen(artistId: String, onBack: () -> Unit, onAlbum: (String) -
     if (artist == null) { Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }; return }
     val a = artist!!
 
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(if (isTv) 180.dp else 150.dp),
-        contentPadding = PaddingValues(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 88.dp),
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-            Column(Modifier.statusBarsPadding()) {
-                Row(Modifier.fillMaxWidth()) {
-                    val backSource = rememberInteractionSource()
-                    IconButton(
-                        onClick = onBack,
-                        modifier = Modifier.then(if (isTv) Modifier.tvFocusable(backSource) else Modifier)
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại", tint = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(28.dp))
+    Box(Modifier.fillMaxSize().swipeBackGesture { onBack() }) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(if (isTv) 180.dp else 150.dp),
+            contentPadding = PaddingValues(start = 12.dp, top = 12.dp, end = 12.dp, bottom = 88.dp),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                Column(Modifier.statusBarsPadding()) {
+                    Row(Modifier.fillMaxWidth()) {
+                        val backSource = rememberInteractionSource()
+                        IconButton(
+                            onClick = onBack,
+                            modifier = Modifier.then(if (isTv) Modifier.tvFocusable(backSource) else Modifier)
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại", tint = MaterialTheme.colorScheme.onBackground,
+                                modifier = Modifier.size(28.dp))
+                        }
                     }
+                    Text(a.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(start = 12.dp, bottom = 8.dp))
                 }
-                Text(a.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(start = 12.dp, bottom = 8.dp))
             }
-        }
-        gridItems(a.album, key = { it.id }) { album ->
-            val source = rememberInteractionSource()
-            Column(
-                Modifier.padding(6.dp)
-                    .then(if (isTv) Modifier.tvFocusable(source) else Modifier)
-                    .clickable(interactionSource = source, indication = null) { onAlbum(album.id) },
-            ) {
-                AsyncImage(
-                    model = repo.config.coverArtUrl(album.coverArt, 400),
-                    contentDescription = album.name, contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(10.dp)),
-                )
-                Text(album.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 6.dp))
-                album.year?.let {
-                    Text(it.toString(), style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+            gridItems(a.album, key = { it.id }) { album ->
+                val source = rememberInteractionSource()
+                Column(
+                    Modifier.padding(6.dp)
+                        .then(if (isTv) Modifier.tvFocusable(source) else Modifier)
+                        .clickable(interactionSource = source, indication = null) { onAlbum(album.id) },
+                ) {
+                    AsyncImage(
+                        model = repo.config.coverArtUrl(album.coverArt, 400),
+                        contentDescription = album.name, contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(10.dp)),
+                    )
+                    Text(album.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 6.dp))
+                    album.year?.let {
+                        Text(it.toString(), style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
@@ -241,47 +244,49 @@ fun PlaylistDetailScreen(playlistId: String, onBack: () -> Unit, onNowPlaying: (
     var confirmDelete by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 88.dp)) {
-        item {
-            Row(Modifier.fillMaxWidth().statusBarsPadding().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                val backSource = rememberInteractionSource()
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier.then(if (isTv) Modifier.tvFocusable(backSource) else Modifier)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại", tint = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.size(28.dp))
+    Box(Modifier.fillMaxSize().swipeBackGesture { onBack() }) {
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 88.dp)) {
+            item {
+                Row(Modifier.fillMaxWidth().statusBarsPadding().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    val backSource = rememberInteractionSource()
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier.then(if (isTv) Modifier.tvFocusable(backSource) else Modifier)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Quay lại", tint = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(28.dp))
+                    }
+                    Text(p.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(start = 4.dp))
+                    val deleteSource = rememberInteractionSource()
+                    IconButton(
+                        onClick = { confirmDelete = true },
+                        modifier = Modifier.then(if (isTv) Modifier.tvFocusable(deleteSource) else Modifier)
+                    ) {
+                        Icon(Icons.Filled.DeleteOutline, "Xoá playlist",
+                            tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(26.dp))
+                    }
                 }
-                Text(p.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f).padding(start = 4.dp))
-                val deleteSource = rememberInteractionSource()
-                IconButton(
-                    onClick = { confirmDelete = true },
-                    modifier = Modifier.then(if (isTv) Modifier.tvFocusable(deleteSource) else Modifier)
+                val playSource = rememberInteractionSource()
+                Button(
+                    onClick = { player.play(p.entry, 0); onNowPlaying() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary),
+                    modifier = Modifier
+                        .padding(start = 16.dp, bottom = 8.dp)
+                        .then(if (isTv) Modifier.tvFocusable(playSource) else Modifier),
                 ) {
-                    Icon(Icons.Filled.DeleteOutline, "Xoá playlist",
-                        tint = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(26.dp))
+                    Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                    Text("Phát tất cả", modifier = Modifier.padding(start = 4.dp))
                 }
             }
-            val playSource = rememberInteractionSource()
-            Button(
-                onClick = { player.play(p.entry, 0); onNowPlaying() },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary),
-                modifier = Modifier
-                    .padding(start = 16.dp, bottom = 8.dp)
-                    .then(if (isTv) Modifier.tvFocusable(playSource) else Modifier),
-            ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = null)
-                Text("Phát tất cả", modifier = Modifier.padding(start = 4.dp))
+            itemsIndexed(p.entry, key = { _, s -> s.id }) { index, song ->
+                SongRow(song, index, isCurrent = false,
+                    onClick = { player.play(p.entry, index); onNowPlaying() },
+                    onAdd = { pendingAdd = listOf(song.id) })
             }
-        }
-        itemsIndexed(p.entry, key = { _, s -> s.id }) { index, song ->
-            SongRow(song, index, isCurrent = false,
-                onClick = { player.play(p.entry, index); onNowPlaying() },
-                onAdd = { pendingAdd = listOf(song.id) })
         }
     }
 

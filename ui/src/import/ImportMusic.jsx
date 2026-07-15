@@ -46,6 +46,7 @@ import { APP_NAME } from '../consts'
 import { formatBytes } from '../utils'
 import config from '../config'
 import UnifiedImport from './UnifiedImport'
+import PremiumManager from './PremiumManager'
 
 
 const foldSearch = (s) => {
@@ -530,6 +531,7 @@ const ImportMusic = () => {
           >
             <Tab label="Tìm & Nhập Nhạc" />
             <Tab label="Lịch sử Import" />
+            <Tab label="Đồng bộ Premium" />
           </Tabs>
         </Box>
 
@@ -539,6 +541,10 @@ const ImportMusic = () => {
             onImported={afterImport}
             onJobStarted={onRemoteJobStarted}
           />
+        )}
+
+        {tab === 2 && (
+          <PremiumManager />
         )}
 
         {tab === 1 && (

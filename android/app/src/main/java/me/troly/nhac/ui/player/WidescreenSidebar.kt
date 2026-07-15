@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.graphics.graphicsLayer
@@ -56,7 +57,7 @@ import me.troly.nhac.ui.components.formatDuration
 
 @Composable
 fun WidescreenSidebar(
-    onShowSignalPath: () -> Unit,
+    onNavigateToSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -620,80 +621,65 @@ fun WidescreenSidebar(
                     }
                 }
                 1 -> {
-                    // TAB 2: INLINE ROON-STYLE SIGNAL PATH (DYNAMICALLY DETERMINED)
-                    val scrollState = rememberScrollState()
+                    // TAB 2: COMPACT PREMIUM DIAGNOSTIC PANEL
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(scrollState)
-                            .padding(20.dp)
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // 1. Source
-                        SignalPathStep(
-                            title = "1. FILE NGUỒN (SOURCE FILE)",
-                            value = formatName,
-                            subValue = originalSpecs,
-                            isFirst = true,
-                            color = ledColor
-                        )
-                        
-                        // 2. Transcode / Stream
-                        val isTranscoded = remember(suffix) { isServerTranscodeSuffix(suffix) }
-                        val streamingValue = if (isTranscoded) "Server Transcoded (FLAC 24-bit)" else "Direct Stream (Nguyên bản)"
-                        val streamingSub = if (isTranscoded) {
-                            "Dữ liệu gốc định dạng $suffix được máy chủ tự động chuyển mã không hao tổn sang FLAC 24-bit PCM giúp Android giải mã tối ưu."
-                        } else {
-                            "Tệp âm thanh được truyền phát trực tiếp ở chất lượng nguyên bản từ máy chủ, không qua bất kỳ khâu nén nào."
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color(0x0DFFFFFF))
+                                .border(0.5.dp, ledColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(ledColor)
+                            )
+                            Text(
+                                text = "${suffix?.uppercase() ?: "FLAC"} ${if (bitDepth > 0) "${bitDepth}-bit / " else ""}${if (samplingRate > 0) "${samplingRate / 1000.0} kHz" else "44.1 kHz"} • ${audioReport.statusLabel}",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
-                        SignalPathStep(
-                            title = "2. PHƯƠNG THỨC TRUYỀN PHÁT (STREAMING)",
-                            value = streamingValue,
-                            subValue = streamingSub,
-                            color = ledColor
+
+                        Spacer(Modifier.height(12.dp))
+
+                        Text(
+                            text = "Bộ lọc: $activeFilter\nThiết bị: ${activeDevice.name}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFC4BBA6),
+                            textAlign = TextAlign.Center,
+                            lineHeight = 16.sp
                         )
-                        
-                        // 3. DSP Resampling Engine
-                        val dspEngineTitle = if (audioReport.isUpsampled) {
-                            "HQPlayer-grade Audiophile DSP"
-                        } else {
-                            "ExoPlayer Audio Engine (Float 32-bit)"
+
+                        Spacer(Modifier.height(20.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                                .clickable { onNavigateToSettings() }
+                                .padding(vertical = 10.dp, horizontal = 16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Cấu hình thiết bị & Đường truyền ➜",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
-                        SignalPathStep(
-                            title = "3. BỘ XỬ LÝ SỐ (AUDIO ENGINE / DSP)",
-                            value = dspEngineTitle,
-                            subValue = audioReport.dspEngineStatus,
-                            color = ledColor,
-                            content = if (audioReport.isUpsampled) {
-                                {
-                                    InteractiveDspSelectors(
-                                        activeFilter = activeFilter,
-                                        activeDither = activeDither,
-                                        activeModulator = activeModulator,
-                                        onFilterSelected = { player.setFilter(it) },
-                                        onDitherSelected = { player.setDither(it) },
-                                        onModulatorSelected = { player.setModulator(it) }
-                                    )
-                                }
-                            } else null
-                        )
-                        
-                        // 4. Output Device details
-                        val deviceDetails = "${activeDevice.techLabel} • Định dạng thực tế: ${audioReport.actualOutputFormat}\n${activeDevice.description}"
-                        SignalPathStep(
-                            title = "4. THIẾT BỊ ĐẦU RA (OUTPUT DEVICE)",
-                            value = activeDevice.name,
-                            subValue = deviceDetails,
-                            color = ledColor
-                        )
-                        
-                        // 5. Overall Audio Forecast
-                        SignalPathStep(
-                            title = "5. ĐÁNH GIÁ CHẤT LƯỢNG (AUDIO FORECAST)",
-                            value = audioReport.statusLabel,
-                            subValue = audioReport.statusDesc,
-                            isLast = true,
-                            color = ledColor
-                        )
                     }
                 }
                 
@@ -703,73 +689,7 @@ fun WidescreenSidebar(
     }
 }
 
-@Composable
-private fun SignalPathStep(
-    title: String,
-    value: String,
-    subValue: String,
-    isFirst: Boolean = false,
-    isLast: Boolean = false,
-    color: Color,
-    content: @Composable (() -> Unit)? = null
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(vertical = 2.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(24.dp).fillMaxHeight().padding(top = 4.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(color)
-            )
-            if (!isLast) {
-                Box(
-                    modifier = Modifier
-                        .width(1.5.dp)
-                        .weight(1f)
-                        .background(color.copy(alpha = 0.2f))
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.width(6.dp))
-        
-        Column(modifier = Modifier.weight(1f).padding(bottom = 12.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF8E8E93),
-                fontWeight = FontWeight.Bold,
-                fontSize = 9.sp
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                modifier = Modifier.padding(top = 1.dp)
-            )
-            Text(
-                text = subValue,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFFC4BBA6),
-                fontSize = 11.sp,
-                lineHeight = 15.sp,
-                modifier = Modifier.padding(top = 3.dp)
-            )
-            if (content != null) {
-                Spacer(Modifier.height(8.dp))
-                content()
-            }
-        }
-    }
-}
+
 
 private fun formatOriginalSpecs(suffix: String?, bitDepth: Int, samplingRate: Int, bitRate: Int): Pair<String, String> {
     val fmt = suffix?.lowercase() ?: "audio"

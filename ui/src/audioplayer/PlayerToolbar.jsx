@@ -2,7 +2,7 @@ import React, { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import IconButton from '@material-ui/core/IconButton'
 import { useMediaQuery } from '@material-ui/core'
-import { RiSaveLine } from 'react-icons/ri'
+import { RiSaveLine, RiEqualizerLine } from 'react-icons/ri'
 import { openSaveQueueDialog } from '../actions'
 import { makeStyles } from '@material-ui/core/styles'
 
@@ -51,7 +51,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }))
 
-const PlayerToolbar = ({ isRadio }) => {
+const PlayerToolbar = ({ isRadio, consoleOpen, onToggleConsole }) => {
   const dispatch = useDispatch()
   const queueEmpty = useSelector(
     (state) => (state.player?.queue?.length ?? 0) === 0,
@@ -70,6 +70,21 @@ const PlayerToolbar = ({ isRadio }) => {
   const buttonClass = isDesktop ? classes.button : classes.mobileButton
   const listItemClass = isDesktop ? classes.toolbar : classes.mobileListItem
 
+  const consoleButton = onToggleConsole && (
+    <IconButton
+      size={isDesktop ? 'small' : undefined}
+      onClick={(e) => {
+        onToggleConsole()
+        e.stopPropagation()
+      }}
+      title="Audiophile Console"
+      style={{ color: consoleOpen ? '#dfb15b' : undefined }}
+      className={buttonClass}
+    >
+      <RiEqualizerLine className={!isDesktop ? classes.mobileIcon : undefined} />
+    </IconButton>
+  )
+
   const saveQueueButton = (
     <IconButton
       size={isDesktop ? 'small' : undefined}
@@ -82,7 +97,12 @@ const PlayerToolbar = ({ isRadio }) => {
     </IconButton>
   )
 
-  return <li className={`${listItemClass} item`}>{saveQueueButton}</li>
+  return (
+    <li className={`${listItemClass} item`}>
+      {consoleButton}
+      {saveQueueButton}
+    </li>
+  )
 }
 
 export default PlayerToolbar

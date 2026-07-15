@@ -35,13 +35,30 @@ class BitPerfectRenderersFactory(context: Context) : DefaultRenderersFactory(con
         enableFloatOutput: Boolean,
         enableAudioTrackPlaybackParams: Boolean,
     ): AudioSink {
+        val dspPrefs = context.getSharedPreferences("trolynhac_dsp", Context.MODE_PRIVATE)
+        val bufferSizeSetting = dspPrefs.getString("bufferSize", "Balanced Standard") ?: "Balanced Standard"
+
+        val aaudioEnabled = dspPrefs.getBoolean("aaudioEnabled", false)
+
         // Luôn bật Float Output để giữ độ phân giải 24-bit/32-bit cho nguồn âm thanh chất lượng cao,
         // giúp hệ thống truyền tải Hi-Res nguyên bản qua Bluetooth (LDAC / SSC).
-        val delegate = DefaultAudioSink.Builder(context)
+        val delegateBuilder = DefaultAudioSink.Builder(context)
             .setEnableFloatOutput(true)
             .setAudioCapabilities(AudioCapabilities.getCapabilities(context))
-            .build()
 
-        return UsbAudioSink(delegate, context).also { currentUsbSink = it }
+        if (bufferSizeSetting != "Balanced Standard") {
+            val frameCount = bufferSizeSetting.replace(" frames", "").replace(" frame", "").toIntOrNull() ?: 1024
+            delegateBuilder.setAudioTrackBufferSizeProvider { minBufferSizeInBytes, encoding, outputMode, pcmFrameSize, sampleRate, bitrate, maxSpeed ->
+                val calculatedBytes = frameCount * pcmFrameSize
+                calculatedBytes.coerceAtLeast(minBufferSizeInBytes)
+            }
+        }
+
+        val delegate = delegateBuilder.build()
+
+        val bitPerfectEnabled = dspPrefs.getBoolean("bitPerfectEnabled", true)
+        val usbConfig = com.decent.usbaudio.media3.UsbAudioSinkConfig(bitPerfectEnabled = bitPerfectEnabled)
+
+        return UsbAudioSink(delegate, context, usbConfig).also { currentUsbSink = it }
     }
 }

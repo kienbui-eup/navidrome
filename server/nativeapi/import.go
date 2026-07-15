@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -28,6 +29,8 @@ func (api *Router) addImportRoute(r chi.Router) {
 		r.Post("/url", api.importURLHandler)
 		r.Post("/feed", api.importFeedHandler)
 		r.Post("/scan", api.importScanHandler)
+		r.Get("/cookies", api.importCookiesStatusHandler)
+		r.Post("/cookies", api.importCookiesHandler)
 		r.Get("/search/songs", api.songSearchHandler)
 		r.Get("/preview", api.importPreviewHandler)
 		r.Get("/trends", api.importTrendsHandler)
@@ -452,6 +455,154 @@ func (api *Router) importHistoryHandler(w http.ResponseWriter, r *http.Request) 
 func (api *Router) importScanHandler(w http.ResponseWriter, r *http.Request) {
 	api.importer.TriggerScan(r.Context())
 	writeJSON(w, r, map[string]string{"status": "scan_started"})
+}
+
+func (api *Router) importCookiesStatusHandler(w http.ResponseWriter, r *http.Request) {
+	providers := []string{"youtube", "zing"}
+	status := make(map[string]any)
+
+	for _, provider := range providers {
+		var filename string
+		var envVar string
+
+		switch provider {
+		case "youtube":
+			filename = "youtube-cookies.txt"
+			envVar = "ND_YOUTUBE_COOKIES_FILE"
+		case "zing":
+			filename = "zing-cookies.txt"
+			envVar = "ND_ZING_COOKIES_FILE"
+		}
+
+		var targetPath string
+		if envPath := os.Getenv(envVar); envPath != "" {
+			targetPath = envPath
+		} else {
+			base, err := api.ds.Library(r.Context()).GetPath(1)
+			if err != nil || base == "" {
+				if _, errStat := os.Stat("/music"); errStat == nil {
+					targetPath = filepath.Join("/music", filename)
+				} else {
+					targetPath = filepath.Join(os.TempDir(), filename)
+				}
+			} else {
+				targetPath = filepath.Join(base, filename)
+			}
+		}
+
+		info, err := os.Stat(targetPath)
+		if err == nil {
+			status[provider] = map[string]any{
+				"exists":    true,
+				"path":      targetPath,
+				"updatedAt": info.ModTime().Format(time.RFC3339),
+				"size":      info.Size(),
+			}
+		} else {
+			status[provider] = map[string]any{
+				"exists": false,
+				"path":   targetPath,
+			}
+		}
+	}
+
+	writeJSON(w, r, status)
+}
+
+func (api *Router) importCookiesHandler(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Provider   string `json:"provider"`
+		RawCookies string `json:"raw_cookies"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	provider := strings.ToLower(strings.TrimSpace(body.Provider))
+	if provider == "" {
+		http.Error(w, "provider is required", http.StatusBadRequest)
+		return
+	}
+
+	var domain string
+	var filename string
+	var envVar string
+
+	switch provider {
+	case "youtube":
+		domain = ".youtube.com"
+		filename = "youtube-cookies.txt"
+		envVar = "ND_YOUTUBE_COOKIES_FILE"
+	case "zing", "mp3zing":
+		domain = ".zingmp3.vn"
+		filename = "zing-cookies.txt"
+		envVar = "ND_ZING_COOKIES_FILE"
+	default:
+		http.Error(w, "unsupported provider: "+provider, http.StatusBadRequest)
+		return
+	}
+
+	converted := convertToNetscape(body.RawCookies, domain)
+
+	var targetPath string
+	if envPath := os.Getenv(envVar); envPath != "" {
+		targetPath = envPath
+	} else {
+		base, err := api.ds.Library(r.Context()).GetPath(1)
+		if err != nil || base == "" {
+			if _, errStat := os.Stat("/music"); errStat == nil {
+				targetPath = filepath.Join("/music", filename)
+			} else {
+				targetPath = filepath.Join(os.TempDir(), filename)
+			}
+		} else {
+			targetPath = filepath.Join(base, filename)
+		}
+	}
+
+	// Make sure the target directory exists
+	if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+		http.Error(w, "failed to create directory: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := os.WriteFile(targetPath, []byte(converted), 0644); err != nil {
+		http.Error(w, "failed to save cookie file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, r, map[string]string{
+		"status": "ok",
+		"path":   targetPath,
+	})
+}
+
+func convertToNetscape(rawCookies string, domain string) string {
+	if strings.HasPrefix(rawCookies, "# Netscape HTTP Cookie File") || strings.Contains(rawCookies, "\t") {
+		return rawCookies
+	}
+
+	var buf bytes.Buffer
+	buf.WriteString("# Netscape HTTP Cookie File\n")
+	buf.WriteString("# This file was generated automatically from document.cookie\n\n")
+
+	pairs := strings.Split(rawCookies, ";")
+	for _, pair := range pairs {
+		pair = strings.TrimSpace(pair)
+		if pair == "" {
+			continue
+		}
+		parts := strings.SplitN(pair, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		name := parts[0]
+		value := parts[1]
+
+		buf.WriteString(domain + "\tTRUE\t/\tTRUE\t2147483647\t" + name + "\t" + value + "\n")
+	}
+	return buf.String()
 }
 
 func writeJSON(w http.ResponseWriter, r *http.Request, v any) {

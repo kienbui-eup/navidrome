@@ -36,6 +36,14 @@ struct NowPlayingView: View {
     @State private var isEditingReview = false
     @State private var reviewInput: String = ""
     
+    // Lyrics State
+    @State private var showingLyricsSheet = false
+    @State private var isLyricsLoading = false
+    @State private var lyricsSynced = false
+    @State private var lyricLines: [LyricLine] = []
+    @State private var activeLyricId: UUID? = nil
+    @State private var lastAutoScrollTime: Date = Date()
+    
     private func syncLocalSongState(for song: Song) {
         self.localStarred = song.starred
         self.localUserRating = song.userRating ?? 0
@@ -115,6 +123,7 @@ struct NowPlayingView: View {
                 updateVisualizerState()
                 if let song = playerManager.currentSong {
                     syncLocalSongState(for: song)
+                    loadLyrics(for: song)
                 }
             }
             .onDisappear {
@@ -126,7 +135,15 @@ struct NowPlayingView: View {
             .onChange(of: playerManager.currentSong) { newSong in
                 if let song = newSong {
                     syncLocalSongState(for: song)
+                    loadLyrics(for: song)
                 }
+            }
+            .onChange(of: playerManager.currentTime) { _ in
+                updateActiveLyricLine()
+            }
+            // Lyrics Bottom Sheet
+            .sheet(isPresented: $showingLyricsSheet) {
+                lyricsSheet(song)
             }
             // Signal Path Popover Sheet
             .sheet(isPresented: $showingSignalPathSheet) {
@@ -306,6 +323,17 @@ struct NowPlayingView: View {
             }
             
             Spacer()
+            
+            // Lyrics Button
+            Button(action: { showingLyricsSheet = true }) {
+                Image(systemName: "quote.bubble.fill")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(lyricLines.isEmpty ? .white.opacity(0.4) : .appPrimary)
+                    .frame(width: 36, height: 36)
+                    .background(Color.white.opacity(0.04))
+                    .cornerRadius(18)
+            }
+            .padding(.trailing, 4)
             
             // DSP / HQPlayer Button
             Button(action: { showingDSPConfigSheet = true }) {
@@ -1133,5 +1161,161 @@ struct NowPlayingView: View {
                 }
             }
         }
+    }
+    
+    // ── LYRICS COMPONENT ──────────────────────────────────────────────────────
+    
+    private func loadLyrics(for song: Song) {
+        isLyricsLoading = true
+        lyricLines = []
+        lyricsSynced = false
+        
+        Task {
+            let result = await repository.fetchLyrics(
+                songId: song.id,
+                artist: song.artist ?? "",
+                title: song.title,
+                duration: playerManager.duration
+            )
+            
+            await MainActor.run {
+                self.lyricLines = result.lines
+                self.lyricsSynced = result.synced
+                self.isLyricsLoading = false
+                self.updateActiveLyricLine()
+            }
+        }
+    }
+    
+    private func updateActiveLyricLine() {
+        guard lyricsSynced, !lyricLines.isEmpty else { return }
+        let currentTimeMs = playerManager.currentTime * 1000
+        
+        var activeLine: LyricLine? = nil
+        for line in lyricLines {
+            if line.timeMs >= 0 && line.timeMs <= currentTimeMs {
+                activeLine = line
+            }
+        }
+        
+        if let activeLine = activeLine, activeLine.id != activeLyricId {
+            if Date().timeIntervalSince(lastAutoScrollTime) > 2.0 {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                    self.activeLyricId = activeLine.id
+                }
+            } else {
+                self.activeLyricId = activeLine.id
+            }
+        }
+    }
+    
+    private func lyricsSheet(_ song: Song) -> some View {
+        ZStack {
+            ambientBackground(song)
+            
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(song.title)
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                        
+                        Text(song.artist ?? "")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.6))
+                            .lineLimit(1)
+                    }
+                    
+                    Spacer()
+                    
+                    Button(action: { showingLyricsSheet = false }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                .padding(.bottom, 16)
+                
+                if isLyricsLoading {
+                    Spacer()
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .appPrimary))
+                        .scaleEffect(1.5)
+                    Text("Đang tải lời bài hát...")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
+                        .padding(.top, 16)
+                    Spacer()
+                } else if lyricLines.isEmpty {
+                    Spacer()
+                    VStack(spacing: 12) {
+                        Image(systemName: "quote.bubble.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(.white.opacity(0.2))
+                        Text("Không tìm thấy lời bài hát")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    Spacer()
+                } else {
+                    ScrollViewReader { proxy in
+                        ScrollView(.vertical, showsIndicators: false) {
+                            VStack(alignment: .leading, spacing: 24) {
+                                Color.clear.frame(height: 150)
+                                
+                                ForEach(lyricLines) { line in
+                                    let isActive = lyricsSynced && (line.id == activeLyricId)
+                                    
+                                    Button(action: {
+                                        if lyricsSynced && line.timeMs >= 0 {
+                                            let generator = UIImpactFeedbackGenerator(style: .light)
+                                            generator.impactOccurred()
+                                            
+                                            playerManager.seek(to: line.timeMs / 1000)
+                                            lastAutoScrollTime = Date()
+                                            
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                                self.activeLyricId = line.id
+                                            }
+                                        }
+                                    }) {
+                                        Text(line.text)
+                                            .font(.system(size: isActive ? 26 : 22, weight: isActive ? .bold : .semibold))
+                                            .foregroundColor(isActive ? .white : .white.opacity(0.4))
+                                            .multilineTextAlignment(.leading)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .shadow(color: isActive ? Color.white.opacity(0.3) : Color.clear, radius: isActive ? 8 : 0)
+                                            .scaleEffect(isActive ? 1.02 : 0.98)
+                                            .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isActive)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    .id(line.id)
+                                }
+                                
+                                Color.clear.frame(height: 250)
+                            }
+                            .padding(.horizontal, 24)
+                        }
+                        .onChange(of: activeLyricId) { targetId in
+                            if let id = targetId {
+                                withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+                                    proxy.scrollTo(id, anchor: .center)
+                                }
+                            }
+                        }
+                        .onAppear {
+                            if let activeId = activeLyricId {
+                                proxy.scrollTo(activeId, anchor: .center)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
     }
 }

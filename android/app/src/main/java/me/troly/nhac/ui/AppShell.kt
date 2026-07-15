@@ -114,8 +114,8 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 fun AppShell() {
     val isTv = LocalIsTv.current
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val isWideScreen = !isTv && configuration.screenWidthDp >= 600
-    val showWidescreenSidebar = !isTv && configuration.screenWidthDp >= 920
+    val isWideScreen = !isTv && configuration.screenWidthDp >= 600 && configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val showWidescreenSidebar = !isTv && configuration.screenWidthDp >= 920 && configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     val repo = LocalRepo.current
     val player = LocalPlayer.current
     val scope = rememberCoroutineScope()
@@ -128,6 +128,12 @@ fun AppShell() {
 
     val openAlbum: (String) -> Unit = { albumId = it }
     val openNow = { showNowPlaying = true }
+    val changeTab: (Tab) -> Unit = { targetTab ->
+        tab = targetTab
+        albumId = null
+        artistId = null
+        playlistId = null
+    }
 
     // Play a picked playlist from the quick-picker sheet.
     val playPlaylist: (Playlist) -> Unit = { pl ->
@@ -180,7 +186,7 @@ fun AppShell() {
             ) { targetTab ->
                 Box(Modifier.fillMaxSize()) {
                     when (targetTab) {
-                        Tab.HOME -> HomeScreen(onAlbum = { openAlbum(it.id) }, onNavigateToSettings = { tab = Tab.SETTINGS })
+                        Tab.HOME -> HomeScreen(onAlbum = { openAlbum(it.id) }, onNavigateToSettings = { changeTab(Tab.SETTINGS) })
                         Tab.SEARCH -> SearchScreen(onAlbum = { openAlbum(it.id) }, onNowPlaying = openNow)
                         Tab.LIBRARY -> LibraryScreen(
                             onAlbum = openAlbum,
@@ -286,7 +292,7 @@ fun AppShell() {
                                     icon = t.icon,
                                     label = t.label,
                                     selected = selected,
-                                    onClick = { tab = t },
+                                    onClick = { changeTab(t) },
                                     isExpanded = isSidebarFocused
                                 )
                             }
@@ -329,7 +335,7 @@ fun AppShell() {
                             Tab.entries.forEach { t ->
                                 val selected = tab == t
                                 NavigationRailItem(
-                                    selected = selected, onClick = { tab = t },
+                                    selected = selected, onClick = { changeTab(t) },
                                     icon = { Icon(t.icon, contentDescription = t.label) },
                                     label = { Text(t.label, fontSize = 11.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal) },
                                     colors = NavigationRailItemDefaults.colors(
@@ -354,7 +360,7 @@ fun AppShell() {
                                 .background(Color(0xFF26211C))
                         )
                         WidescreenSidebar(
-                            onShowSignalPath = openNow,
+                            onNavigateToSettings = { changeTab(Tab.SETTINGS) },
                             modifier = Modifier.weight(0.75f)
                         )
                     } else {
@@ -373,7 +379,7 @@ fun AppShell() {
                             if (artistId == null && playlistId == null && albumId == null) {
                                 CompactBottomBar(
                                     current = tab,
-                                    onSelect = { tab = it },
+                                    onSelect = { changeTab(it) },
                                     onOpenPlaylists = { showPlaylistPicker = true },
                                 )
                             }
@@ -393,7 +399,13 @@ fun AppShell() {
                 animationSpec = tween(400, easing = EaseInQuart)
             ) + fadeOut(animationSpec = tween(400))
         ) {
-            NowPlayingScreen(onClose = { showNowPlaying = false })
+            NowPlayingScreen(
+                onClose = { showNowPlaying = false },
+                onNavigateToSettings = {
+                    showNowPlaying = false
+                    changeTab(Tab.SETTINGS)
+                }
+            )
         }
         if (showPlaylistPicker) {
             PlaylistPickerSheet(

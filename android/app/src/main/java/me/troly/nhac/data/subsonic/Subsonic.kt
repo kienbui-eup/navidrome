@@ -150,6 +150,16 @@ data class DeleteResponse(
     val ids: List<String>
 )
 
+@Serializable
+data class AudiophileResponse(
+    @SerialName("media_file_id") val mediaFileId: String = "",
+    @SerialName("real_lossless") val realLossless: Boolean = true,
+    @SerialName("cutoff_frequency") val cutoffFrequency: Double = 22000.0,
+    @SerialName("dynamic_range_score") val dynamicRangeScore: Int = 10,
+    @SerialName("analyzed_at") val analyzedAt: String = "",
+    val status: String? = null
+)
+
 interface NativeApi {
     @POST("auth/sso/subsonic")
     suspend fun ssoLogin(@Body body: SsoRequest): SsoResponse
@@ -168,7 +178,14 @@ interface NativeApi {
         @Header("X-VI-Authorization") authHeader: String,
         @Path("id") id: String
     ): DeleteResponse
+
+    @GET("api/song/{id}/audiophile")
+    suspend fun getSongAudiophile(
+        @Header("X-VI-Authorization") authHeader: String,
+        @Path("id") id: String
+    ): AudiophileResponse
 }
+
 
 
 // ── DTOs ────────────────────────────────────────────────────────────────────
@@ -340,6 +357,11 @@ class SubsonicRepository(val config: ServerConfig) {
         val b = r.response ?: throw IllegalStateException("Phản hồi rỗng")
         if (b.status != "ok") throw IllegalStateException(b.error?.message ?: "Máy chủ trả lỗi")
         return b
+    }
+
+    suspend fun getSongAudiophile(songId: String): AudiophileResponse {
+        val sso = getSsoToken()
+        return nativeApi.getSongAudiophile("Bearer $sso", songId)
     }
 
     suspend fun ping(): Boolean = api.ping().response?.status == "ok"

@@ -22,6 +22,8 @@ public struct SubsonicBody: Codable {
     public let starred2: Starred2?
     public let searchResult3: SearchResult3?
     public let similarSongs2: SimilarSongs2?
+    public let lyrics: SubsonicLyrics?
+    public let lyricsList: SubsonicLyricsList?
     public let error: SubsonicError?
 }
 
@@ -165,4 +167,42 @@ public struct DeleteResponse: Codable {
 
 public struct SimilarSongs2: Codable {
     public let song: [Song]?
+}
+
+// ── LYRICS MODELS ───────────────────────────────────────────────────────────
+
+public struct SubsonicLyrics: Codable {
+    public let artist: String?
+    public let title: String?
+    public let value: String?
+}
+
+public struct SubsonicLyricsList: Codable {
+    public let structuredLyrics: [SubsonicStructuredLyrics]?
+}
+
+public struct SubsonicStructuredLyrics: Codable {
+    public let displayArtist: String?
+    public let displayTitle: String?
+    public let lang: String?
+    public let offset: Int?
+    public let synced: Bool
+    public let line: [SubsonicStructuredLine]?
+}
+
+public struct SubsonicStructuredLine: Codable {
+    public let start: Int?
+    public let value: String
+}
+
+public struct LyricLine: Identifiable, Equatable {
+    public let id: UUID
+    public let timeMs: Double
+    public let text: String
+    
+    public init(id: UUID = UUID(), timeMs: Double, text: String) {
+        self.id = id
+        self.timeMs = timeMs
+        self.text = text
+    }
 }

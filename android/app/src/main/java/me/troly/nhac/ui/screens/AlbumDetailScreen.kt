@@ -82,6 +82,7 @@ import me.troly.nhac.ui.LocalRepo
 import me.troly.nhac.ui.components.AddToPlaylistSheet
 import me.troly.nhac.ui.components.CoverImage
 import me.troly.nhac.ui.components.SongRow
+import me.troly.nhac.ui.components.swipeBackGesture
 
 import me.troly.nhac.ui.LocalIsTv
 import me.troly.nhac.ui.rememberInteractionSource
@@ -195,7 +196,11 @@ fun AlbumDetailScreen(
         "${mins} phút ${secs} giây"
     }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .swipeBackGesture { onBack() }
+    ) {
         // Ambient Fluid moving artwork background across the entire screen
         me.troly.nhac.ui.player.AnimatedAmbientBackground(artworkUri = coverUrl, modifier = Modifier.matchParentSize())
 

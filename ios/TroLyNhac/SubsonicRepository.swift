@@ -401,4 +401,130 @@ public class SubsonicRepository: ObservableObject {
         let searchRes = try await search(query: artistName)
         return searchRes.song ?? []
     }
+    
+    // ── LYRICS FETCHING & PARSING ────────────────────────────────────────────
+    
+    public func fetchLyrics(songId: String, artist: String, title: String, duration: Double? = nil) async -> (synced: Bool, lines: [LyricLine]) {
+        // Step 1: Try getLyricsBySongId (OpenSubsonic extension)
+        do {
+            let params = [URLQueryItem(name: "id", value: songId)]
+            let res: SubsonicResponse = try await performRequest(endpoint: "rest/getLyricsBySongId.view", queryParams: params)
+            if let body = try? extractBody(res), let lyricsList = body.lyricsList?.structuredLyrics {
+                if let syncedLyrics = lyricsList.first(where: { $0.synced }), let lines = syncedLyrics.line {
+                    let parsedLines = lines.map { LyricLine(timeMs: Double($0.start ?? 0), text: $0.value) }
+                    if !parsedLines.isEmpty {
+                        return (synced: true, lines: parsedLines)
+                    }
+                } else if let unsyncedLyrics = lyricsList.first, let lines = unsyncedLyrics.line {
+                    let parsedLines = lines.map { LyricLine(timeMs: -1, text: $0.value) }
+                    if !parsedLines.isEmpty {
+                        return (synced: false, lines: parsedLines)
+                    }
+                }
+            }
+        } catch {
+            print("getLyricsBySongId failed or not supported: \(error)")
+        }
+        
+        // Step 2: Try standard Subsonic getLyrics.view
+        do {
+            let params = [
+                URLQueryItem(name: "artist", value: artist),
+                URLQueryItem(name: "title", value: title)
+            ]
+            let res: SubsonicResponse = try await performRequest(endpoint: "rest/getLyrics.view", queryParams: params)
+            if let body = try? extractBody(res), let lyricsObj = body.lyrics, let lyricText = lyricsObj.value {
+                let lines = parseLRC(lyricText)
+                if !lines.isEmpty {
+                    let isSynced = lines.contains(where: { $0.timeMs >= 0 })
+                    return (synced: isSynced, lines: lines)
+                }
+            }
+        } catch {
+            print("getLyrics failed: \(error)")
+        }
+        
+        // Step 3: Fallback to LRCLib Public API
+        do {
+            var urlComponents = URLComponents(string: "https://lrclib.net/api/get")
+            let cleanArtist = artist.contains(",") ? artist.components(separatedBy: ",").first ?? artist : artist
+            var queryItems = [
+                URLQueryItem(name: "artist_name", value: cleanArtist),
+                URLQueryItem(name: "track_name", value: title)
+            ]
+            if let dur = duration {
+                queryItems.append(URLQueryItem(name: "duration", value: String(Int(dur))))
+            }
+            urlComponents?.queryItems = queryItems
+            
+            if let url = urlComponents?.url {
+                var request = URLRequest(url: url)
+                request.httpMethod = "GET"
+                request.addValue("TroLyNhac-iOS", forHTTPHeaderField: "Lrclib-Client")
+                request.timeoutInterval = 5.0
+                
+                let (data, response) = try await URLSession.shared.data(for: request)
+                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        let syncedLyrics = json["syncedLyrics"] as? String
+                        let plainLyrics = json["plainLyrics"] as? String
+                        
+                        if let synced = syncedLyrics, !synced.isEmpty {
+                            let lines = parseLRC(synced)
+                            return (synced: true, lines: lines)
+                        } else if let plain = plainLyrics, !plain.isEmpty {
+                            let lines = plain.components(separatedBy: .newlines).map { LyricLine(timeMs: -1, text: $0) }
+                            return (synced: false, lines: lines)
+                        }
+                    }
+                }
+            }
+        } catch {
+            print("LRCLib fallback failed: \(error)")
+        }
+        
+        return (synced: false, lines: [])
+    }
+    
+    private func parseLRC(_ lrcText: String) -> [LyricLine] {
+        var lines: [LyricLine] = []
+        let rawLines = lrcText.components(separatedBy: .newlines)
+        for rawLine in rawLines {
+            let trimmed = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+            
+            if trimmed.hasPrefix("[") {
+                if let closeBracketIndex = trimmed.firstIndex(of: "]") {
+                    let timeString = trimmed[trimmed.index(after: trimmed.startIndex)..<closeBracketIndex]
+                    let lyricText = trimmed[trimmed.index(after: closeBracketIndex)...].trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    // Parse timeString: mm:ss.xx or mm:ss:xx
+                    let parts = timeString.components(separatedBy: ":")
+                    if parts.count >= 2 {
+                        if let minutes = Double(parts[0]) {
+                            let secPart = parts[1]
+                            let secParts = secPart.components(separatedBy: CharacterSet(charactersIn: ".:"))
+                            if let seconds = Double(secParts[0]) {
+                                var ms = 0.0
+                                if secParts.count > 1, let millisecondsVal = Double(secParts[1]) {
+                                    if secParts[1].count == 2 {
+                                        ms = millisecondsVal * 10
+                                    } else if secParts[1].count == 3 {
+                                        ms = millisecondsVal
+                                    } else {
+                                        ms = millisecondsVal * 100
+                                    }
+                                }
+                                let totalTimeMs = (minutes * 60 + seconds) * 1000 + ms
+                                lines.append(LyricLine(timeMs: totalTimeMs, text: lyricText))
+                            }
+                        }
+                    }
+                }
+            } else {
+                lines.append(LyricLine(timeMs: -1, text: trimmed))
+            }
+        }
+        return lines
+    }
 }
