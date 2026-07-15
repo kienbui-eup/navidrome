@@ -524,6 +524,14 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
     }
   }, [notify])
 
+  useEffect(() => {
+    if (source === 'public_search_youtube' || source === 'public_search_zing' || source === 'public_search') {
+      setLosslessOnly(false)
+    } else if (source === 'google_drive' || source === 'remote_server' || source === 'internet_archive') {
+      setLosslessOnly(true)
+    }
+  }, [source])
+
   const stopPreview = () => {
     if (audioRef.current) audioRef.current.pause()
     setPlaying(null)
