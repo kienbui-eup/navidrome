@@ -114,7 +114,7 @@ private enum class Tab(val label: String, val icon: ImageVector) {
 fun AppShell() {
     val isTv = LocalIsTv.current
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val isWideScreen = !isTv && configuration.screenWidthDp >= 600 && configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isWideScreen = !isTv && configuration.screenWidthDp >= 600
     val showWidescreenSidebar = !isTv && configuration.screenWidthDp >= 920 && configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     val repo = LocalRepo.current
     val player = LocalPlayer.current
@@ -237,11 +237,6 @@ fun AppShell() {
                                 .fillMaxHeight()
                                 .width(sidebarWidth)
                                 .background(Color(0xFF111014))
-                                .border(
-                                    width = 0.5.dp,
-                                    brush = Brush.horizontalGradient(listOf(Color.Transparent, Color.White.copy(alpha = 0.08f))),
-                                    shape = RoundedCornerShape(0.dp)
-                                )
                                 .onFocusChanged { isSidebarFocused = it.hasFocus }
                                 .padding(vertical = 12.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
@@ -262,7 +257,7 @@ fun AppShell() {
                                 if (isSidebarFocused) {
                                     Spacer(Modifier.height(6.dp))
                                     Text(
-                                        text = "DECENT",
+                                        text = "VI2PLAY",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary,
@@ -282,9 +277,7 @@ fun AppShell() {
                                 isExpanded = isSidebarFocused
                             )
                             
-                            Spacer(Modifier.height(8.dp))
-                            HorizontalDivider(color = Color.White.copy(alpha = 0.05f), modifier = Modifier.padding(horizontal = 16.dp))
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(16.dp))
                             
                             Tab.entries.forEach { t ->
                                 val selected = tab == t
@@ -299,7 +292,7 @@ fun AppShell() {
                         }
                     } else {
                         NavigationRail(
-                            containerColor = Color(0xFF111014),
+                            containerColor = Color.Transparent,
                             header = {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -313,7 +306,7 @@ fun AppShell() {
                                     )
                                     Spacer(Modifier.height(6.dp))
                                     Text(
-                                        text = "DECENT",
+                                        text = "VI2PLAY",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary,
@@ -353,12 +346,7 @@ fun AppShell() {
                         Column(Modifier.weight(1.25f)) {
                             content(Modifier.weight(1f))
                         }
-                        Box(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .width(1.dp)
-                                .background(Color(0xFF26211C))
-                        )
+
                         WidescreenSidebar(
                             onNavigateToSettings = { changeTab(Tab.SETTINGS) },
                             modifier = Modifier.weight(0.75f)
@@ -539,14 +527,7 @@ private fun CompactBottomBar(current: Tab, onSelect: (Tab) -> Unit, onOpenPlayli
         color = Color.Transparent,
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFF14120F),
-                        Color(0xFF0F0D0B)
-                    )
-                )
-            )
+            .background(Color(0xFF111014).copy(alpha = 0.92f))
     ) {
         // Edge-to-edge: lift the bar above the system navigation/gesture bar so items
         // aren't covered. The Surface tint still fills down to the screen edge.

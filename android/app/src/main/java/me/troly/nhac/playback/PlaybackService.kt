@@ -17,6 +17,7 @@ import com.decent.usbaudio.media3.UsbAudioSink
 class PlaybackService : MediaLibraryService() {
 
     private var mediaSession: MediaLibrarySession? = null
+    private var remoteServer: KtorWebRemoteServer? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -53,12 +54,17 @@ class PlaybackService : MediaLibraryService() {
         renderers.currentUsbSink?.attachToPlayer(player)
 
         mediaSession = MediaLibrarySession.Builder(this, player, LibraryCallback()).build()
+
+        // Khởi chạy máy chủ Web Remote điều khiển từ xa qua Wi-Fi
+        remoteServer = KtorWebRemoteServer(this, player).apply { start() }
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? =
         mediaSession
 
     override fun onDestroy() {
+        remoteServer?.stop()
+        remoteServer = null
         mediaSession?.run {
             player.release()
             release()

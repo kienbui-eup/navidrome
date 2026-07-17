@@ -373,16 +373,37 @@ fun SettingsScreen() {
             InfoLine("Địa chỉ", cfg.baseUrl)
             InfoLine("Tài khoản", cfg.username.ifBlank { "—" })
             pingResult?.let { InfoLine("Trạng thái", it) }
-            OutlinedButton(
-                onClick = {
-                    pingResult = "Đang kiểm tra…"
-                    scope.launch {
-                        pingResult = runCatching { repo.ping() }
-                            .fold({ if (it) "Kết nối tốt" else "Không phản hồi" }, { "Lỗi: ${it.message}" })
-                    }
-                },
-                modifier = Modifier.padding(top = 10.dp),
-            ) { Text("Kiểm tra kết nối") }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        pingResult = "Đang kiểm tra…"
+                        scope.launch {
+                            pingResult = runCatching { repo.ping() }
+                                .fold({ if (it) "Kết nối tốt" else "Không phản hồi" }, { "Lỗi: ${it.message}" })
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Kiểm tra kết nối")
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            repo.triggerLocalRefresh()
+                            Toast.makeText(context, "Đã làm mới dữ liệu từ máy chủ!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Đồng bộ dữ liệu")
+                }
+            }
         }
 
         // 4. ADMIN STATUS

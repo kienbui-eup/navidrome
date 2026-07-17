@@ -105,7 +105,7 @@ fun TvApp() {
                             )
                             Spacer(Modifier.height(6.dp))
                             Text(
-                                text = "DECENT",
+                                text = "VI2PLAY",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,

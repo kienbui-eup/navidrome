@@ -68,8 +68,11 @@ android {
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
     packaging {
-        // jsch and jspecify both ship META-INF/versions/9/OSGI-INF/MANIFEST.MF
-        resources.excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+        resources {
+            excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+            excludes.add("META-INF/INDEX.LIST")
+            excludes.add("META-INF/io.netty.versions.properties")
+        }
     }
 }
 
@@ -106,6 +109,14 @@ dependencies {
     implementation(libs.okhttp.logging)
 
     implementation(libs.coil.compose)
+
+    // Ktor Server for Headless Volumio-like Web Remote
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.websockets)
+    implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.server.cors)
 
     // ── Bit-perfect USB Audio (the "UAPP core") — decent-player, vendored ────
     implementation(project(":decent-usb-audio-driver"))

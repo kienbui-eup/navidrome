@@ -87,6 +87,8 @@ type Importer interface {
 	StartImportJob(ctx context.Context, items []ImportJobItem, libraryID int) (string, error)
 	// GetImportJob returns a snapshot of a running/finished job.
 	GetImportJob(id string) (*ImportJob, bool)
+	// GetImportJobs returns snapshot of all running/recent jobs.
+	GetImportJobs() []*ImportJob
 	// CancelImportJob requests cancellation of a running job.
 	CancelImportJob(id string)
 	// History returns recent import records, most recent first.
@@ -587,7 +589,176 @@ func (imp *importer) updateJob(jobID string, fn func(*ImportJob)) {
 	}
 }
 
+func isProcessRunning(pattern string) bool {
+	files, err := filepath.Glob("/proc/[0-9]*/cmdline")
+	if err != nil {
+		return false
+	}
+	for _, file := range files {
+		content, err := os.ReadFile(file)
+		if err == nil {
+			if strings.Contains(string(content), pattern) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func parsePythonLog(id, logPath, scriptPattern, displayName string) *ImportJob {
+	isRunning := isProcessRunning(scriptPattern)
+	
+	// If it is not running and log file doesn't exist, don't return it
+	if _, err := os.Stat(logPath); err != nil {
+		if !isRunning {
+			return nil
+		}
+		// If running but no log file yet
+		return &ImportJob{
+			ID:        id,
+			Status:    "running",
+			Total:     100,
+			Completed: 0,
+			Current:   "Đang khởi tạo tiến trình tải...",
+		}
+	}
+
+	// Read log file to parse progress
+	contentBytes, err := os.ReadFile(logPath)
+	if err != nil {
+		return nil
+	}
+	content := string(contentBytes)
+	lines := strings.Split(content, "\n")
+
+	status := "completed"
+	if isRunning {
+		status = "running"
+	} else if strings.Contains(content, "COMPLETED") || strings.Contains(content, "completed") {
+		status = "completed"
+	} else {
+		// If it's not running and didn't complete, it might have failed/canceled
+		status = "canceled"
+	}
+
+	total := 100
+	completed := 0
+	current := ""
+
+	// Parse from bottom to top to find the latest progress
+	for i := len(lines) - 1; i >= 0; i-- {
+		line := strings.TrimSpace(lines[i])
+		if line == "" {
+			continue
+		}
+
+		// Check for import_5000 style: [1/5000] Processing query: "..."
+		// e.g. [2026-07-16 09:05:44] [1/5000] Processing query: "Trường Vũ - Thành Phố Buồn"
+		if idx := strings.Index(line, "] ["); idx != -1 {
+			sub := line[idx+3:]
+			if closeIdx := strings.Index(sub, "] Processing query:"); closeIdx != -1 {
+				parts := strings.Split(sub[:closeIdx], "/")
+				if len(parts) == 2 {
+					comp, err1 := strconv.Atoi(parts[0])
+					tot, err2 := strconv.Atoi(parts[1])
+					if err1 == nil && err2 == nil {
+						completed = comp
+						total = tot
+						
+						queryPart := sub[closeIdx+19:]
+						queryPart = strings.TrimSpace(queryPart)
+						if strings.HasPrefix(queryPart, `"`) && strings.HasSuffix(queryPart, `"`) {
+							queryPart = queryPart[1 : len(queryPart)-1]
+						}
+						current = displayName + ": " + queryPart
+						break
+					}
+				}
+			}
+		}
+
+		// Check for import_nu_90s style: Processing Song 12/12: "..."
+		// e.g. [2026-07-15 12:30:06] Processing Song 12/12: "Thương Thì Thôi (Nữ Lofi Cover)"
+		if idx := strings.Index(line, "Processing Song "); idx != -1 {
+			sub := line[idx+16:]
+			if colonIdx := strings.Index(sub, ":"); colonIdx != -1 {
+				parts := strings.Split(sub[:colonIdx], "/")
+				if len(parts) == 2 {
+					comp, err1 := strconv.Atoi(parts[0])
+					tot, err2 := strconv.Atoi(parts[1])
+					if err1 == nil && err2 == nil {
+						completed = comp
+						total = tot
+						
+						songPart := sub[colonIdx+1:]
+						songPart = strings.TrimSpace(songPart)
+						if strings.HasPrefix(songPart, `"`) && strings.HasSuffix(songPart, `"`) {
+							songPart = songPart[1 : len(songPart)-1]
+						}
+						current = displayName + ": " + songPart
+						break
+					}
+				}
+			}
+		}
+	}
+
+	if current == "" {
+		if status == "completed" {
+			current = displayName + ": Đã hoàn thành toàn bộ"
+		} else if status == "running" {
+			current = displayName + ": Đang chạy tiến trình tải..."
+		} else {
+			current = displayName + ": Đã dừng"
+		}
+	}
+
+	// Adjust completed to reflect index (if index is 1, completed is 0)
+	if completed > 0 && status == "running" {
+		completed = completed - 1
+	}
+
+	return &ImportJob{
+		ID:        id,
+		Status:    status,
+		Total:     total,
+		Completed: completed,
+		Current:   current,
+	}
+}
+
+func (imp *importer) getVirtualBackgroundJobs() []*ImportJob {
+	var list []*ImportJob
+
+	// 1. Check NhacViet5000 job
+	job5000 := parsePythonLog("import_5000", "/music/import_5000.log", "import_5000.py", "Tuyển tập 5000 Nhạc Việt")
+	if job5000 != nil {
+		list = append(list, job5000)
+	}
+
+	// 2. Check NuSinh90s job
+	job90s := parsePythonLog("import_nu_90s", "/music/import_nu_90s.log", "import_nu_90s.py", "Nữ Sinh 90s Cover")
+	if job90s != nil {
+		list = append(list, job90s)
+	}
+
+	return list
+}
+
 func (imp *importer) GetImportJob(id string) (*ImportJob, bool) {
+	if id == "import_5000" {
+		job := parsePythonLog("import_5000", "/music/import_5000.log", "import_5000.py", "Tuyển tập 5000 Nhạc Việt")
+		if job != nil {
+			return job, true
+		}
+	}
+	if id == "import_nu_90s" {
+		job := parsePythonLog("import_nu_90s", "/music/import_nu_90s.log", "import_nu_90s.py", "Nữ Sinh 90s Cover")
+		if job != nil {
+			return job, true
+		}
+	}
+
 	imp.mu.Lock()
 	defer imp.mu.Unlock()
 	job := imp.jobs[id]
@@ -600,6 +771,25 @@ func (imp *importer) GetImportJob(id string) (*ImportJob, bool) {
 	snapshot.Errors = append([]string(nil), job.Errors...)
 	snapshot.Items = append([]ImportJobItemStatus(nil), job.Items...)
 	return &snapshot, true
+}
+
+func (imp *importer) GetImportJobs() []*ImportJob {
+	imp.mu.Lock()
+	list := make([]*ImportJob, 0, len(imp.jobs)+2)
+	for _, job := range imp.jobs {
+		snapshot := *job
+		snapshot.cancel = nil
+		snapshot.Errors = append([]string(nil), job.Errors...)
+		snapshot.Items = append([]ImportJobItemStatus(nil), job.Items...)
+		list = append(list, &snapshot)
+	}
+	imp.mu.Unlock()
+
+	// Add virtual jobs from background scripts
+	virtualJobs := imp.getVirtualBackgroundJobs()
+	list = append(list, virtualJobs...)
+
+	return list
 }
 
 func (imp *importer) CancelImportJob(id string) {

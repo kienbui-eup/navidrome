@@ -23,6 +23,12 @@ const useStyles = makeStyles((theme) => ({
     animation: '$slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     color: '#ffffff',
     fontFamily: "'Outfit', sans-serif",
+    '@media (max-width: 960px)': {
+      height: 'auto',
+      maxHeight: '70vh',
+      overflowY: 'auto',
+      bottom: 120,
+    },
   },
   '@keyframes slideUp': {
     from: {
@@ -93,12 +99,22 @@ const useStyles = makeStyles((theme) => ({
     padding: 24,
     gap: 24,
     overflow: 'hidden',
+    '@media (max-width: 960px)': {
+      gridTemplateColumns: '1fr',
+      overflowY: 'visible',
+      gap: 16,
+      padding: 16,
+    },
   },
   column: {
     display: 'flex',
     flexDirection: 'column',
     height: '100%',
     overflow: 'hidden',
+    '@media (max-width: 960px)': {
+      height: 'auto',
+      overflow: 'visible',
+    },
   },
   colTitle: {
     fontSize: '11px',
@@ -118,6 +134,10 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    '@media (max-width: 960px)': {
+      height: 200,
+      minHeight: 200,
+    },
   },
   canvas: {
     width: '100%',
@@ -133,6 +153,9 @@ const useStyles = makeStyles((theme) => ({
     borderRadius: 8,
     border: '1px solid rgba(255, 255, 255, 0.05)',
     padding: '16px 20px',
+    '@media (max-width: 960px)': {
+      gap: 12,
+    },
   },
   flowStep: {
     display: 'flex',

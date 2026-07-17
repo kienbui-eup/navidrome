@@ -166,7 +166,6 @@ fun MiniPlayer(onExpand: () -> Unit) {
                     )
                 )
             )
-            .border(BorderStroke(1.dp, Color(0x22C4BBA6)), RoundedCornerShape(16.dp))
     ) {
         Column(
             Modifier

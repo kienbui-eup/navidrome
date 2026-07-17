@@ -259,7 +259,6 @@ private fun HiResSignalCapsule(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
                         .background(Color(0x2E00E676)) // Emerald green glow background
-                        .border(0.7.dp, Color(0xFF00E676).copy(alpha = 0.8f), RoundedCornerShape(4.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -299,7 +298,6 @@ private fun HiResSignalCapsule(
                     modifier = Modifier
                         .clip(RoundedCornerShape(4.dp))
                         .background(badgeBgColor)
-                        .border(0.5.dp, badgeTextColor.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(
@@ -360,7 +358,6 @@ private fun HiResSignalCapsule(
             modifier = Modifier
                 .clip(RoundedCornerShape(20.dp))
                 .background(Color(0x0EFFFFFF))
-                .border(0.5.dp, ledColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
                 .padding(horizontal = 10.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
@@ -891,8 +888,9 @@ fun RealTimeSpectrumAnalyzer(
     val activeColor = ledColor
 
     // Animate container height and layout when expanded (slight height boost to fit multiple modes and selectors)
+    val targetExpandedHeight = if (isSmallScreen) 180.dp else 260.dp
     val animatedHeightDp by animateDpAsState(
-        targetValue = if (isExpanded) 260.dp else 72.dp,
+        targetValue = if (isExpanded) targetExpandedHeight else 72.dp,
         animationSpec = spring(dampingRatio = 0.82f, stiffness = 250f),
         label = "rt_container_h"
     )
@@ -2198,7 +2196,9 @@ fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {})
 
     // Responsive design detection (Folded vs. Unfolded Cover screen)
     val configuration = LocalConfiguration.current
-    val isWideScreen = isTv || (configuration.screenWidthDp >= 600 && configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE)
+    val isWideScreenLandscape = isTv || (configuration.screenWidthDp >= 600 && configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE)
+    val isWideScreenPortrait = !isTv && configuration.screenWidthDp >= 600 && configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
+    val isNarrowPortrait = !isWideScreenLandscape && !isWideScreenPortrait
 
     val focusRequester = remember { FocusRequester() }
     if (isTv) {
@@ -2227,7 +2227,7 @@ fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {})
         // Ambient Fluid moving artwork background
         AnimatedAmbientBackground(artworkUri = art)
 
-        if (isWideScreen) {
+        if (isWideScreenLandscape) {
             // ── WIDESCREEN DUAL-COLUMN DASHBOARD ─────────────────────────────────
             Row(
                 modifier = Modifier
@@ -2294,6 +2294,33 @@ fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {})
                         }
                     }
 
+                    if (isTv) {
+                        Spacer(Modifier.height(20.dp))
+                        val albumScale by animateFloatAsState(
+                            targetValue = if (state.isPlaying) 1.0f else 0.92f,
+                            animationSpec = spring(dampingRatio = 0.72f, stiffness = 150f),
+                            label = "tv_album_artwork_scale"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(240.dp)
+                                .graphicsLayer {
+                                    scaleX = albumScale
+                                    scaleY = albumScale
+                                }
+                                .shadow(24.dp, RoundedCornerShape(20.dp))
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color(0xFF231F27))
+                        ) {
+                            AsyncImage(
+                                model = art,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+
                     Spacer(Modifier.height(16.dp))
 
                     // Hi-Res Signal Capsule Badge (Widescreen)
@@ -2345,22 +2372,22 @@ fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {})
                         val prevSource = rememberInteractionSource()
                         Box(
                             modifier = Modifier
-                                .size(56.dp)
+                                .size(if (isTv) 72.dp else 56.dp)
                                 .then(if (isTv) Modifier.tvFocusable(prevSource) else Modifier)
                                 .clickable(interactionSource = prevSource, indication = null) { player.previous() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Filled.SkipPrevious, "Bài trước", modifier = Modifier.size(36.dp), tint = Color.White)
+                            Icon(Icons.Filled.SkipPrevious, "Bài trước", modifier = Modifier.size(if (isTv) 44.dp else 36.dp), tint = Color.White)
                         }
 
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier.padding(horizontal = 16.dp).size(80.dp)
+                            modifier = Modifier.padding(horizontal = if (isTv) 24.dp else 16.dp).size(if (isTv) 100.dp else 80.dp)
                         ) {
                             if (state.isPlaying) {
                                 Box(
                                     modifier = Modifier
-                                        .size(64.dp)
+                                        .size(if (isTv) 80.dp else 64.dp)
                                         .graphicsLayer {
                                             scaleX = haloScale
                                             scaleY = haloScale
@@ -2371,7 +2398,7 @@ fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {})
                             }
                             val playPauseSource = rememberInteractionSource()
                             Box(
-                                Modifier.size(64.dp)
+                                Modifier.size(if (isTv) 80.dp else 64.dp)
                                     .clip(CircleShape).background(MaterialTheme.colorScheme.primary)
                                     .then(if (isTv) Modifier.tvFocusable(playPauseSource) else Modifier)
                                     .clickable(interactionSource = playPauseSource, indication = null) { player.togglePlay() },
@@ -2379,7 +2406,7 @@ fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {})
                             ) {
                                 Icon(
                                     if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                    contentDescription = "Phát/Dừng", modifier = Modifier.size(36.dp),
+                                    contentDescription = "Phát/Dừng", modifier = Modifier.size(if (isTv) 48.dp else 36.dp),
                                     tint = MaterialTheme.colorScheme.onPrimary,
                                 )
                             }
@@ -2388,12 +2415,12 @@ fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {})
                         val nextSource = rememberInteractionSource()
                         Box(
                             modifier = Modifier
-                                .size(56.dp)
+                                .size(if (isTv) 72.dp else 56.dp)
                                 .then(if (isTv) Modifier.tvFocusable(nextSource) else Modifier)
                                 .clickable(interactionSource = nextSource, indication = null) { player.next() },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Filled.SkipNext, "Bài sau", modifier = Modifier.size(36.dp), tint = Color.White)
+                            Icon(Icons.Filled.SkipNext, "Bài sau", modifier = Modifier.size(if (isTv) 44.dp else 36.dp), tint = Color.White)
                         }
                     }
 
@@ -2487,21 +2514,23 @@ fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {})
                         )
                     }
 
-                    Spacer(Modifier.height(24.dp))
+                    if (!isTv) {
+                        Spacer(Modifier.height(24.dp))
 
-                    // Reordered Review Panel placed at the very bottom
-                    AudiophileReviewPanel(
-                        songId = currentSongId ?: "",
-                        songDetails = songDetails,
-                        onSongDetailsChanged = { songDetails = it },
-                        reviewNote = reviewNote,
-                        onReviewNoteChanged = { note ->
-                            reviewNote = note
-                            currentSongId?.let { id ->
-                                sharedPrefs.edit().putString(id, note).apply()
+                        // Reordered Review Panel placed at the very bottom
+                        AudiophileReviewPanel(
+                            songId = currentSongId ?: "",
+                            songDetails = songDetails,
+                            onSongDetailsChanged = { songDetails = it },
+                            reviewNote = reviewNote,
+                            onReviewNoteChanged = { note ->
+                                reviewNote = note
+                                currentSongId?.let { id ->
+                                    sharedPrefs.edit().putString(id, note).apply()
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
 
                 // COL 2: Right panel (Queue, Radio Recommendations - DSP card removed as it is integrated)
@@ -2608,6 +2637,381 @@ fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {})
                         }
                     }
 
+                    if (!isTv) {
+                        // Smart Recommendations Header
+                        item {
+                            Text(
+                                text = "ĐỀ XUẤT THÔNG MINH (RECOMMENDATIONS)",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+
+                        // Recommendations List
+                        if (isRecLoading) {
+                            item {
+                                Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        } else if (recSongs.isEmpty()) {
+                            item {
+                                Text("Không có đề xuất phù hợp", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            }
+                        } else {
+                            itemsIndexed(recSongs) { index, song ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            player.appendSong(song)
+                                            queueItems = player.getQueue()
+                                            currentIndex = player.getCurrentIndex()
+                                            player.skipToQueueItem(player.getQueue().size - 1)
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    AsyncImage(
+                                        model = repo.config.coverArtUrl(song.coverArt, 120),
+                                        contentDescription = null,
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(Color(0xFF231F27)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            song.title,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            song.artist ?: "Unknown Artist",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color(0xFFC4BBA6),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            player.appendSong(song)
+                                            queueItems = player.getQueue()
+                                            currentIndex = player.getCurrentIndex()
+                                            Toast.makeText(context, "Đã thêm vào cuối hàng đợi", Toast.LENGTH_SHORT).show()
+                                        }
+                                    ) {
+                                        Icon(Icons.Filled.PlayArrow, "Thêm vào hàng đợi", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else if (isWideScreenPortrait) {
+            // ── UNFOLDED PORTRAIT DUAL-COLUMN DASHBOARD ─────────────────────────
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .systemBarsPadding()
+                    .padding(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(28.dp)
+            ) {
+                // COL 1: Left panel (Stationary Console: Controls, Artwork, Capsule, Spectrum, Seekbar)
+                Column(
+                    modifier = Modifier
+                        .weight(1.1f)
+                        .fillMaxHeight()
+                        .verticalScroll(rememberScrollState())
+                        .swipeGestures(
+                            onSwipeDown = onClose,
+                            onSwipeLeft = { player.next() },
+                            onSwipeRight = { player.previous() }
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Header Bar with close and title
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onClose) {
+                            Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Đóng",
+                                tint = Color.White, modifier = Modifier.size(28.dp))
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f).padding(start = 8.dp)
+                        ) {
+                            Text(
+                                text = meta?.title?.toString() ?: "",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.basicMarquee()
+                            )
+                            Text(
+                                text = meta?.artist?.toString() ?: "",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFC4BBA6),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // 1:1 Album Artwork card utilizing spring-based scale physics
+                    val albumScale by animateFloatAsState(
+                        targetValue = if (state.isPlaying) 1.0f else 0.92f,
+                        animationSpec = spring(dampingRatio = 0.72f, stiffness = 150f),
+                        label = "album_artwork_scale"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f)
+                            .graphicsLayer {
+                                scaleX = albumScale
+                                scaleY = albumScale
+                            }
+                            .shadow(16.dp, RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFF231F27))
+                    ) {
+                        AsyncImage(
+                            model = art,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+
+                    Spacer(Modifier.height(20.dp))
+
+                    // Hi-Res Signal Capsule Badge (Widescreen)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { showSignalPathDialog = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        HiResSignalCapsule(
+                            isPlaying = state.isPlaying,
+                            suffix = suffix,
+                            bitRate = bitRate,
+                            bitDepth = bitDepth,
+                            samplingRate = samplingRate,
+                            activeDevice = activeDevice,
+                            ledColor = ledColor
+                        )
+                    }
+
+                    // Real-Time 16-Band FFT Spectrum Analyzer
+                    RealTimeSpectrumAnalyzer(
+                        isPlaying = state.isPlaying,
+                        ledColor = ledColor,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp, bottom = 8.dp)
+                    )
+
+                    WaveformSeekbar(
+                        songId = currentSongId ?: "",
+                        progress = progress.coerceIn(0f, 1f),
+                        onSeek = { player.seekTo((it * duration).toLong()) },
+                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 4.dp),
+                    )
+                    Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(formatMs(state.positionMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
+                        Text(formatMs(state.durationMs), style = MaterialTheme.typography.bodySmall, color = Color(0xFFC4BBA6))
+                    }
+
+                    // Controls
+                    Row(
+                        Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 16.dp),
+                        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        val prevSource = rememberInteractionSource()
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clickable(interactionSource = prevSource, indication = null) { player.previous() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Filled.SkipPrevious, "Bài trước", modifier = Modifier.size(36.dp), tint = Color.White)
+                        }
+
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.padding(horizontal = 16.dp).size(80.dp)
+                        ) {
+                            if (state.isPlaying) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .graphicsLayer {
+                                            scaleX = haloScale
+                                            scaleY = haloScale
+                                            alpha = haloAlpha
+                                        }
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), CircleShape)
+                                )
+                            }
+                            val playPauseSource = rememberInteractionSource()
+                            Box(
+                                Modifier.size(64.dp)
+                                    .clip(CircleShape).background(MaterialTheme.colorScheme.primary)
+                                    .clickable(interactionSource = playPauseSource, indication = null) { player.togglePlay() },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                    contentDescription = "Phát/Dừng", modifier = Modifier.size(36.dp),
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                )
+                            }
+                        }
+
+                        val nextSource = rememberInteractionSource()
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clickable(interactionSource = nextSource, indication = null) { player.next() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Filled.SkipNext, "Bài sau", modifier = Modifier.size(36.dp), tint = Color.White)
+                        }
+                    }
+                }
+
+                // COL 2: Right panel (Queue list & Smart recommendations & Signal Path, Hardware info, Reviews)
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Queue Header
+                    item {
+                        Text(
+                            text = "HÀNG ĐỢI PHÁT (ACTIVE PLAYLIST)",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+                    }
+
+                    // Queue list items
+                    if (queueItems.isEmpty()) {
+                        item {
+                            Text("Hàng đợi trống", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        }
+                    } else {
+                        itemsIndexed(queueItems) { idx, item ->
+                            val isPlayingCurrent = idx == currentIndex
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isPlayingCurrent) Color(0x18FFFFFF) else Color.Transparent)
+                                    .clickable { player.skipToQueueItem(idx) }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(Color(0xFF231F27)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isPlayingCurrent) {
+                                        AudioVisualizer(isPlaying = state.isPlaying)
+                                    } else {
+                                        Text("${idx + 1}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                    }
+                                }
+                                Spacer(Modifier.width(12.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        item.title?.toString() ?: "Unknown",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = if (isPlayingCurrent) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isPlayingCurrent) MaterialTheme.colorScheme.primary else Color.White,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        item.artist?.toString() ?: "Unknown Artist",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color(0xFFC4BBA6),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                if (!isPlayingCurrent) {
+                                    IconButton(
+                                        onClick = {
+                                            player.removeQueueItem(idx)
+                                            queueItems = player.getQueue()
+                                            currentIndex = player.getCurrentIndex()
+                                        }
+                                    ) {
+                                        Icon(Icons.Filled.Delete, "Xoá", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Autoplay Radio Toggle Card
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0x11FFFFFF))
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Tự động phát nhạc tương tự",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "Khi phát hết nhạc trong hàng đợi",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFC4BBA6)
+                                )
+                            }
+                            androidx.compose.material3.Switch(
+                                checked = autoRadioEnabled,
+                                onCheckedChange = { recManager.setAutoRadioEnabled(it) }
+                            )
+                        }
+                    }
+
                     // Smart Recommendations Header
                     item {
                         Text(
@@ -2684,32 +3088,148 @@ fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {})
                             }
                         }
                     }
+
+                    // Interactive Signal Path Box
+                    item {
+                        Text(
+                            text = "ĐƯỜNG TRUYỀN TÍN HIỆU (SIGNAL PATH)",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                        )
+                    }
+
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0x0AFFFFFF))
+                                .border(0.5.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(Color(0x0DFFFFFF))
+                                    .border(0.5.dp, ledColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(ledColor)
+                                )
+                                Text(
+                                    text = "${suffix?.uppercase() ?: "FLAC"} ${if (bitDepth > 0) "${bitDepth}-bit / " else ""}${if (samplingRate > 0) "${samplingRate / 1000.0} kHz" else "44.1 kHz"} • ${audioReport.statusLabel}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+
+                            Spacer(Modifier.height(12.dp))
+
+                            Text(
+                                text = "Bộ lọc DSP: $activeFilter • Thiết bị: ${activeDevice.name}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFC4BBA6),
+                                textAlign = TextAlign.Center
+                            )
+
+                            Spacer(Modifier.height(16.dp))
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                                    .clickable { onNavigateToSettings() }
+                                    .padding(vertical = 10.dp, horizontal = 16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Xem chi tiết đường truyền & Cấu hình thiết bị ➜",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                    }
+
+                    // Dynamic Hardware Specs matching note
+                    item {
+                        val hardwareNote = activeDevice.hardwareNote
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0x08FFFFFF))
+                                .padding(12.dp)
+                        ) {
+                            Text(
+                                text = hardwareNote,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFFC4BBA6),
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+
+                    // Audiophile Review Panel
+                    item {
+                        AudiophileReviewPanel(
+                            songId = currentSongId ?: "",
+                            songDetails = songDetails,
+                            onSongDetailsChanged = { songDetails = it },
+                            reviewNote = reviewNote,
+                            onReviewNoteChanged = { note ->
+                                reviewNote = note
+                                currentSongId?.let { id ->
+                                    sharedPrefs.edit().putString(id, note).apply()
+                                }
+                            }
+                        )
+                    }
                 }
             }
         } else {
             // ── NARROW PORTRAIT STRUCTURAL LAYOUT (MOBILE COVER SCREEN) ──────────
+            val isSmallScreen = configuration.screenHeightDp < 650
+            val targetArtHeight = if (isQueueExpanded) 0.dp else (if (isSmallScreen) 130.dp else 180.dp)
+            val targetCapsuleHeight = if (isQueueExpanded) 0.dp else (if (isSmallScreen) 30.dp else 36.dp)
+            val targetMetaHeight = if (isQueueExpanded) 0.dp else (if (isSmallScreen) 48.dp else 56.dp)
+            val targetSeekbarHeight = if (isQueueExpanded) 0.dp else (if (isSmallScreen) 44.dp else 54.dp)
+            val targetSpacing = if (isQueueExpanded) 0.dp else (if (isSmallScreen) 6.dp else 12.dp)
+
             val animatedArtHeight by animateDpAsState(
-                targetValue = if (isQueueExpanded) 0.dp else 180.dp,
+                targetValue = targetArtHeight,
                 animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
                 label = "art_height"
             )
             val animatedCapsuleHeight by animateDpAsState(
-                targetValue = if (isQueueExpanded) 0.dp else 36.dp,
+                targetValue = targetCapsuleHeight,
                 animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
                 label = "capsule_height"
             )
             val animatedMetaHeight by animateDpAsState(
-                targetValue = if (isQueueExpanded) 0.dp else 56.dp,
+                targetValue = targetMetaHeight,
                 animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
                 label = "meta_height"
             )
             val animatedSeekbarHeight by animateDpAsState(
-                targetValue = if (isQueueExpanded) 0.dp else 54.dp,
+                targetValue = targetSeekbarHeight,
                 animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
                 label = "seekbar_height"
             )
             val animatedSpacing by animateDpAsState(
-                targetValue = if (isQueueExpanded) 0.dp else 12.dp,
+                targetValue = targetSpacing,
                 animationSpec = spring(dampingRatio = 0.85f, stiffness = 300f),
                 label = "vertical_spacing"
             )
@@ -2747,7 +3267,9 @@ fun NowPlayingScreen(onClose: () -> Unit, onNavigateToSettings: () -> Unit = {})
                             } else {
                                 onClose()
                             }
-                        }
+                        },
+                        onSwipeLeft = { player.next() },
+                        onSwipeRight = { player.previous() }
                     )
             ) {
                 // PART 1: STICKY CONTROL CONSOLE (STATIONARY AT THE TOP)

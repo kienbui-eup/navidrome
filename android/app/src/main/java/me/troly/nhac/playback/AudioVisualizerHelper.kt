@@ -235,7 +235,7 @@ object AudioVisualizerHelper {
                      
                      for (i in 0 until 32) {
                          val avg = if (bandCounts[i] > 0) bandSums[i] / bandCounts[i] else 0f
-                         temp32[i] = (avg / 65f).coerceIn(0.1f, 1.0f)
+                         temp32[i] = (avg / 65f).coerceIn(0.0f, 1.0f)
                      }
 
                     // Apply smooth decay dynamics to 32 bands
@@ -262,7 +262,10 @@ object AudioVisualizerHelper {
                     for (i in 12..17) trebleSum += temp32[i]
                     val trebleE = trebleSum / 6f
 
-                    if (trebleE > 0.15f) {
+                    // Use robust overall RMS signal level gating instead of high frequency energy gating to avoid stuck status
+                    val isActivePlaying = _rmsLevel.value > 0.012f
+
+                    if (isActivePlaying) {
                         activeFramesCount++
                         silentFramesCount = 0
 
@@ -281,15 +284,15 @@ object AudioVisualizerHelper {
                                 for (i in 24..31) ultrasonicSum += temp32[i]
                                 val ultrasonicE = ultrasonicSum / 8f
 
-                                if (ultrasonicE > 0.14f) {
+                                if (ultrasonicE > 0.015f) {
                                     // Real ultrasonic harmonics present! Confirmed authentic Hi-Res mastering
                                     runningLosslessScore = (runningLosslessScore + 1.5f).coerceAtMost(100f)
-                                } else if (ultrasonicE < 0.11f && trebleE > 0.25f) {
+                                } else if (ultrasonicE < 0.008f && trebleE > 0.02f) {
                                     // High mid-treble, but absolute flatline above 20kHz. CD Upscaled Fake Hi-Res.
                                     runningLosslessScore = (runningLosslessScore - 1.8f).coerceIn(5f, 100f)
                                 }
 
-                                if (activeFramesCount > 60) {
+                                if (activeFramesCount > 25) {
                                     val score = runningLosslessScore
                                     _losslessConfidence.value = score
                                     if (score >= 75f) {
@@ -313,15 +316,15 @@ object AudioVisualizerHelper {
                             for (i in 23..29) ultraHighSum += temp32[i]
                             val ultraHighE = ultraHighSum / 7f
 
-                            if (ultraHighE > 0.17f) {
+                            if (ultraHighE > 0.015f) {
                                 runningLosslessScore = (runningLosslessScore + 1.2f).coerceAtMost(100f)
-                            } else if (ultraHighE < 0.12f && highTrebleE > 0.18f) {
+                            } else if (ultraHighE < 0.008f && highTrebleE > 0.015f) {
                                 runningLosslessScore = (runningLosslessScore - 1.8f).coerceIn(5f, 100f)
-                            } else if (ultraHighE < 0.12f && trebleE > 0.25f) {
+                            } else if (ultraHighE < 0.008f && trebleE > 0.02f) {
                                 runningLosslessScore = (runningLosslessScore - 2.2f).coerceIn(5f, 100f)
                             }
 
-                            if (activeFramesCount > 60) {
+                            if (activeFramesCount > 25) {
                                 val score = runningLosslessScore
                                 _losslessConfidence.value = score
                                 when {
@@ -329,7 +332,7 @@ object AudioVisualizerHelper {
                                         _losslessVerdict.value = "VERIFIED PURE LOSSLESS"
                                         var estimatedCutoff = 22000f
                                         for (idx in 31 downTo 20) {
-                                            if (temp32[idx] > 0.14f) {
+                                            if (temp32[idx] > 0.015f) {
                                                 estimatedCutoff = bounds[idx]
                                                 break
                                             }
@@ -344,7 +347,7 @@ object AudioVisualizerHelper {
                                         _losslessVerdict.value = "COMPRESSED / LOSS_CUT"
                                         var cutoff = 16000f
                                         for (idx in 23 downTo 12) {
-                                            if (temp32[idx] > 0.14f) {
+                                            if (temp32[idx] > 0.015f) {
                                                 cutoff = bounds[idx]
                                                 break
                                             }
@@ -358,6 +361,8 @@ object AudioVisualizerHelper {
                         silentFramesCount++
                         if (silentFramesCount > 100 && activeFramesCount < 30) {
                             _losslessVerdict.value = "Analyzing (Awaiting active frequencies)..."
+                            runningLosslessScore = 55f
+                            _losslessConfidence.value = 0f
                         }
                     }
                 }

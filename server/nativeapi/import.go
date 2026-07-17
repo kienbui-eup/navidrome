@@ -57,6 +57,7 @@ func (api *Router) addImportRoute(r chi.Router) {
 		})
 		r.Route("/job", func(r chi.Router) {
 			r.Post("/", api.importJobStartHandler)
+			r.Get("/", api.importJobsListHandler)
 			r.Get("/{id}", api.importJobStatusHandler)
 			r.Post("/{id}/cancel", api.importJobCancelHandler)
 		})
@@ -432,6 +433,10 @@ func (api *Router) importJobStartHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	writeJSON(w, r, map[string]string{"jobId": id})
+}
+
+func (api *Router) importJobsListHandler(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, r, api.importer.GetImportJobs())
 }
 
 func (api *Router) importJobStatusHandler(w http.ResponseWriter, r *http.Request) {

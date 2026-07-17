@@ -96,11 +96,6 @@ fun AlbumCard(album: Album, repo: SubsonicRepository, onClick: () -> Unit) {
                 corner = 14.dp,
                 modifier = Modifier
                     .fillMaxSize()
-                    .border(
-                        width = 0.5.dp,
-                        color = Color.White.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(14.dp)
-                    )
                     .then(
                         if (glowColor != Color.Transparent) {
                             Modifier.border(
@@ -121,11 +116,6 @@ fun AlbumCard(album: Album, repo: SubsonicRepository, onClick: () -> Unit) {
                         .padding(8.dp)
                         .clip(RoundedCornerShape(6.dp))
                         .background(Color(0xE60D0B10))
-                        .border(
-                            width = 0.5.dp,
-                            color = format.color.copy(alpha = 0.4f),
-                            shape = RoundedCornerShape(6.dp)
-                        )
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
                     Text(

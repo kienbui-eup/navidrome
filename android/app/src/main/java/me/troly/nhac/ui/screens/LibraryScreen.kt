@@ -22,6 +22,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,10 +35,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -81,10 +86,38 @@ fun LibraryScreen(onAlbum: (String) -> Unit, onArtist: (String) -> Unit, onPlayl
     val titles = listOf("Album", "Nghệ sĩ", "Playlist")
 
     Column(Modifier.fillMaxSize()) {
-        TabRow(selectedTabIndex = tab, containerColor = MaterialTheme.colorScheme.background) {
+        TabRow(
+            selectedTabIndex = tab,
+            containerColor = Color(0xFF0B0A0E),
+            contentColor = Color(0xFFFFB300),
+            indicator = { tabPositions ->
+                if (tab < tabPositions.size) {
+                    TabRowDefaults.SecondaryIndicator(
+                        modifier = Modifier.tabIndicatorOffset(tabPositions[tab]),
+                        height = 2.dp,
+                        color = Color(0xFFFFB300)
+                    )
+                }
+            },
+            divider = {
+                HorizontalDivider(color = Color.White.copy(alpha = 0.05f))
+            }
+        ) {
             titles.forEachIndexed { i, t ->
-                Tab(selected = tab == i, onClick = { tab = i },
-                    text = { Text(t, color = MaterialTheme.colorScheme.onBackground) })
+                Tab(
+                    selected = tab == i,
+                    onClick = { tab = i },
+                    selectedContentColor = Color(0xFFFFB300),
+                    unselectedContentColor = Color(0x66C4BBA6),
+                    text = {
+                        Text(
+                            text = t.uppercase(),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (tab == i) FontWeight.Bold else FontWeight.Normal,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                )
             }
         }
         when (tab) {

@@ -230,6 +230,7 @@ const ImportMusic = () => {
   // background job + history
   const [job, setJob] = useState(null)
   const [history, setHistory] = useState(null)
+  const [jobsList, setJobsList] = useState([])
 
   // URL / RSS tab state
   const [url, setUrl] = useState('')
@@ -237,13 +238,27 @@ const ImportMusic = () => {
   const [driveFiles, setDriveFiles] = useState(null)
   const isDrive = /drive\.google\.com/.test(url)
 
-
-
   const loadHistory = useCallback(() => {
     httpClient('/api/import/history')
       .then(({ json }) => setHistory(json || []))
       .catch(() => {})
   }, [])
+
+  const loadJobsList = useCallback(() => {
+    httpClient('/api/import/job')
+      .then(({ json }) => setJobsList(json || []))
+      .catch(() => {})
+  }, [])
+
+  // Poll jobs list when Tab 2 (Đang xử lý) is active
+  useEffect(() => {
+    if (tab !== 2) return undefined
+    loadJobsList()
+    const t = setInterval(() => {
+      loadJobsList()
+    }, 1500)
+    return () => clearInterval(t)
+  }, [tab, loadJobsList])
 
   // Load the list of libraries to pick an import destination.
   useEffect(() => {
@@ -525,12 +540,14 @@ const ImportMusic = () => {
             onChange={(e, v) => {
               setTab(v)
               if (v === 1) loadHistory()
+              else if (v === 2) loadJobsList()
             }}
             indicatorColor="primary"
             textColor="primary"
           >
             <Tab label="Tìm & Nhập Nhạc" />
             <Tab label="Lịch sử Import" />
+            <Tab label="Đang xử lý" />
             <Tab label="Đồng bộ Premium" />
           </Tabs>
         </Box>
@@ -543,8 +560,79 @@ const ImportMusic = () => {
           />
         )}
 
-        {tab === 2 && (
+        {tab === 3 && (
           <PremiumManager />
+        )}
+
+        {tab === 2 && (
+          <Box className={classes.section}>
+            {(!jobsList || jobsList.length === 0) && (
+              <Typography className={classes.hint}>
+                Không có tiến trình import nào đang xử lý hoặc gần đây.
+              </Typography>
+            )}
+            {jobsList && jobsList.length > 0 && (
+              <Box>
+                {jobsList
+                  .sort((a, b) => {
+                    if (a.status === 'running' && b.status !== 'running') return -1
+                    if (a.status !== 'running' && b.status === 'running') return 1
+                    return b.id.localeCompare(a.id)
+                  })
+                  .map((j) => {
+                    const jPct = j.total ? Math.round(((j.completed + j.skipped + j.failed) / j.total) * 100) : 0
+                    const jDone = j.completed + j.skipped + j.failed
+                    const jRunning = j.status === 'running'
+                    
+                    return (
+                      <Box key={j.id} style={{ marginBottom: 20, padding: 16, borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography variant="subtitle1" style={{ fontWeight: 'bold' }}>
+                            Mã tiến trình: {j.id} {jRunning ? ' • 📥 Đang tải...' : (j.status === 'completed' ? ' • ✅ Hoàn tất' : ' • ❌ Đã hủy')}
+                          </Typography>
+                          {jRunning && (
+                            <Button size="small" variant="outlined" color="secondary" onClick={() => {
+                              httpClient(`/api/import/job/${j.id}/cancel`, { method: 'POST' }).then(() => loadJobsList())
+                            }}>
+                              Hủy
+                            </Button>
+                          )}
+                        </Box>
+                        <Typography variant="body2" className={classes.hint} style={{ marginTop: 6 }}>
+                          Tiến độ: {jDone}/{j.total} • Hoàn thành: {j.completed} • Trùng: {j.skipped} • Lỗi: {j.failed}
+                          {j.current ? ` • Đang xử lý: ${j.current}` : ''}
+                        </Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={jPct}
+                          style={{ marginTop: 12, marginBottom: 12 }}
+                        />
+                        {j.items && j.items.length > 0 && (
+                          <Box style={{ marginTop: 12, maxHeight: 180, overflow: 'auto', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 4, padding: 8, background: 'rgba(0,0,0,0.1)' }}>
+                            {j.items.map((it, idx) => (
+                              <Box key={idx} display="flex" flexDirection="column" style={{ marginBottom: 6, paddingBottom: 6, borderBottom: idx < j.items.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                  <Typography variant="body2" style={{ fontSize: '0.82rem', color: it.status === 'completed' ? '#4caf50' : (it.status === 'failed' ? '#f44336' : (it.status === 'downloading' ? '#2196f3' : (it.status === 'skipped' ? '#ff9800' : '#888'))) }}>
+                                    {it.status === 'downloading' ? '📥 ' : (it.status === 'completed' ? '✅ ' : (it.status === 'failed' ? '❌ ' : (it.status === 'skipped' ? '⏭️ ' : '⏳ ')))}
+                                    {it.label}
+                                  </Typography>
+                                  <Typography variant="caption" style={{ color: '#aaa', marginLeft: 8 }}>
+                                    {it.status === 'downloading' ? `${it.progress}%` : (it.status === 'completed' ? 'Xong' : (it.status === 'failed' ? 'Lỗi' : (it.status === 'skipped' ? 'Trùng' : 'Chờ')))}
+                                  </Typography>
+                                </Box>
+                                {it.status === 'downloading' && (
+                                  <LinearProgress variant="determinate" value={it.progress} style={{ marginTop: 4, height: 2 }} />
+                                )}
+                              </Box>
+                            ))}
+                          </Box>
+                        )}
+                      </Box>
+                    )
+                  })}
+              </Box>
+            )}
+          </Box>
         )}
 
         {tab === 1 && (
