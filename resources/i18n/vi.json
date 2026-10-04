@@ -473,7 +473,7 @@
   },
   "ra": {
     "auth": {
-      "welcome1": "Cảm ơn bạn đã cài đặt vi2play (Vip Player)!",
+      "welcome1": "Cảm ơn bạn đã cài đặt Troly Play!",
       "welcome2": "Để bắt đầu, hãy tạo một người dùng quản trị",
       "confirmPassword": "Xác nhận mật khẩu",
       "buttonCreateAdmin": "Tạo quản trị viên",
@@ -484,7 +484,7 @@
       "sign_in": "Đăng nhập",
       "sign_in_error": "Xác thực thất bại, vui lòng thử lại",
       "logout": "Đăng xuất",
-      "insightsCollectionNote": "vi2play thu thập dữ liệu sử dụng ẩn danh để\ngiúp cải thiện dự án. Nhấn [here] để tìm hiểu\nthêm và từ chối nếu bạn muốn"
+      "insightsCollectionNote": "Troly Play thu thập dữ liệu sử dụng ẩn danh để\ngiúp cải thiện dự án. Nhấn [here] để tìm hiểu\nthêm và từ chối nếu bạn muốn"
     },
     "validation": {
       "invalidChars": "Vui lòng chỉ sử dụng chữ cái và số",
@@ -625,7 +625,7 @@
     "coverRemoveError": "Lỗi khi xoá ảnh bìa",
     "note": "GHI CHÚ",
     "transcodingDisabled": "Thay đổi cấu hình chuyển mã qua giao diện web đã bị vô hiệu hoá vì lý do bảo mật. Nếu bạn muốn thay đổi (sửa hoặc thêm) tuỳ chọn chuyển mã, hãy khởi động lại máy chủ với tuỳ chọn cấu hình %{config}.",
-    "transcodingEnabled": "vi2play hiện đang chạy với %{config}, cho phép chạy lệnh hệ thống từ cài đặt chuyển mã bằng giao diện web. Chúng tôi khuyến nghị tắt tuỳ chọn này vì lý do bảo mật và chỉ bật khi cần cấu hình tuỳ chọn Chuyển mã.",
+    "transcodingEnabled": "Troly Play hiện đang chạy với %{config}, cho phép chạy lệnh hệ thống từ cài đặt chuyển mã bằng giao diện web. Chúng tôi khuyến nghị tắt tuỳ chọn này vì lý do bảo mật và chỉ bật khi cần cấu hình tuỳ chọn Chuyển mã.",
     "songsAddedToPlaylist": "Đã thêm 1 bài hát vào danh sách phát |||| Đã thêm %{smart_count} bài hát vào danh sách phát",
     "songsAddedToQueue": "Đã thêm 1 bài vào hàng chờ phát |||| Đã thêm %{smart_count} bài vào hàng chờ phát",
     "noSimilarSongsFound": "Không tìm thấy bài hát tương tự",
@@ -639,7 +639,7 @@
     "remove_all_missing_title": "Xoá tất cả tệp bị thiếu",
     "remove_all_missing_content": "Bạn có chắc muốn xoá tất cả tệp bị thiếu khỏi cơ sở dữ liệu? Thao tác này sẽ xoá vĩnh viễn mọi tham chiếu đến chúng, bao gồm lượt phát và đánh giá.",
     "notifications_blocked": "Bạn đã chặn Thông báo cho trang này trong cài đặt trình duyệt",
-    "notifications_not_available": "Trình duyệt này không hỗ trợ thông báo trên máy tính hoặc bạn không truy cập vi2play qua https",
+    "notifications_not_available": "Trình duyệt này không hỗ trợ thông báo trên máy tính hoặc bạn không truy cập Troly Play qua https",
     "lastfmLinkSuccess": "Liên kết Last.fm thành công và đã bật ghi nhận lượt nghe",
     "lastfmLinkFailure": "Không thể liên kết Last.fm",
     "lastfmUnlinkSuccess": "Đã huỷ liên kết Last.fm và tắt ghi nhận lượt nghe",
@@ -770,7 +770,7 @@
     "minutesAgo": "%{smart_count} phút trước |||| %{smart_count} phút trước"
   },
   "help": {
-    "title": "Phím tắt vi2play (Vip Player)",
+    "title": "Phím tắt Troly Play",
     "hotkeys": {
       "show_help": "Hiện trợ giúp này",
       "toggle_menu": "Bật/tắt thanh menu",

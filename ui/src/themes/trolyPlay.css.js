@@ -1,0 +1,183 @@
+const stylesheet = `
+@font-face{font-family:'Be Vietnam Pro';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/BeVietnamPro-400-vietnamese.woff2') format('woff2');unicode-range:U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;}
+@font-face{font-family:'Be Vietnam Pro';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/BeVietnamPro-400-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family:'Be Vietnam Pro';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/BeVietnamPro-400-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Be Vietnam Pro';font-style:normal;font-weight:500;font-display:swap;src:url('fonts/BeVietnamPro-500-vietnamese.woff2') format('woff2');unicode-range:U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;}
+@font-face{font-family:'Be Vietnam Pro';font-style:normal;font-weight:500;font-display:swap;src:url('fonts/BeVietnamPro-500-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family:'Be Vietnam Pro';font-style:normal;font-weight:500;font-display:swap;src:url('fonts/BeVietnamPro-500-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Be Vietnam Pro';font-style:normal;font-weight:600;font-display:swap;src:url('fonts/BeVietnamPro-600-vietnamese.woff2') format('woff2');unicode-range:U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;}
+@font-face{font-family:'Be Vietnam Pro';font-style:normal;font-weight:600;font-display:swap;src:url('fonts/BeVietnamPro-600-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family:'Be Vietnam Pro';font-style:normal;font-weight:600;font-display:swap;src:url('fonts/BeVietnamPro-600-latin.woff2') format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+
+.react-jinke-music-player-main svg:active, .react-jinke-music-player-main svg:hover {
+    color: #A5B4FF
+}
+
+.react-jinke-music-player-main .music-player-panel .panel-content .rc-slider-handle, .react-jinke-music-player-main .music-player-panel .panel-content .rc-slider-track {
+    background-color: #FF6B4A
+}
+
+.react-jinke-music-player-main ::-webkit-scrollbar-thumb {
+    background-color: #A5B4FF;
+}
+
+.react-jinke-music-player-main .music-player-panel .panel-content .rc-slider-handle:active {
+    box-shadow: 0 0 2px #A5B4FF
+}
+
+.react-jinke-music-player-main .audio-item.playing svg {
+    color: #A5B4FF
+}
+
+.react-jinke-music-player-main .audio-item.playing .player-singer {
+    color: #A5B4FF !important
+}
+
+.react-jinke-music-player-main .loading svg {
+    color: #A5B4FF !important
+}
+
+
+.react-jinke-music-player-main .music-player-panel .panel-content .rc-slider-handle {
+    border: hidden;
+    box-shadow:none;
+}
+
+
+.rc-slider-rail, .rc-slider-track {
+    border-radius: 2rem;
+    height: 4px;
+}
+
+.rc-slider-track {
+    background-color: #FF6B4A;
+}
+
+.rc-slider {
+    padding: 3px 0;
+}
+
+.progress-bar > div:nth-child(2) > div:nth-child(4) {
+    transform: translateX(-50%) translateY(5%) !important;
+}
+
+.sound-operation > div:nth-child(4) {
+    transform: translateX(-50%) translateY(5%) !important;
+}
+
+.sound-operation {
+    padding: 4px 0;
+}
+
+.react-jinke-music-player-main .music-player-panel .panel-content .player-content .play-sounds .sound-operation {
+    width: 50px;
+}
+
+.react-jinke-music-player-main .music-player-panel {
+    background-color: #1B1E32;
+    border-top: 1px solid #363C56;
+    min-height: 72px;
+    color: #F3F4FC
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.audio-lists-panel {
+    background-color: #1B1E32;
+    border-radius: .625rem;
+    bottom: 6.25rem;
+    box-shadow:none;
+}
+
+.audio-lists-panel-content .audio-item.playing {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.audio-lists-panel-content .audio-item:nth-child(2n+1) {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.audio-lists-panel-content .audio-item:active,
+.audio-lists-panel-content .audio-item:hover {
+    background-color:rgba(255, 255, 255, 0.08);
+}
+
+.audio-lists-panel-header {
+    border-bottom:1px solid #363C56;
+}
+
+.react-jinke-music-player-main .music-player-panel .panel-content .player-content .audio-lists-btn {
+    background-color:rgba(0,0,0,0);
+    box-shadow:0 0 0 0;
+}
+
+
+.audio-lists-panel-content .audio-item {
+    line-height: 32px;
+    padding: 4px 20px;
+    border-radius: 8px;
+    margin: 3px;
+}
+
+.react-jinke-music-player-main .music-player-panel .panel-content .img-content {
+    box-shadow:none;
+}
+
+.react-jinke-music-player-main .music-player-lyric {
+    color: #F3F4FC;
+    -webkit-text-stroke: 0.5px #1B1E32;
+    font-weight: bolder;
+}
+
+.react-jinke-music-player-main .lyric-btn-active, .react-jinke-music-player-main .lyric-btn-active svg {
+    color: #F3F4FC !important;
+}
+
+.audio-lists-panel-header {
+    border-bottom:1px solid rgba(0, 0, 0, 0.25);
+    box-shadow:none;
+}
+
+.audio-lists-panel-content .audio-item.playing, .audio-lists-panel-content .audio-item.playing svg {
+    color: #A5B4FF
+}
+
+.audio-lists-panel-content .audio-item:active .group:not([class=".player-delete"]) svg, .audio-lists-panel-content .audio-item:hover .group:not([class=".player-delete"]) svg {
+    color: #A5B4FF
+}
+
+.audio-lists-panel-content .audio-item .player-icons {
+    scale: 75%;
+}
+
+.audio-lists-panel-content .audio-item:active,
+.audio-lists-panel-content .audio-item:hover {
+    background-color: #252A43;
+}
+
+/* Mobile */
+
+.react-jinke-music-player-mobile-cover {
+    border: none;
+    box-shadow:none;
+}
+
+.react-jinke-music-player .music-player-controller {
+    border: none;
+    box-shadow:none;
+    color: #A5B4FF;
+}
+
+.react-jinke-music-player .music-player-controller .music-player-controller-setting {
+    color: rgba(165,180,255,.4);
+}
+
+.react-jinke-music-player-mobile-progress .rc-slider-handle, .react-jinke-music-player-mobile-progress .rc-slider-track {
+    background-color: #FF6B4A;
+}
+
+.react-jinke-music-player-mobile-progress .rc-slider-handle {
+    border: none;
+}
+`
+
+export default stylesheet

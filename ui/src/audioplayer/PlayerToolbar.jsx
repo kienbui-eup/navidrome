@@ -78,7 +78,7 @@ const PlayerToolbar = ({ isRadio, consoleOpen, onToggleConsole }) => {
         e.stopPropagation()
       }}
       title="Audiophile Console"
-      style={{ color: consoleOpen ? '#dfb15b' : undefined }}
+      style={{ color: consoleOpen ? 'var(--accent-color)' : undefined }}
       className={buttonClass}
     >
       <RiEqualizerLine className={!isDesktop ? classes.mobileIcon : undefined} />

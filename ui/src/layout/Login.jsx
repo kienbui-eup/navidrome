@@ -8,7 +8,7 @@ import CardActions from '@material-ui/core/CardActions'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import Link from '@material-ui/core/Link'
 import TextField from '@material-ui/core/TextField'
-import { ThemeProvider, makeStyles } from '@material-ui/core/styles'
+import { ThemeProvider, makeStyles, useTheme } from '@material-ui/core/styles'
 import {
   createMuiTheme,
   useLogin,
@@ -17,41 +17,9 @@ import {
   useTranslate,
   useVersion,
 } from 'react-admin'
-const Vi2PlayLogo = ({ size = 110 }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 100 100"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    style={{ filter: 'drop-shadow(0px 6px 15px rgba(197, 168, 128, 0.45))' }}
-  >
-    <defs>
-      <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#F1E5AC" />
-        <stop offset="50%" stopColor="#C5A880" />
-        <stop offset="100%" stopColor="#8A6F48" />
-      </linearGradient>
-    </defs>
-    <circle cx="50" cy="50" r="44" stroke="url(#goldGrad)" strokeWidth="3" fill="rgba(10, 10, 10, 0.85)" />
-    <circle cx="50" cy="50" r="38" stroke="url(#goldGrad)" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
-    <circle cx="50" cy="50" r="32" stroke="url(#goldGrad)" strokeWidth="0.5" opacity="0.3" />
-    
-    <path
-      d="M28 35 C28 35, 34 68, 48 78 C49 79, 51 79, 52 78 C66 68, 72 35, 72 35"
-      stroke="url(#goldGrad)"
-      strokeWidth="3.5"
-      strokeLinecap="round"
-      opacity="0.8"
-    />
-    <path
-      d="M44 38 L62 50 L44 62 Z"
-      fill="url(#goldGrad)"
-      style={{ filter: 'drop-shadow(0px 2px 5px rgba(0,0,0,0.5))' }}
-    />
-  </svg>
-)
-
+import Logo from '../icons/android-icon-192x192.png'
+import WordmarkLight from '../icons/trolyplay-wordmark.svg'
+import WordmarkInk from '../icons/trolyplay-wordmark-ink.svg'
 
 import Notification from './Notification'
 import useCurrentTheme from '../themes/useCurrentTheme'
@@ -97,12 +65,20 @@ const useStyles = makeStyles(
       backgroundColor: 'transparent',
       width: '6.3em',
       height: '6.3em',
+      borderRadius: '1.4em',
+    },
+    // Troly Play: the contiguous wordmark ([T-play] + roly Play) on the login card.
+    // Snow/Coral file on dark themes, Ink/Coral on light themes (picked in FormLogin).
+    wordmark: {
+      height: '3.25em',
+      width: 'auto',
+      display: 'block',
     },
     systemName: {
-      marginTop: '1em',
+      marginTop: '2.25em',
       display: 'flex',
       justifyContent: 'center',
-      color: '#3f51b5', //theme.palette.grey[500]
+      color: theme.palette.text.secondary,
     },
     welcome: {
       marginTop: '1em',
@@ -110,7 +86,7 @@ const useStyles = makeStyles(
       display: 'flex',
       justifyContent: 'center',
       flexWrap: 'wrap',
-      color: '#3f51b5', //theme.palette.grey[500]
+      color: theme.palette.text.secondary,
     },
     form: {
       padding: '0 1em 1em 1em',
@@ -158,6 +134,9 @@ const renderInput = ({
 const FormLogin = ({ loading, handleSubmit, validate }) => {
   const translate = useTranslate()
   const classes = useStyles()
+  const muiTheme = useTheme()
+  const Wordmark =
+    muiTheme.palette.type === 'dark' ? WordmarkLight : WordmarkInk
 
   return (
     <Form
@@ -167,25 +146,12 @@ const FormLogin = ({ loading, handleSubmit, validate }) => {
         <form onSubmit={handleSubmit} noValidate>
           <div className={classes.main}>
             <Card className={classes.card}>
-              <div className={classes.avatar}>
-                <Vi2PlayLogo />
-              </div>
-              <div className={classes.systemName} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '1.2em' }}>
-                <a
-                  href="https://www.vi2play.org"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={classes.systemNameLink}
-                  style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                >
-                  <div style={{ fontSize: '2.1rem', fontWeight: '900', fontFamily: "'Outfit', 'Inter', sans-serif", letterSpacing: '2px', display: 'inline-block', lineHeight: 1 }}>
-                    <span style={{ background: 'linear-gradient(135deg, #F1E5AC 0%, #C5A880 50%, #8A6F48 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Vi2</span>
-                    <span style={{ color: '#FFFFFF' }}>Play</span>
-                  </div>
-                  <span style={{ fontSize: '9px', tracking: '0.25em', letterSpacing: '3px', color: '#C5A880', fontWeight: 'bold', marginTop: '8px', textTransform: 'uppercase', opacity: 0.85 }}>
-                    VIP PLAY • VIỆT PLAYER
-                  </span>
-                </a>
+              <div className={classes.systemName}>
+                <img
+                  src={Wordmark}
+                  className={classes.wordmark}
+                  alt={APP_NAME}
+                />
               </div>
               {config.welcomeMessage && (
                 <div
@@ -297,6 +263,9 @@ const InsightsNotice = ({ url }) => {
 const FormSignUp = ({ loading, handleSubmit, validate }) => {
   const translate = useTranslate()
   const classes = useStyles()
+  const muiTheme = useTheme()
+  const Wordmark =
+    muiTheme.palette.type === 'dark' ? WordmarkLight : WordmarkInk
 
   return (
     <Form
@@ -306,17 +275,12 @@ const FormSignUp = ({ loading, handleSubmit, validate }) => {
         <form onSubmit={handleSubmit} noValidate>
           <div className={classes.main}>
             <Card className={classes.card}>
-              <div className={classes.avatar}>
-                <Vi2PlayLogo />
-              </div>
-              <div className={classes.systemName} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '1.2em' }}>
-                <div style={{ fontSize: '2.1rem', fontWeight: '900', fontFamily: "'Outfit', 'Inter', sans-serif", letterSpacing: '2px', display: 'inline-block', lineHeight: 1 }}>
-                  <span style={{ background: 'linear-gradient(135deg, #F1E5AC 0%, #C5A880 50%, #8A6F48 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Vi2</span>
-                  <span style={{ color: '#FFFFFF' }}>Play</span>
-                </div>
-                <span style={{ fontSize: '9px', tracking: '0.25em', letterSpacing: '3px', color: '#C5A880', fontWeight: 'bold', marginTop: '8px', textTransform: 'uppercase', opacity: 0.85 }}>
-                  VIP PLAY • VIỆT PLAYER
-                </span>
+              <div className={classes.systemName}>
+                <img
+                  src={Wordmark}
+                  className={classes.wordmark}
+                  alt={APP_NAME}
+                />
               </div>
               <div className={classes.welcome}>
                 {translate('ra.auth.welcome1')}

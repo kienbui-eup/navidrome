@@ -45,7 +45,7 @@ const useStyles = makeStyles((theme) => ({
   container: {
     marginTop: theme.spacing(3),
     marginBottom: theme.spacing(3),
-    fontFamily: 'Outfit, Inter, Roboto, sans-serif',
+    fontFamily: "'Be Vietnam Pro', Inter, Roboto, sans-serif",
   },
   headerPanel: {
     background: 'linear-gradient(135deg, rgba(20, 20, 35, 0.75) 0%, rgba(35, 20, 50, 0.65) 100%)',

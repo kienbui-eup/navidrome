@@ -20,7 +20,7 @@ import { makeStyles } from '@material-ui/core/styles'
 import config from '../config'
 import { DialogTitle } from './DialogTitle'
 import { DialogContent } from './DialogContent'
-import { INSIGHTS_DOC_URL } from '../consts.js'
+import { INSIGHTS_DOC_URL, APP_NAME } from '../consts.js'
 import subsonic from '../subsonic/index.js'
 import { Typography } from '@material-ui/core'
 import TableHead from '@material-ui/core/TableHead'
@@ -70,13 +70,13 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 const links = {
-  homepage: 'vi2play.org',
-  reddit: 'reddit.com/r/vi2play',
-  twitter: 'twitter.com/vi2play',
+  homepage: 'ms.troly.me',
+  source: 'github.com/kienbui-eup/navidrome',
+  bugReports: 'github.com/kienbui-eup/navidrome/issues/new',
+  featureRequests: 'github.com/kienbui-eup/navidrome/issues/new',
+  // Upstream project Troly Play is built on (credit, GPL-3.0)
+  reddit: 'reddit.com/r/navidrome',
   discord: 'discord.gg/xh7j7yF',
-  source: 'github.com/vi2play/vi2play',
-  bugReports: 'github.com/vi2play/vi2play/issues/new/choose',
-  featureRequests: 'github.com/vi2play/vi2play/discussions/new',
 }
 
 const LinkToVersion = ({ version }) => {
@@ -88,10 +88,10 @@ const LinkToVersion = ({ version }) => {
   const commitID = parts[1].replace(/[()]/g, '')
   const isSnapshot = version.includes('SNAPSHOT')
   const url = isSnapshot
-    ? `https://github.com/vi2play/vi2play/compare/v${
+    ? `https://github.com/navidrome/navidrome/compare/v${
         parts[0].split('-')[0]
       }...${commitID}`
-    : `https://github.com/vi2play/vi2play/releases/tag/v${parts[0]}`
+    : `https://github.com/navidrome/navidrome/releases/tag/v${parts[0]}`
   return (
     <>
       <Link href={url} target="_blank" rel="noopener noreferrer">
@@ -472,7 +472,7 @@ const AboutDialog = ({ open, onClose }) => {
       className={classes.expandableDialog}
     >
       <DialogTitle id="about-dialog-title" onClose={onClose}>
-        vi2play (Vip Player)
+        {APP_NAME}
       </DialogTitle>
       <DialogContent dividers>
         <TabContent

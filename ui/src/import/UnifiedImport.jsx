@@ -143,7 +143,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: 'hidden',
     transition: 'all 0.2s ease',
     '&:hover': {
-      borderColor: 'rgba(197, 168, 128, 0.3)',
+      borderColor: 'rgba(var(--accent-rgb), 0.3)',
       boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
     },
   },
@@ -1748,8 +1748,8 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
               }
               label={
                 <Box display="flex" alignItems="center" gap={0.5}>
-                  <GraphicEqIcon fontSize="small" style={{ color: losslessOnly ? '#C5A880' : 'inherit' }} />
-                  <Typography variant="body2" style={{ fontWeight: losslessOnly ? 'bold' : 'normal', color: losslessOnly ? '#C5A880' : 'inherit' }}>
+                  <GraphicEqIcon fontSize="small" style={{ color: losslessOnly ? 'var(--accent-color)' : 'inherit' }} />
+                  <Typography variant="body2" style={{ fontWeight: losslessOnly ? 'bold' : 'normal', color: losslessOnly ? 'var(--accent-color)' : 'inherit' }}>
                     Chỉ tìm nhạc chất lượng cao Lossless / Hi-Res (FLAC, DSD, WAV...)
                   </Typography>
                 </Box>
@@ -1844,8 +1844,8 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
       )}
 
       {losslessOnly && (source === 'public_search_zing' || source === 'public_search_youtube') && (
-        <Box p={2} borderRadius={8} bgcolor="rgba(197, 168, 128, 0.1)" border="1px solid #C5A880" mt={2}>
-          <Typography variant="body2" style={{ color: '#C5A880', fontWeight: 'bold' }}>
+        <Box p={2} borderRadius={8} bgcolor="rgba(var(--accent-rgb), 0.1)" border="1px solid var(--accent-color)" mt={2}>
+          <Typography variant="body2" style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>
             🔔 Nguồn Zing MP3 và YouTube Music chỉ cung cấp định dạng nén (MP3, Opus/AAC). Hãy tắt tùy chọn "Chỉ tìm nhạc chất lượng cao Lossless / Hi-Res" bên trên để tìm thấy kết quả từ các nguồn này.
           </Typography>
         </Box>
@@ -1895,10 +1895,10 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                         onClick={() => toggleArtistExpand(artist)}
                       >
                         <Box display="flex" alignItems="center" gap={1.5} style={{ flexGrow: 1, overflow: 'hidden' }}>
-                          <IconButton size="small" style={{ color: '#C5A880', padding: 4 }}>
+                          <IconButton size="small" style={{ color: 'var(--accent-color)', padding: 4 }}>
                             {isArtistExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                           </IconButton>
-                          <Avatar style={{ width: 34, height: 34, backgroundColor: '#C5A880', color: '#0A0A0A', fontSize: '0.9rem', fontWeight: 'bold' }}>
+                          <Avatar style={{ width: 34, height: 34, backgroundColor: 'var(--accent-color)', color: '#0A0A0A', fontSize: '0.9rem', fontWeight: 'bold' }}>
                             {artist.name.charAt(0).toUpperCase()}
                           </Avatar>
                           <Box style={{ overflow: 'hidden' }}>
@@ -1911,7 +1911,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                           </Box>
                         </Box>
                         <Box display="flex" alignItems="center">
-                          {artistBusy && <CircularProgress size={14} style={{ marginRight: 8, color: '#C5A880' }} />}
+                          {artistBusy && <CircularProgress size={14} style={{ marginRight: 8, color: 'var(--accent-color)' }} />}
                           {artist.songCount > 0 && (
                             <Button
                               size="small"
@@ -1923,7 +1923,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                                 const allSongs = artist.albums.reduce((all, alb) => [...all, ...alb.songs], [])
                                 handleImportBatch(artist.name, allSongs)
                               }}
-                              style={{ border: '1px solid rgba(197, 168, 128, 0.3)', color: '#C5A880', padding: '2px 8px', fontSize: '0.75rem', borderRadius: 4 }}
+                              style={{ border: '1px solid rgba(var(--accent-rgb), 0.3)', color: 'var(--accent-color)', padding: '2px 8px', fontSize: '0.75rem', borderRadius: 4 }}
                             >
                               <span className={classes.displayModeText}>Tải tất cả</span>
                             </Button>
@@ -1936,7 +1936,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                         <Box style={{ paddingLeft: 20, paddingRight: 12, paddingBottom: 8 }}>
                           {artistBusy ? (
                             <Box display="flex" justifyContent="center" py={1.5}>
-                              <CircularProgress size={20} style={{ color: '#C5A880' }} />
+                              <CircularProgress size={20} style={{ color: 'var(--accent-color)' }} />
                             </Box>
                           ) : (
                             <Box style={{ borderLeft: '1px dashed rgba(255, 255, 255, 0.1)', paddingLeft: 12 }}>
@@ -1953,10 +1953,10 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                                         onClick={() => toggleAlbumExpand(artist, album)}
                                       >
                                         <Box display="flex" alignItems="center" gap={1} style={{ flexGrow: 1, overflow: 'hidden' }}>
-                                          <IconButton size="small" style={{ color: '#C5A880', padding: 4 }}>
+                                          <IconButton size="small" style={{ color: 'var(--accent-color)', padding: 4 }}>
                                             {isAlbumExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                                           </IconButton>
-                                          <AlbumIcon style={{ fontSize: '1.25rem', color: '#C5A880' }} />
+                                          <AlbumIcon style={{ fontSize: '1.25rem', color: 'var(--accent-color)' }} />
                                           <Box style={{ overflow: 'hidden' }}>
                                             <Typography className={classes.treeAlbumName}>
                                               {album.name} {album.year ? `(${album.year})` : ''}
@@ -1967,7 +1967,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                                           </Box>
                                         </Box>
                                         <Box display="flex" alignItems="center">
-                                          {albumBusy && <CircularProgress size={12} style={{ marginRight: 6, color: '#C5A880' }} />}
+                                          {albumBusy && <CircularProgress size={12} style={{ marginRight: 6, color: 'var(--accent-color)' }} />}
                                           {album.songs && album.songs.length > 0 && (
                                             <Button
                                               size="small"
@@ -1978,7 +1978,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                                                 e.stopPropagation()
                                                 handleImportBatch(album.name, album.songs)
                                               }}
-                                              style={{ color: '#C5A880', padding: '2px 4px', fontSize: '0.72rem' }}
+                                              style={{ color: 'var(--accent-color)', padding: '2px 4px', fontSize: '0.72rem' }}
                                             >
                                               <span className={classes.displayModeText}>Tải album</span>
                                             </Button>
@@ -1991,7 +1991,7 @@ const UnifiedImport = ({ libraryId, onImported, onJobStarted }) => {
                                         <Box style={{ paddingLeft: 8, paddingRight: 4, paddingBottom: 4 }}>
                                           {albumBusy ? (
                                             <Box display="flex" justifyContent="center" py={1.5}>
-                                              <CircularProgress size={16} style={{ color: '#C5A880' }} />
+                                              <CircularProgress size={16} style={{ color: 'var(--accent-color)' }} />
                                             </Box>
                                           ) : (
                                             <List style={{ padding: 0 }}>

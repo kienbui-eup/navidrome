@@ -41,6 +41,18 @@ const createAdminStore = ({
     compose
 
   const persistedState = loadState()
+  // One-time brand migration (vi2play -> Troly Play): the old server default was
+  // the gold "Dark" theme, so browsers that still hold it move to the new default.
+  // Anyone who picks Dark again afterwards keeps it.
+  try {
+    const flag = 'trolyplay.themeMigrated'
+    if (persistedState?.theme === 'DarkTheme' && !localStorage.getItem(flag)) {
+      delete persistedState.theme
+    }
+    localStorage.setItem(flag, '1')
+  } catch {
+    // storage unavailable: nothing to migrate
+  }
   if (persistedState?.player?.savedPlayIndex) {
     persistedState.player.playIndex = persistedState.player.savedPlayIndex
   }

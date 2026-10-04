@@ -13,7 +13,7 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: 'rgba(15, 14, 13, 0.88)',
     backdropFilter: 'blur(28px)',
     '-webkit-backdrop-filter': 'blur(28px)',
-    border: '1px solid rgba(223, 177, 91, 0.22)',
+    border: '1px solid rgba(255, 107, 74, 0.22)',
     borderRadius: 16,
     boxShadow: '0 24px 60px rgba(0, 0, 0, 0.75), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
     zIndex: 99,
@@ -22,7 +22,7 @@ const useStyles = makeStyles((theme) => ({
     overflow: 'hidden',
     animation: '$slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     color: '#ffffff',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Be Vietnam Pro', 'Inter', sans-serif",
     '@media (max-width: 960px)': {
       height: 'auto',
       maxHeight: '70vh',
@@ -45,7 +45,7 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '12px 24px',
-    borderBottom: '1px solid rgba(223, 177, 91, 0.12)',
+    borderBottom: '1px solid rgba(255, 107, 74, 0.12)',
     background: 'rgba(26, 24, 23, 0.6)',
   },
   titleGroup: {
@@ -57,16 +57,16 @@ const useStyles = makeStyles((theme) => ({
     fontSize: '14px',
     fontWeight: 600,
     letterSpacing: '0.1em',
-    color: '#dfb15b',
+    color: '#FF6B4A',
     textTransform: 'uppercase',
-    textShadow: '0 0 8px rgba(223, 177, 91, 0.2)',
+    textShadow: '0 0 8px rgba(255, 107, 74, 0.2)',
   },
   statusDot: {
     width: 6,
     height: 6,
     borderRadius: '50%',
-    backgroundColor: '#00f3ff',
-    boxShadow: '0 0 8px #00f3ff',
+    backgroundColor: '#80D8B2',
+    boxShadow: '0 0 8px #80D8B2',
     animation: '$pulse 2s infinite',
   },
   '@keyframes pulse': {
@@ -87,8 +87,8 @@ const useStyles = makeStyles((theme) => ({
     transition: 'all 0.2s',
     borderRadius: '50%',
     '&:hover': {
-      color: '#dfb15b',
-      backgroundColor: 'rgba(223, 177, 91, 0.1)',
+      color: '#FF6B4A',
+      backgroundColor: 'rgba(255, 107, 74, 0.1)',
       transform: 'rotate(90deg)',
     },
   },
@@ -128,7 +128,7 @@ const useStyles = makeStyles((theme) => ({
     flex: 1,
     backgroundColor: 'rgba(10, 10, 10, 0.6)',
     borderRadius: 8,
-    border: '1px solid rgba(223, 177, 91, 0.1)',
+    border: '1px solid rgba(255, 107, 74, 0.1)',
     position: 'relative',
     display: 'flex',
     alignItems: 'center',
@@ -170,7 +170,7 @@ const useStyles = makeStyles((theme) => ({
     top: 14,
     width: 2,
     height: 'calc(100% - 10px)',
-    background: 'linear-gradient(to bottom, #dfb15b 40%, rgba(255, 255, 255, 0.1) 100%)',
+    background: 'linear-gradient(to bottom, #FF6B4A 40%, rgba(255, 255, 255, 0.1) 100%)',
     zIndex: 0,
   },
   stepIndicator: {
@@ -187,9 +187,9 @@ const useStyles = makeStyles((theme) => ({
     color: 'rgba(255, 255, 255, 0.5)',
   },
   stepIndicatorActive: {
-    borderColor: '#dfb15b',
-    color: '#dfb15b',
-    boxShadow: '0 0 10px rgba(223, 177, 91, 0.4)',
+    borderColor: '#FF6B4A',
+    color: '#FF6B4A',
+    boxShadow: '0 0 10px rgba(255, 107, 74, 0.4)',
   },
   stepDetails: {
     display: 'flex',
@@ -243,12 +243,12 @@ const useStyles = makeStyles((theme) => ({
     transition: 'all 0.15s ease',
     '&:hover': {
       transform: 'scale(1.15)',
-      color: '#dfb15b',
+      color: '#FF6B4A',
     },
   },
   starActive: {
-    color: '#dfb15b',
-    filter: 'drop-shadow(0 0 4px rgba(223, 177, 91, 0.5))',
+    color: '#FF6B4A',
+    filter: 'drop-shadow(0 0 4px rgba(255, 107, 74, 0.5))',
   },
   loveBtn: {
     background: 'none',
@@ -280,10 +280,10 @@ const useStyles = makeStyles((theme) => ({
     fontSize: '11px',
     resize: 'none',
     outline: 'none',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: "'Be Vietnam Pro', 'Inter', sans-serif",
     transition: 'border-color 0.2s',
     '&:focus': {
-      borderColor: 'rgba(223, 177, 91, 0.4)',
+      borderColor: 'rgba(255, 107, 74, 0.4)',
     },
   },
 }))
@@ -383,7 +383,7 @@ const AudiophileConsole = ({ open, onClose, analyser, isPlaying, currentSong }) 
       ctx.fillStyle = dialGrad
       ctx.fill()
       ctx.lineWidth = 1.5
-      ctx.strokeStyle = 'rgba(223, 177, 91, 0.25)'
+      ctx.strokeStyle = 'rgba(255, 107, 74, 0.25)'
       ctx.stroke()
 
       // Draw beautiful McIntosh Blue soft glow
@@ -421,7 +421,7 @@ const AudiophileConsole = ({ open, onClose, analyser, isPlaying, currentSong }) 
 
       // Draw simple dB text labels
       ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'
-      ctx.font = '7px Outfit'
+      ctx.font = "7px 'Be Vietnam Pro'"
       ctx.textAlign = 'center'
       
       const lblAngle1 = startAngle + (endAngle - startAngle) * 0.1
@@ -433,8 +433,8 @@ const AudiophileConsole = ({ open, onClose, analyser, isPlaying, currentSong }) 
       ctx.fillText('+3dB', cx + radius * 0.73 * Math.cos(lblAngle3), cy + radius * 0.73 * Math.sin(lblAngle3))
 
       // Draw Meter Title (L/R)
-      ctx.fillStyle = 'rgba(223, 177, 91, 0.75)'
-      ctx.font = 'bold 8px Outfit'
+      ctx.fillStyle = 'rgba(255, 107, 74, 0.75)'
+      ctx.font = "bold 8px 'Be Vietnam Pro'"
       ctx.fillText(title, cx, cy - radius * 0.3)
 
       // Draw clip LED
@@ -458,8 +458,8 @@ const AudiophileConsole = ({ open, onClose, analyser, isPlaying, currentSong }) 
       ctx.moveTo(cx, cy + radius * 0.08)
       ctx.lineTo(nx, ny)
       ctx.lineWidth = 1.2
-      ctx.strokeStyle = '#dfb15b'
-      ctx.shadowColor = 'rgba(223, 177, 91, 0.5)'
+      ctx.strokeStyle = '#FF6B4A'
+      ctx.shadowColor = 'rgba(255, 107, 74, 0.5)'
       ctx.shadowBlur = 3
       ctx.stroke()
       ctx.shadowBlur = 0 // reset
@@ -584,17 +584,17 @@ const AudiophileConsole = ({ open, onClose, analyser, isPlaying, currentSong }) 
   const isHiRes = currentSong?.sampleRate > 48000 || currentSong?.bitDepth > 16
 
   if (isDSD) {
-    ledColor = '#dfb15b' // Gold Champagne
+    ledColor = '#F2B59B' // Troly Play tier-hires
     ledLabel = 'STUDIO DSD'
-    ledGlow = 'rgba(223, 177, 91, 0.45)'
+    ledGlow = 'rgba(242, 181, 155, 0.45)'
   } else if (isHiRes) {
-    ledColor = '#00f3ff' // Glowing Cyan
+    ledColor = '#F2B59B' // Troly Play tier-hires
     ledLabel = 'HI-RES LOSSLESS'
-    ledGlow = 'rgba(0, 243, 255, 0.45)'
+    ledGlow = 'rgba(242, 181, 155, 0.45)'
   } else if (isLossless) {
-    ledColor = '#e5e9f0' // Platinum Silver
+    ledColor = '#A5B4FF' // Troly Play tier-lossless
     ledLabel = 'CD LOSSLESS'
-    ledGlow = 'rgba(229, 233, 240, 0.45)'
+    ledGlow = 'rgba(165, 180, 255, 0.45)'
   }
 
   return (
@@ -633,7 +633,7 @@ const AudiophileConsole = ({ open, onClose, analyser, isPlaying, currentSong }) 
                 <div 
                   className={classes.ledBadge}
                   style={{ 
-                    backgroundColor: `rgba(${ledColor === '#dfb15b' ? '223, 177, 91' : ledColor === '#00f3ff' ? '0, 243, 255' : '229, 233, 240'}, 0.08)`,
+                    backgroundColor: `rgba(${ledColor === '#F2B59B' ? '242, 181, 155' : ledColor === '#A5B4FF' ? '165, 180, 255' : '136, 136, 136'}, 0.08)`,
                     color: ledColor,
                     border: `1px solid ${ledColor}40`,
                     boxShadow: `0 0 8px ${ledGlow}`
