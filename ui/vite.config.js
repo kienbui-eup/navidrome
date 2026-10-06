@@ -56,15 +56,15 @@ export default defineConfig({
 // PWA manifest
 function manifest() {
   return {
-    name: 'vi2play (Vip Player)',
-    short_name: 'vi2play',
+    name: 'Troly Play',
+    short_name: 'Troly Play',
     description:
-      'vi2play (Vip Player), an open source web-based music collection server and streamer',
+      'Trợ lý giải trí của cả nhà: nhạc hi-end, phim, radio và podcast',
     categories: ['music', 'entertainment'],
     display: 'standalone',
     start_url: './',
-    background_color: '#101010',
-    theme_color: '#d4a017',
+    background_color: '#111322',
+    theme_color: '#111322',
     icons: [
       {
         src: './android-chrome-192x192.png',
