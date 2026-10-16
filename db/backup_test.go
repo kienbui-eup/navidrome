@@ -68,7 +68,7 @@ var _ = Describe("database backups", func() {
 
 			timesShuffled = make([]time.Time, len(timesDecreasingChronologically))
 			copy(timesShuffled, timesDecreasingChronologically)
-			rand.Shuffle(len(timesShuffled), func(i, j int) {
+			rand.Shuffle(len(timesShuffled), func(i, j int) { // #nosec G404 -- Only permutes synthetic backup timestamps in this test.
 				timesShuffled[i], timesShuffled[j] = timesShuffled[j], timesShuffled[i]
 			})
 
