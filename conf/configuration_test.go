@@ -32,6 +32,15 @@ var _ = Describe("Configuration", func() {
 		}))
 	})
 
+	It("loads ND_DBPATH without requiring a configuration file", func() {
+		expected := filepath.Join(GinkgoT().TempDir(), "preserved.db") + "?cache=shared&_journal_mode=WAL"
+		GinkgoT().Setenv("ND_CONFIGFILE", "")
+		GinkgoT().Setenv("ND_DBPATH", expected)
+		conf.InitConfig("", true)
+		conf.Load(true)
+		Expect(conf.Server.DbPath).To(Equal(expected))
+	})
+
 	Describe("ParseLanguages", func() {
 		It("parses single language", func() {
 			Expect(conf.ParseLanguages("en")).To(Equal([]string{"en"}))

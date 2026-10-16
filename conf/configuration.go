@@ -732,6 +732,7 @@ func setViperDefaults() {
 	viper.SetDefault("musicfolder", filepath.Join(".", "music"))
 	viper.SetDefault("cachefolder", "")
 	viper.SetDefault("datafolder", ".")
+	viper.SetDefault("dbpath", "")
 	viper.SetDefault("loglevel", "info")
 	viper.SetDefault("logfile", "")
 	viper.SetDefault("address", "0.0.0.0")
