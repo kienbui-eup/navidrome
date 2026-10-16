@@ -27,7 +27,12 @@ import config from '../config'
 const useStyles = makeStyles((theme) => ({
   root: { marginTop: '1em' },
   field: { marginRight: theme.spacing(1), minWidth: 320 },
-  actions: { marginTop: theme.spacing(2), display: 'flex', gap: theme.spacing(1), flexWrap: 'wrap' },
+  actions: {
+    marginTop: theme.spacing(2),
+    display: 'flex',
+    gap: theme.spacing(1),
+    flexWrap: 'wrap',
+  },
   section: { marginTop: theme.spacing(3) },
   hint: { color: theme.palette.text.secondary, marginTop: theme.spacing(1) },
   itemMeta: { color: theme.palette.text.secondary, fontSize: '0.8rem' },
@@ -127,7 +132,10 @@ const ImportMusic = () => {
       })
       afterImport(json.savedName)
     } catch (e) {
-      notify(`Không tải được "${file.name || file.id}": ${errMsg(e)}`, 'warning')
+      notify(
+        `Không tải được "${file.name || file.id}": ${errMsg(e)}`,
+        'warning',
+      )
     } finally {
       setBusy(null)
     }
@@ -149,7 +157,10 @@ const ImportMusic = () => {
       }
     }
     setBusy(null)
-    notify(`Đã tải ${ok}/${driveFiles.length} file. Đang quét thư viện...`, 'info')
+    notify(
+      `Đã tải ${ok}/${driveFiles.length} file. Đang quét thư viện...`,
+      'info',
+    )
     triggerScan()
   }
 
@@ -217,9 +228,9 @@ const ImportMusic = () => {
       <CardContent>
         <Typography variant="h6">Import nhạc từ nguồn công khai</Typography>
         <Typography className={classes.hint}>
-          Tải nhạc từ URL/podcast trực tiếp, thư mục Google Drive công khai, hoặc
-          kho mở Internet Archive vào thư viện. Chỉ dùng cho nội dung bạn có
-          quyền tải.
+          Tải nhạc từ URL/podcast trực tiếp, thư mục Google Drive công khai,
+          hoặc kho mở Internet Archive vào thư viện. Chỉ dùng cho nội dung bạn
+          có quyền tải.
         </Typography>
 
         <Box className={classes.section}>
