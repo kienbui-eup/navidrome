@@ -17,6 +17,7 @@ function createMatchMedia(theme) {
 
 beforeEach(() => {
   document.body.style.backgroundColor = ''
+  document.body.style.fontFamily = ''
 })
 
 describe('useCurrentTheme', () => {
@@ -126,6 +127,18 @@ describe('useCurrentTheme', () => {
   describe('body background color', () => {
     beforeAll(() => {
       window.matchMedia = createMatchMedia('dark')
+    })
+    it('applies the brand font to inherited album and player text', () => {
+      renderHook(() => useCurrentTheme(), {
+        wrapper: ({ children }) => (
+          <Provider
+            store={createStore(themeReducer, { theme: 'TrolyPlayTheme' })}
+          >
+            {children}
+          </Provider>
+        ),
+      })
+      expect(document.body.style.fontFamily).toContain('Be Vietnam Pro')
     })
     it('sets body background for dark theme', () => {
       renderHook(() => useCurrentTheme(), {

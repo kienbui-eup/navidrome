@@ -46,6 +46,10 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   wordmark: { display: 'block', width: '100%', maxWidth: 176, height: 'auto' },
+  brandCompact: {
+    margin: theme.spacing(0, 0.5, 2),
+    padding: theme.spacing(0.5),
+  },
 }))
 
 const translatedResourceName = (resource, translate) =>
@@ -126,7 +130,10 @@ const Menu = ({ dense = false }) => {
         [classes.closed]: !open,
       })}
     >
-      <a href="#/" className={classes.brand}>
+      <a
+        href="#/"
+        className={clsx(classes.brand, { [classes.brandCompact]: !open })}
+      >
         <BrandLogo compact={!open} className={classes.wordmark} />
       </a>
       {open && <LibrarySelector />}
