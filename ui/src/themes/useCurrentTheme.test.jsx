@@ -32,7 +32,8 @@ describe('useCurrentTheme', () => {
           </Provider>
         ),
       })
-      expect(result.current.themeName).toMatch('Light')
+      expect(result.current.themeName).toBe('Troly Play Light')
+      expect(result.current.palette.background.default).toBe('#FAF8F2')
     })
     it('sets theme as dark', () => {
       const { result } = renderHook(() => useCurrentTheme(), {
@@ -83,7 +84,8 @@ describe('useCurrentTheme', () => {
         ),
       })
 
-      expect(result.current.themeName).toMatch('Dark')
+      expect(result.current.themeName).toBe('Troly Play')
+      expect(result.current.palette.background.default).toBe('#111322')
     })
     it('sets theme as dark', () => {
       const { result } = renderHook(() => useCurrentTheme(), {

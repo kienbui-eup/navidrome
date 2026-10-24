@@ -17,7 +17,7 @@ const defaultConfig = {
   gaTrackingId: '',
   devActivityPanel: true,
   enableStarRating: true,
-  defaultTheme: 'Dark',
+  defaultTheme: 'Troly Play',
   defaultLanguage: '',
   googleDriveEnabled: false,
   defaultUIVolume: 100,

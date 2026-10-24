@@ -9,14 +9,16 @@ const useCurrentTheme = () => {
   const prefersLightMode = useMediaQuery('(prefers-color-scheme: light)')
   const theme = useSelector((state) => {
     if (state.theme === AUTO_THEME_ID) {
-      return prefersLightMode ? themes.LightTheme : themes.DarkTheme
+      return prefersLightMode
+        ? themes.TrolyPlayLightTheme
+        : themes.TrolyPlayTheme
     }
     const themeName =
       Object.keys(themes).find((t) => t === state.theme) ||
       Object.keys(themes).find(
         (t) => themes[t].themeName === config.defaultTheme,
       ) ||
-      'DarkTheme'
+      'TrolyPlayTheme'
     return themes[themeName]
   })
 

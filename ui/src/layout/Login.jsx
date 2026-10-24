@@ -16,55 +16,53 @@ import {
   useTranslate,
   useVersion,
 } from 'react-admin'
-import Logo from '../icons/android-icon-192x192.png'
+import BrandLogo from '../common/BrandLogo'
 
 import Notification from './Notification'
 import useCurrentTheme from '../themes/useCurrentTheme'
 import config from '../config'
 import { clearQueue } from '../actions'
-import { INSIGHTS_DOC_URL, APP_NAME } from '../consts.js'
+import { INSIGHTS_DOC_URL } from '../consts.js'
 
 const useStyles = makeStyles(
   (theme) => ({
     main: {
+      boxSizing: 'border-box',
       display: 'flex',
       flexDirection: 'column',
       minHeight: '100vh',
       alignItems: 'center',
-      justifyContent: 'flex-start',
-      // A theme-based gradient always sits underneath the (optional) background
-      // image. If loginBackgroundURL is empty, or the remote image fails to load
-      // / times out, the gradient shows through instead of a blank white/black
-      // page. When the image loads it fully covers the gradient (backgroundSize
-      // cover), so there is no visible overlay of the two.
-      background: config.loginBackgroundURL
-        ? `url(${config.loginBackgroundURL}), linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.main}22 100%)`
-        : `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.main}22 100%)`,
+      justifyContent: 'center',
+      padding: theme.spacing(3, 2),
+      background:
+        config.loginBackgroundURL &&
+        !config.loginBackgroundURL.includes('/backgrounds') &&
+        !config.loginBackgroundURL.startsWith('data:') &&
+        !config.loginBackgroundURL.includes('source.unsplash.com')
+          ? `url(${config.loginBackgroundURL}), linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.main}22 100%)`
+          : `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.main}22 100%)`,
       backgroundRepeat: 'no-repeat',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     },
     card: {
-      minWidth: 300,
-      marginTop: '6em',
-      overflow: 'visible',
+      boxSizing: 'border-box',
+      width: '100%',
+      maxWidth: 420,
+      borderRadius: 20,
+      padding: theme.spacing(2),
     },
-    avatar: {
-      margin: '1em',
-      display: 'flex',
-      justifyContent: 'center',
-      marginTop: '-3em',
-    },
-    icon: {
-      backgroundColor: 'transparent',
-      width: '6.3em',
-      height: '6.3em',
+    wordmark: {
+      width: '100%',
+      maxWidth: 240,
+      height: 'auto',
+      display: 'block',
     },
     systemName: {
-      marginTop: '1em',
+      margin: theme.spacing(3, 2, 2),
       display: 'flex',
       justifyContent: 'center',
-      color: '#3f51b5', //theme.palette.grey[500]
+      color: theme.palette.text.secondary,
     },
     welcome: {
       marginTop: '1em',
@@ -72,7 +70,7 @@ const useStyles = makeStyles(
       display: 'flex',
       justifyContent: 'center',
       flexWrap: 'wrap',
-      color: '#3f51b5', //theme.palette.grey[500]
+      color: theme.palette.text.secondary,
     },
     form: {
       padding: '0 1em 1em 1em',
@@ -83,7 +81,13 @@ const useStyles = makeStyles(
     actions: {
       padding: '0 1em 1em 1em',
     },
-    button: {},
+    button: {
+      minHeight: 48,
+      '&:focus-visible': {
+        outline: `2px solid ${theme.palette.primary.main}`,
+        outlineOffset: 3,
+      },
+    },
     systemNameLink: {
       textDecoration: 'none',
     },
@@ -129,18 +133,8 @@ const FormLogin = ({ loading, handleSubmit, validate }) => {
         <form onSubmit={handleSubmit} noValidate>
           <div className={classes.main}>
             <Card className={classes.card}>
-              <div className={classes.avatar}>
-                <img src={Logo} className={classes.icon} alt={'logo'} />
-              </div>
               <div className={classes.systemName}>
-                <a
-                  href="https://www.navidrome.org"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={classes.systemNameLink}
-                >
-                  {APP_NAME}
-                </a>
+                <BrandLogo className={classes.wordmark} />
               </div>
               {config.welcomeMessage && (
                 <div
@@ -159,6 +153,8 @@ const FormLogin = ({ loading, handleSubmit, validate }) => {
                     label={translate('ra.auth.username')}
                     disabled={loading}
                     spellCheck={false}
+                    autoComplete="username"
+                    variant="outlined"
                   />
                 </div>
                 <div className={classes.input}>
@@ -167,6 +163,8 @@ const FormLogin = ({ loading, handleSubmit, validate }) => {
                     component={renderInput}
                     label={translate('ra.auth.password')}
                     type="password"
+                    autoComplete="current-password"
+                    variant="outlined"
                     disabled={loading}
                   />
                 </div>
@@ -261,8 +259,8 @@ const FormSignUp = ({ loading, handleSubmit, validate }) => {
         <form onSubmit={handleSubmit} noValidate>
           <div className={classes.main}>
             <Card className={classes.card}>
-              <div className={classes.avatar}>
-                <img src={Logo} className={classes.icon} alt={'logo'} />
+              <div className={classes.systemName}>
+                <BrandLogo className={classes.wordmark} />
               </div>
               <div className={classes.welcome}>
                 {translate('ra.auth.welcome1')}
