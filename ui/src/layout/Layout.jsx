@@ -1,6 +1,11 @@
 import React, { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Layout as RALayout, toggleSidebar, useTranslate } from 'react-admin'
+import {
+  Layout as RALayout,
+  Sidebar as RASidebar,
+  toggleSidebar,
+  useTranslate,
+} from 'react-admin'
 import { makeStyles } from '@material-ui/core/styles'
 import { HotKeys } from 'react-hotkeys'
 import Menu from './Menu'
@@ -8,9 +13,14 @@ import AppBar from './AppBar'
 import Notification from './Notification'
 import useCurrentTheme from '../themes/useCurrentTheme'
 import { useSearchRefocus } from '../common'
+import { PageHeaderProvider } from './PageHeader'
 
 const useStyles = makeStyles((theme) => ({
   root: { paddingBottom: (props) => (props.addPadding ? '80px' : 0) },
+  appFrame: { '&&': { marginTop: 0 } },
+  sidebar: {
+    '&&': { height: 'calc(100vh - var(--troly-header-height, 64px))' },
+  },
   // Keyboard "skip to main content" link: off-screen until focused.
   skipLink: {
     position: 'absolute',
@@ -27,6 +37,16 @@ const useStyles = makeStyles((theme) => ({
     },
   },
 }))
+
+const Sidebar = (props) => {
+  const classes = useStyles(props)
+  return (
+    <RASidebar
+      {...props}
+      classes={{ root: classes.sidebar, fixed: classes.sidebar }}
+    />
+  )
+}
 
 const Layout = (props) => {
   const theme = useCurrentTheme()
@@ -53,19 +73,27 @@ const Layout = (props) => {
   }, [])
 
   return (
-    <HotKeys handlers={keyHandlers}>
-      <a href="#main-content" className={classes.skipLink} onClick={handleSkip}>
-        {translate('ra.navigation.skip_nav', { _: 'Skip to main content' })}
-      </a>
-      <RALayout
-        {...props}
-        className={classes.root}
-        menu={Menu}
-        appBar={AppBar}
-        theme={theme}
-        notification={Notification}
-      />
-    </HotKeys>
+    <PageHeaderProvider>
+      <HotKeys handlers={keyHandlers}>
+        <a
+          href="#main-content"
+          className={classes.skipLink}
+          onClick={handleSkip}
+        >
+          {translate('ra.navigation.skip_nav', { _: 'Skip to main content' })}
+        </a>
+        <RALayout
+          {...props}
+          className={classes.root}
+          menu={Menu}
+          sidebar={Sidebar}
+          appBar={AppBar}
+          classes={{ appFrame: classes.appFrame }}
+          theme={theme}
+          notification={Notification}
+        />
+      </HotKeys>
+    </PageHeaderProvider>
   )
 }
 

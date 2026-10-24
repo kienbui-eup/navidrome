@@ -5,12 +5,7 @@ import {
   TopToolbar,
   useTranslate,
 } from 'react-admin'
-import {
-  ButtonGroup,
-  useMediaQuery,
-  Typography,
-  makeStyles,
-} from '@material-ui/core'
+import { ButtonGroup, Typography, makeStyles } from '@material-ui/core'
 import ViewHeadlineIcon from '@material-ui/icons/ViewHeadline'
 import ViewModuleIcon from '@material-ui/icons/ViewModule'
 import { useDispatch, useSelector } from 'react-redux'
@@ -87,7 +82,6 @@ const AlbumListActions = ({
   fullWidth,
   ...rest
 }) => {
-  const isNotSmall = useMediaQuery((theme) => theme.breakpoints.up('sm'))
   const albumView = useSelector((state) => state.albumView)
   return (
     <TopToolbar className={className} {...sanitizeListRestProps(rest)}>
@@ -99,15 +93,11 @@ const AlbumListActions = ({
           filterValues,
           context: 'button',
         })}
-      {isNotSmall ? (
-        <ToggleFieldsMenu
-          resource="album"
-          topbarComponent={AlbumViewToggler}
-          hideColumns={albumView.grid}
-        />
-      ) : (
-        <AlbumViewToggler showTitle={false} />
-      )}
+      <ToggleFieldsMenu
+        resource="album"
+        topbarComponent={AlbumViewToggler}
+        hideColumns={albumView.grid}
+      />
     </TopToolbar>
   )
 }
