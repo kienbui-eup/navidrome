@@ -50,6 +50,7 @@ const useCurrentTheme = () => {
     const bgColor =
       theme.palette?.background?.default || (isDark ? '#303030' : '#fafafa')
     document.body.style.backgroundColor = bgColor
+    document.body.style.fontFamily = theme.typography?.fontFamily || ''
   }, [theme])
 
   return theme
