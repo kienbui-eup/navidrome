@@ -8,7 +8,13 @@ import {
 } from 'react-admin'
 import { MdInfo, MdPerson, MdSupervisorAccount } from 'react-icons/md'
 import { useSelector } from 'react-redux'
-import { makeStyles, MenuItem, ListItemIcon, Divider } from '@material-ui/core'
+import {
+  makeStyles,
+  MenuItem,
+  ListItemIcon,
+  Divider,
+  Typography,
+} from '@material-ui/core'
 import ViewListIcon from '@material-ui/icons/ViewList'
 import { Dialogs } from '../dialogs/Dialogs'
 import { AboutDialog } from '../dialogs'
@@ -18,6 +24,7 @@ import ActivityPanel from './ActivityPanel'
 import NowPlayingPanel from './NowPlayingPanel'
 import UserMenu from './UserMenu'
 import config from '../config'
+import { PageHeaderFrame, PageHeaderSlot } from './PageHeader'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -28,6 +35,49 @@ const useStyles = makeStyles(
       color: theme.palette.text.primary,
     },
     icon: { minWidth: theme.spacing(5) },
+    appBar: {
+      '&&': {
+        backgroundColor: theme.palette.background.paper,
+        color: theme.palette.text.primary,
+        boxShadow: 'none',
+        borderBottom: `1px solid ${theme.palette.divider}`,
+      },
+    },
+    toolbar: {
+      minHeight: 64,
+      boxSizing: 'border-box',
+      padding: theme.spacing(1, 2),
+      gap: theme.spacing(1),
+      flexWrap: 'wrap',
+      '& > button': {
+        width: 44,
+        height: 44,
+        minWidth: 44,
+        minHeight: 44,
+        padding: 10,
+        margin: 0,
+      },
+      [theme.breakpoints.down('xs')]: {
+        padding: theme.spacing(1),
+        gap: theme.spacing(0.5),
+        '& > .MuiIconButton-root, & > .app-loader': { order: 3 },
+        '& > .MuiIconButton-root:first-child': { order: 0 },
+      },
+    },
+    utilities: {
+      display: 'flex',
+      alignItems: 'center',
+      flexShrink: 0,
+      marginLeft: 'auto',
+      '& button': {
+        width: 44,
+        height: 44,
+        minWidth: 44,
+        minHeight: 44,
+        padding: 10,
+      },
+      [theme.breakpoints.down('xs')]: { order: 3 },
+    },
   }),
   {
     name: 'NDAppBar',
@@ -143,8 +193,35 @@ const CustomUserMenu = ({ onClick, ...rest }) => {
   )
 }
 
-const AppBar = (props) => (
-  <RAAppBar {...props} container={Fragment} userMenu={<CustomUserMenu />} />
-)
+const AppBarUserMenu = ({ logout }) => {
+  const classes = useStyles()
+  return (
+    <div className={classes.utilities}>
+      <CustomUserMenu logout={logout} />
+    </div>
+  )
+}
+
+const AppBar = (props) => {
+  const classes = useStyles()
+  return (
+    <PageHeaderFrame>
+      <RAAppBar
+        {...props}
+        position="static"
+        color="default"
+        elevation={0}
+        className={classes.appBar}
+        classes={{ toolbar: classes.toolbar }}
+        container={Fragment}
+        userMenu={<AppBarUserMenu />}
+      >
+        <PageHeaderSlot
+          fallback={<Typography variant="h6" id="react-admin-title" />}
+        />
+      </RAAppBar>
+    </PageHeaderFrame>
+  )
+}
 
 export default AppBar
