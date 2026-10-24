@@ -3,27 +3,34 @@ import PropTypes from 'prop-types'
 import Chip from '@material-ui/core/Chip'
 import { useTranslate } from 'react-admin'
 import config from '../config'
-import { makeStyles } from '@material-ui/core'
+import { makeStyles, useTheme } from '@material-ui/core'
 import clsx from 'clsx'
 import { calculateGain } from '../utils/calculateReplayGain'
 
 const llFormats = new Set(config.losslessFormats.split(','))
 const placeholder = 'N/A'
 
-// Quality tiers -> chip accent color (req: green lossless/hi-res, blue high
-// lossy >=256kbps, yellow low lossy <256kbps, undefined/grey when unknown).
+// Quality tiers (Troly Play brand §7): hires (>16-bit or >48 kHz, direct play),
+// lossless, highLossy (>=256 kbps), lowLossy. Colors come from the theme's
+// palette.quality when the theme defines it; otherwise these defaults.
 const QUALITY_COLORS = {
+  hires: '#3FB950',
   lossless: '#3FB950',
   highLossy: '#58A6FF',
   lowLossy: '#E3B341',
 }
 
-const getQualityColor = ({ suffix, bitRate, bitDepth, isLossless }) => {
-  if (isLossless || bitDepth > 16) return QUALITY_COLORS.lossless
-  if (suffix && llFormats.has(suffix)) return QUALITY_COLORS.lossless
-  if (bitRate > 0) {
-    return bitRate >= 256 ? QUALITY_COLORS.highLossy : QUALITY_COLORS.lowLossy
-  }
+const getQualityTier = ({
+  suffix,
+  bitRate,
+  bitDepth,
+  sampleRate,
+  isLossless,
+}) => {
+  const lossless = isLossless || (suffix && llFormats.has(suffix))
+  if (lossless && (bitDepth > 16 || sampleRate > 48000)) return 'hires'
+  if (lossless || bitDepth > 16) return 'lossless'
+  if (bitRate > 0) return bitRate >= 256 ? 'highLossy' : 'lowLossy'
   return undefined
 }
 
@@ -31,6 +38,7 @@ const useStyle = makeStyles(
   (theme) => ({
     chip: {
       transform: 'scale(0.8)',
+      fontVariantNumeric: 'tabular-nums',
     },
   }),
   {
@@ -48,7 +56,10 @@ export const QualityInfo = ({
   isDirectPlay,
 }) => {
   const classes = useStyle()
+  const theme = useTheme()
   const translate = useTranslate()
+  const tierColor = (tier) =>
+    tier ? (theme.palette.quality?.[tier] ?? QUALITY_COLORS[tier]) : undefined
   let {
     suffix,
     bitRate,
@@ -72,7 +83,9 @@ export const QualityInfo = ({
   }
 
   // Color reflects the quality actually delivered: source by default...
-  let qualityColor = getQualityColor({ suffix, bitRate, bitDepth })
+  let qualityColor = tierColor(
+    getQualityTier({ suffix, bitRate, bitDepth, sampleRate }),
+  )
 
   // Show transcode target when transcoding (not direct play)
   if (transcodeStream && !isDirectPlay) {
@@ -87,11 +100,13 @@ export const QualityInfo = ({
     const sourceSuffix = suffix || placeholder
     info = `${sourceSuffix} → ${targetInfo}`
     // ...but when transcoding, the target format/bitrate is what the user hears.
-    qualityColor = getQualityColor({
-      suffix: targetCodec,
-      bitRate: targetBitrate,
-      isLossless: llFormats.has(targetCodec),
-    })
+    qualityColor = tierColor(
+      getQualityTier({
+        suffix: targetCodec,
+        bitRate: targetBitrate,
+        isLossless: llFormats.has(targetCodec),
+      }),
+    )
   }
 
   const extra = useMemo(() => {

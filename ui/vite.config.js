@@ -56,15 +56,15 @@ export default defineConfig({
 // PWA manifest
 function manifest() {
   return {
-    name: 'Trợ lý nhạc',
-    short_name: 'Trợ lý nhạc',
+    name: 'Troly Play',
+    short_name: 'Troly Play',
     description:
-      'Trợ lý nhạc, an open source web-based music collection server and streamer',
+      'Trợ lý giải trí của cả nhà: nhạc hi-end, phim, radio và podcast',
     categories: ['music', 'entertainment'],
     display: 'standalone',
     start_url: './',
-    background_color: 'white',
-    theme_color: 'blue',
+    background_color: '#111322',
+    theme_color: '#111322',
     icons: [
       {
         src: './android-chrome-192x192.png',

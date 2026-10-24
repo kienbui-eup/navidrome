@@ -11,6 +11,7 @@ import albumLists from '../album/albumLists'
 import PlaylistsSubMenu from './PlaylistsSubMenu'
 import LibrarySelector from '../common/LibrarySelector'
 import config from '../config'
+import BrandLogo from '../common/BrandLogo'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -32,6 +33,19 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.text.primary,
     fontWeight: 'bold',
   },
+  brand: {
+    display: 'flex',
+    alignItems: 'center',
+    minHeight: 64,
+    margin: theme.spacing(0, 1, 2),
+    padding: theme.spacing(1),
+    borderRadius: 8,
+    '&:focus-visible': {
+      outline: `2px solid ${theme.palette.primary.main}`,
+      outlineOffset: 3,
+    },
+  },
+  wordmark: { display: 'block', width: '100%', maxWidth: 176, height: 'auto' },
 }))
 
 const translatedResourceName = (resource, translate) =>
@@ -112,6 +126,9 @@ const Menu = ({ dense = false }) => {
         [classes.closed]: !open,
       })}
     >
+      <a href="#/" className={classes.brand}>
+        <BrandLogo compact={!open} className={classes.wordmark} />
+      </a>
       {open && <LibrarySelector />}
       <SubMenu
         handleToggle={() => handleToggle('menuAlbumList')}

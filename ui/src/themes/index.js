@@ -20,7 +20,8 @@ import MoonbaseAlphaTheme from './moonbaseAlpha'
 import MoonbaseBravoTheme from './moonbaseBravo'
 import TokyoNightLightTheme from './tokyoNightLight'
 import TokyoNightTheme from './tokyoNight'
-import VibeNDTheme from './vibeND'
+import TrolyPlayTheme from './trolyPlay'
+import TrolyPlayLightTheme from './trolyPlayLight'
 
 export default {
   // Classic default themes
@@ -48,5 +49,6 @@ export default {
   SquiddiesGlassTheme,
   TokyoNightLightTheme,
   TokyoNightTheme,
-  VibeNDTheme,
+  TrolyPlayTheme,
+  TrolyPlayLightTheme,
 }

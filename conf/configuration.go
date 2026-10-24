@@ -783,7 +783,7 @@ func setViperDefaults() {
 	viper.SetDefault("enablefavourites", true)
 	viper.SetDefault("enablestarrating", true)
 	viper.SetDefault("enableuserediting", true)
-	viper.SetDefault("defaulttheme", "Dark")
+	viper.SetDefault("defaulttheme", "Troly Play")
 	viper.SetDefault("defaultlanguage", "")
 	viper.SetDefault("googledriveapikey", "")
 	viper.SetDefault("defaultuivolume", consts.DefaultUIVolume)

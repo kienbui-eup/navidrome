@@ -15,7 +15,7 @@ describe('themeReducer', () => {
     { configTheme: 'Dark', expected: 'DarkTheme', description: 'is "Dark"' },
     {
       configTheme: 'NonExistent',
-      expected: 'DarkTheme',
+      expected: 'TrolyPlayTheme',
       description: 'is unrecognized',
     },
   ])(
