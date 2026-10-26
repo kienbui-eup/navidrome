@@ -23,14 +23,17 @@ const useStyles = makeStyles((theme) => ({
   slot: {
     display: 'flex',
     alignItems: 'center',
-    flex: '1 1 320px',
+    justifyContent: 'center',
+    flex: '1 1 auto',
     minWidth: 0,
     gap: theme.spacing(1),
+    [theme.breakpoints.down('md')]: { gridColumn: '1 / -1', gridRow: 2 },
     [theme.breakpoints.down('xs')]: { display: 'contents' },
   },
   target: {
     flex: 1,
     minWidth: 0,
+    maxWidth: 960,
     [theme.breakpoints.down('xs')]: { display: 'contents' },
   },
   fallback: {
@@ -40,7 +43,8 @@ const useStyles = makeStyles((theme) => ({
     whiteSpace: 'nowrap',
     [theme.breakpoints.down('xs')]: {
       order: 1,
-      flex: '1 1 calc(100% - 48px)',
+      gridColumn: '1 / -1',
+      gridRow: 2,
     },
   },
   hiddenTitle: {
