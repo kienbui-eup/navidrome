@@ -210,6 +210,8 @@ const ArtistList = (props) => {
     <>
       <List
         {...props}
+        infinite
+        perPage={50}
         sort={{ field: 'name', order: 'ASC' }}
         exporter={false}
         bulkActionButtons={false}

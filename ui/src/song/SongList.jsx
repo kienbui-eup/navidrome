@@ -213,7 +213,8 @@ const SongList = (props) => {
         bulkActionButtons={<SongBulkActions />}
         actions={<SongListActions />}
         filters={<SongFilter />}
-        perPage={isXsmall ? 50 : 15}
+        infinite
+        perPage={50}
       >
         {isXsmall ? (
           <SongSimpleList />

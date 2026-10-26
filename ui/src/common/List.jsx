@@ -11,9 +11,12 @@ import config from '../config'
 import { Pagination } from './Pagination'
 import { Title } from './index'
 import { PageHeaderContent } from '../layout/PageHeader'
+import { ContinuousListBase, ContinuousListEnd } from './ContinuousList'
 
 const useStyles = makeStyles((theme) => ({
   bulkActionsDisplayed: { '&&': { marginTop: 0 } },
+  continuous: { minHeight: '100%', display: 'flex', flexDirection: 'column' },
+  continuousMain: { flex: 1 },
   toolbar: {
     '&&': {
       minHeight: 44,
@@ -41,7 +44,7 @@ const useStyles = makeStyles((theme) => ({
     '& > span:empty': { display: 'none' },
     [theme.breakpoints.down('xs')]: {
       '&&': { display: 'contents' },
-      '& form': { order: 1, flex: '1 1 calc(100% - 48px)' },
+      '& form': { order: 1, flex: '1 1 160px' },
       '& .filter-field:first-child': { flex: '1 1 180px' },
       '& .filter-field:first-child > .MuiFormControl-root': { width: '100%' },
     },
@@ -54,12 +57,18 @@ const useStyles = makeStyles((theme) => ({
       alignItems: 'center',
     },
     '& button': { minWidth: 44, minHeight: 44 },
-    [theme.breakpoints.down('xs')]: { order: 2, flex: '1 1 auto' },
+    [theme.breakpoints.down('xs')]: { order: 2, flex: '0 0 auto' },
   },
 }))
 
-const HeaderListView = ({ filters, actions = <ListActions />, ...props }) => {
-  const controller = useListContext()
+const HeaderListView = ({
+  filters,
+  actions = <ListActions />,
+  infinite,
+  ...props
+}) => {
+  const { loadMore, hasMore, loadingMore, queryKey, ...controller } =
+    useListContext()
   const classes = useStyles()
   return (
     <>
@@ -77,15 +86,20 @@ const HeaderListView = ({ filters, actions = <ListActions />, ...props }) => {
         classes={{
           ...props.classes,
           bulkActionsDisplayed: classes.bulkActionsDisplayed,
+          ...(infinite && {
+            root: classes.continuous,
+            main: classes.continuousMain,
+          }),
         }}
         actions={false}
         filters={undefined}
+        pagination={infinite ? <ContinuousListEnd /> : props.pagination}
       />
     </>
   )
 }
 
-export const List = (props) => {
+export const List = ({ infinite = false, ...props }) => {
   const { resource } = props
   const listProps = {
     title: (
@@ -100,9 +114,10 @@ export const List = (props) => {
     pagination: <Pagination />,
     ...props,
   }
+  const Base = infinite ? ContinuousListBase : ListBase
   return (
-    <ListBase {...listProps}>
-      <HeaderListView {...listProps} />
-    </ListBase>
+    <Base {...listProps}>
+      <HeaderListView {...listProps} infinite={infinite} />
+    </Base>
   )
 }

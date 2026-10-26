@@ -172,6 +172,8 @@ const PlaylistList = (props) => {
   return (
     <List
       {...props}
+      infinite
+      perPage={50}
       exporter={false}
       sort={{ field: 'name', order: 'ASC' }}
       filters={<PlaylistFilter />}

@@ -1,6 +1,7 @@
 import jsonServerProvider from 'ra-data-json-server'
 import httpClient from './httpClient'
 import { REST_URL } from '../consts'
+import { withAbortSignal } from './withAbortSignal'
 
 const dataProvider = jsonServerProvider(REST_URL, httpClient)
 
@@ -36,6 +37,18 @@ const getSelectedLibraries = () => {
 const applyLibraryFilter = (resource, params) => {
   // Content resources that should be filtered by selected libraries
   const filteredResources = ['album', 'song', 'artist', 'playlistTrack', 'tag']
+
+  if (
+    filteredResources.includes(resource) &&
+    Object.prototype.hasOwnProperty.call(params.filter || {}, 'library_id')
+  ) {
+    if (
+      Array.isArray(params.filter.library_id) &&
+      params.filter.library_id.length === 0
+    )
+      delete params.filter.library_id
+    return params
+  }
 
   // Get selected libraries from localStorage
   const selectedLibraries = getSelectedLibraries()
@@ -149,7 +162,7 @@ const wrapperDataProvider = {
   ...dataProvider,
   getList: (resource, params) => {
     const [r, p] = mapResource(resource, params)
-    return dataProvider.getList(r, p)
+    return withAbortSignal(dataProvider.getList(r, p), params.signal)
   },
   getOne: (resource, params) => {
     const [r, p] = mapResource(resource, params)

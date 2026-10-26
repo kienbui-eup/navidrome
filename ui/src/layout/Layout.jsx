@@ -19,8 +19,19 @@ const useStyles = makeStyles((theme) => ({
   root: {
     '--troly-player-height': (props) => (props.addPadding ? '80px' : '0px'),
     paddingBottom: 'var(--troly-player-height)',
+    '&&': {
+      height: '100dvh',
+      minHeight: 0,
+      minWidth: 0,
+      overflow: 'hidden',
+      boxSizing: 'border-box',
+    },
   },
-  appFrame: { '&&': { marginTop: 0 } },
+  appFrame: { '&&': { marginTop: 0, minHeight: 0 } },
+  contentWithSidebar: { minHeight: 0, overflow: 'hidden' },
+  content: {
+    '&&': { minHeight: 0, minWidth: 0, overflow: 'auto' },
+  },
   sidebar: {
     '&&': {
       height:
@@ -96,7 +107,11 @@ const Layout = (props) => {
           menu={Menu}
           sidebar={Sidebar}
           appBar={AppBar}
-          classes={{ appFrame: classes.appFrame }}
+          classes={{
+            appFrame: classes.appFrame,
+            contentWithSidebar: classes.contentWithSidebar,
+            content: classes.content,
+          }}
           theme={theme}
           notification={Notification}
         />

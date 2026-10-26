@@ -414,6 +414,13 @@
     }
   },
   "ra": {
+    "continuous": {
+      "loading": "Đang tải thêm…",
+      "loadMore": "Tải thêm",
+      "retry": "Thử lại",
+      "error": "Chưa tải được thêm kết quả.",
+      "end": "Đã tải hết kết quả"
+    },
     "auth": {
       "welcome1": "Cảm ơn bạn đã cài đặt Trợ lý nhạc!",
       "welcome2": "Để bắt đầu, hãy tạo một người dùng quản trị",

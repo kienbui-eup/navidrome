@@ -6,11 +6,9 @@ import {
   Filter,
   NullableBooleanInput,
   NumberInput,
-  Pagination,
   ReferenceArrayInput,
   ReferenceInput,
   SearchInput,
-  useListContext,
   usePermissions,
   useRefresh,
   useTranslate,
@@ -21,7 +19,6 @@ import { withWidth } from '@material-ui/core'
 import {
   List,
   Title,
-  useAlbumsPerPage,
   useResourceRefresh,
   useSetToggleableFields,
 } from '../common'
@@ -173,20 +170,10 @@ const AlbumListTitle = ({ albumListType }) => {
   return <Title subTitle={title} args={{ smart_count: 2 }} />
 }
 
-const AlbumListPagination = ({ albumListType, ...rest }) => {
-  const { loading } = useListContext()
-  if (loading && albumListType === 'random') {
-    return null
-  }
-  return <Pagination {...rest} />
-}
-
 const randomStartingSeed = Math.random().toString()
 
 const AlbumList = (props) => {
-  const { width } = props
   const albumView = useSelector((state) => state.albumView)
-  const [perPage, perPageOptions] = useAlbumsPerPage(width)
   const location = useLocation()
   const version = useVersion()
   const refresh = useRefresh()
@@ -240,13 +227,8 @@ const AlbumList = (props) => {
         filter={{ seed }}
         actions={<AlbumListActions />}
         filters={<AlbumFilter />}
-        perPage={perPage}
-        pagination={
-          <AlbumListPagination
-            rowsPerPageOptions={perPageOptions}
-            albumListType={albumListType}
-          />
-        }
+        infinite
+        perPage={50}
         title={<AlbumListTitle albumListType={albumListType} />}
       >
         {albumView.grid ? (

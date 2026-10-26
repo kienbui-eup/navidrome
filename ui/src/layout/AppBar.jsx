@@ -14,7 +14,6 @@ import {
   ListItemIcon,
   Divider,
   Typography,
-  useMediaQuery,
 } from '@material-ui/core'
 import ViewListIcon from '@material-ui/icons/ViewList'
 import { Dialogs } from '../dialogs/Dialogs'
@@ -27,7 +26,6 @@ import UserMenu from './UserMenu'
 import config from '../config'
 import { PageHeaderFrame, PageHeaderSlot } from './PageHeader'
 import BrandLogo from '../common/BrandLogo'
-import clsx from 'clsx'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -82,9 +80,7 @@ const useStyles = makeStyles(
         outline: `2px solid ${theme.palette.primary.main}`,
         outlineOffset: -3,
       },
-      [theme.breakpoints.down('xs')]: { flexBasis: 56, height: 56, padding: 0 },
     },
-    brandCompact: { flexBasis: 55 },
     logo: {
       display: 'block',
       width: '100%',
@@ -231,11 +227,9 @@ const AppBarUserMenu = ({ logout }) => {
 
 const HeaderBrand = () => {
   const classes = useStyles()
-  const open = useSelector((state) => state.admin.ui.sidebarOpen)
-  const mobile = useMediaQuery((theme) => theme.breakpoints.down('xs'))
   return (
-    <a href="#/" className={clsx(classes.brand, !open && classes.brandCompact)}>
-      <BrandLogo compact={mobile || !open} className={classes.logo} />
+    <a href="#/" className={classes.brand}>
+      <BrandLogo className={classes.logo} />
     </a>
   )
 }
