@@ -12,8 +12,14 @@ import { setToggleableFields } from '../actions'
 
 const useStyles = makeStyles({
   menuIcon: {
-    position: 'relative',
-    top: '-0.5em',
+    display: 'flex',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  button: {
+    width: 44,
+    height: 44,
+    padding: 10,
   },
   menu: {
     width: '24ch',
@@ -65,6 +71,7 @@ export const ToggleFieldsMenu = ({
   return (
     <div className={classes.menuIcon}>
       <IconButton
+        className={classes.button}
         aria-label="more"
         aria-controls="long-menu"
         aria-haspopup="true"

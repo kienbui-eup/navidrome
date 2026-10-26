@@ -56,16 +56,35 @@ const useStyles = makeStyles((theme) => ({
     borderTop: `1px solid ${theme.palette.divider}`,
   },
   toggle: {
+    '&&': {
+      backgroundColor: 'transparent',
+      borderRadius: 10,
+      fontWeight: 400,
+      fontSize: '0.8125rem',
+      '&:hover, &:focus-visible': {
+        backgroundColor: theme.palette.action.hover,
+      },
+    },
     width: '100%',
     minWidth: 44,
     minHeight: 44,
     justifyContent: 'flex-start',
-    padding: theme.spacing(1),
+    padding: theme.spacing(0, 1.5),
     textTransform: 'none',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
     color: theme.palette.text.secondary,
-    '& svg': { flexShrink: 0, marginRight: theme.spacing(1) },
+    '& .MuiButton-label': {
+      justifyContent: 'inherit',
+      color: 'inherit',
+      padding: 0,
+    },
+    '& svg': {
+      width: 20,
+      height: 20,
+      flexShrink: 0,
+      marginRight: theme.spacing(1),
+    },
     '&:focus-visible': {
       outline: `2px solid ${theme.palette.primary.main}`,
       outlineOffset: -2,
