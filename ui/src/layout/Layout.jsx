@@ -16,10 +16,18 @@ import { useSearchRefocus } from '../common'
 import { PageHeaderProvider } from './PageHeader'
 
 const useStyles = makeStyles((theme) => ({
-  root: { paddingBottom: (props) => (props.addPadding ? '80px' : 0) },
+  root: {
+    '--troly-player-height': (props) => (props.addPadding ? '80px' : '0px'),
+    paddingBottom: 'var(--troly-player-height)',
+  },
   appFrame: { '&&': { marginTop: 0 } },
   sidebar: {
-    '&&': { height: 'calc(100vh - var(--troly-header-height, 64px))' },
+    '&&': {
+      height:
+        'calc(100dvh - var(--troly-header-height, 64px) - var(--troly-player-height, 0px))',
+      overflow: 'hidden',
+      paddingTop: 0,
+    },
   },
   // Keyboard "skip to main content" link: off-screen until focused.
   skipLink: {

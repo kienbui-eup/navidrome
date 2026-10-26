@@ -1,8 +1,15 @@
 import React, { useState } from 'react'
-import { useSelector } from 'react-redux'
-import { Divider, makeStyles } from '@material-ui/core'
+import { useDispatch, useSelector } from 'react-redux'
+import { Button, Divider, makeStyles } from '@material-ui/core'
 import clsx from 'clsx'
-import { useTranslate, MenuItemLink, getResources } from 'react-admin'
+import {
+  useTranslate,
+  MenuItemLink,
+  getResources,
+  toggleSidebar,
+} from 'react-admin'
+import ChevronLeft from '@material-ui/icons/ChevronLeft'
+import ChevronRight from '@material-ui/icons/ChevronRight'
 import ViewListIcon from '@material-ui/icons/ViewList'
 import AlbumIcon from '@material-ui/icons/Album'
 import SubMenu from './SubMenu'
@@ -11,17 +18,20 @@ import albumLists from '../album/albumLists'
 import PlaylistsSubMenu from './PlaylistsSubMenu'
 import LibrarySelector from '../common/LibrarySelector'
 import config from '../config'
-import BrandLogo from '../common/BrandLogo'
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    marginTop: theme.spacing(1),
-    marginBottom: theme.spacing(1),
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    minHeight: 0,
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
-    paddingBottom: (props) => (props.addPadding ? '80px' : '20px'),
+    [theme.breakpoints.down('xs')]: {
+      height: 'calc(100dvh - var(--troly-player-height, 0px))',
+    },
   },
   open: {
     width: 240,
@@ -33,22 +43,37 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.text.primary,
     fontWeight: 'bold',
   },
-  brand: {
-    display: 'flex',
-    alignItems: 'center',
-    minHeight: 64,
-    margin: theme.spacing(0, 1, 2),
+  navigation: {
+    flex: 1,
+    minHeight: 0,
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    paddingTop: theme.spacing(1),
+  },
+  footer: {
+    flexShrink: 0,
+    padding: theme.spacing(1, 0.5),
+    borderTop: `1px solid ${theme.palette.divider}`,
+  },
+  toggle: {
+    width: '100%',
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'flex-start',
     padding: theme.spacing(1),
-    borderRadius: 8,
+    textTransform: 'none',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    color: theme.palette.text.secondary,
+    '& svg': { flexShrink: 0, marginRight: theme.spacing(1) },
     '&:focus-visible': {
       outline: `2px solid ${theme.palette.primary.main}`,
-      outlineOffset: 3,
+      outlineOffset: -2,
     },
   },
-  wordmark: { display: 'block', width: '100%', maxWidth: 176, height: 'auto' },
-  brandCompact: {
-    margin: theme.spacing(0, 0.5, 2),
-    padding: theme.spacing(0.5),
+  toggleCompact: {
+    justifyContent: 'center',
+    '& svg': { marginRight: 0 },
   },
 }))
 
@@ -67,9 +92,12 @@ const translatedResourceName = (resource, translate) =>
 const Menu = ({ dense = false }) => {
   const open = useSelector((state) => state.admin.ui.sidebarOpen)
   const translate = useTranslate()
-  const queue = useSelector((state) => state.player?.queue)
-  const classes = useStyles({ addPadding: queue.length > 0 })
+  const dispatch = useDispatch()
+  const classes = useStyles()
   const resources = useSelector(getResources)
+  const toggleLabel = translate(
+    open ? 'ra.action.close_menu' : 'ra.action.open_menu',
+  )
 
   // TODO State is not persisted in mobile when you close the sidebar menu. Move to redux?
   const [state, setState] = useState({
@@ -130,39 +158,47 @@ const Menu = ({ dense = false }) => {
         [classes.closed]: !open,
       })}
     >
-      <a
-        href="#/"
-        className={clsx(classes.brand, { [classes.brandCompact]: !open })}
-      >
-        <BrandLogo compact={!open} className={classes.wordmark} />
-      </a>
-      {open && <LibrarySelector />}
-      <SubMenu
-        handleToggle={() => handleToggle('menuAlbumList')}
-        isOpen={state.menuAlbumList}
-        sidebarIsOpen={open}
-        name="menu.albumList"
-        icon={<AlbumIcon />}
-        dense={dense}
-      >
-        {Object.keys(albumLists).map((type) =>
-          renderAlbumMenuItemLink(type, albumLists[type]),
+      <div className={classes.navigation}>
+        {open && <LibrarySelector />}
+        <SubMenu
+          handleToggle={() => handleToggle('menuAlbumList')}
+          isOpen={state.menuAlbumList}
+          sidebarIsOpen={open}
+          name="menu.albumList"
+          icon={<AlbumIcon />}
+          dense={dense}
+        >
+          {Object.keys(albumLists).map((type) =>
+            renderAlbumMenuItemLink(type, albumLists[type]),
+          )}
+        </SubMenu>
+        {resources.filter(subItems(undefined)).map(renderResourceMenuItemLink)}
+        {config.devSidebarPlaylists && open ? (
+          <>
+            <Divider />
+            <PlaylistsSubMenu
+              state={state}
+              setState={setState}
+              sidebarIsOpen={open}
+              dense={dense}
+            />
+          </>
+        ) : (
+          resources.filter(subItems('playlist')).map(renderResourceMenuItemLink)
         )}
-      </SubMenu>
-      {resources.filter(subItems(undefined)).map(renderResourceMenuItemLink)}
-      {config.devSidebarPlaylists && open ? (
-        <>
-          <Divider />
-          <PlaylistsSubMenu
-            state={state}
-            setState={setState}
-            sidebarIsOpen={open}
-            dense={dense}
-          />
-        </>
-      ) : (
-        resources.filter(subItems('playlist')).map(renderResourceMenuItemLink)
-      )}
+      </div>
+      <div className={classes.footer}>
+        <Button
+          className={clsx(classes.toggle, !open && classes.toggleCompact)}
+          onClick={() => dispatch(toggleSidebar())}
+          aria-label={toggleLabel}
+          aria-expanded={open}
+          title={toggleLabel}
+        >
+          {open ? <ChevronLeft /> : <ChevronRight />}
+          {open && toggleLabel}
+        </Button>
+      </div>
     </div>
   )
 }

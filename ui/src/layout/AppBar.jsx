@@ -14,6 +14,7 @@ import {
   ListItemIcon,
   Divider,
   Typography,
+  useMediaQuery,
 } from '@material-ui/core'
 import ViewListIcon from '@material-ui/icons/ViewList'
 import { Dialogs } from '../dialogs/Dialogs'
@@ -25,6 +26,8 @@ import NowPlayingPanel from './NowPlayingPanel'
 import UserMenu from './UserMenu'
 import config from '../config'
 import { PageHeaderFrame, PageHeaderSlot } from './PageHeader'
+import BrandLogo from '../common/BrandLogo'
+import clsx from 'clsx'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -46,7 +49,7 @@ const useStyles = makeStyles(
     toolbar: {
       minHeight: 64,
       boxSizing: 'border-box',
-      padding: theme.spacing(1, 2),
+      padding: theme.spacing(0, 2, 0, 0),
       gap: theme.spacing(1),
       flexWrap: 'wrap',
       '& > button': {
@@ -60,9 +63,33 @@ const useStyles = makeStyles(
       [theme.breakpoints.down('xs')]: {
         padding: theme.spacing(1),
         gap: theme.spacing(0.5),
-        '& > .MuiIconButton-root, & > .app-loader': { order: 3 },
+        '& > .MuiIconButton-root, & > .app-loader': { order: 0 },
         '& > .MuiIconButton-root:first-child': { order: 0 },
       },
+    },
+    menuButton: {
+      [theme.breakpoints.up('sm')]: { display: 'none' },
+    },
+    brand: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: '0 0 240px',
+      height: 64,
+      padding: 0,
+      boxSizing: 'border-box',
+      '&:focus-visible': {
+        outline: `2px solid ${theme.palette.primary.main}`,
+        outlineOffset: -3,
+      },
+      [theme.breakpoints.down('xs')]: { flexBasis: 56, height: 56, padding: 0 },
+    },
+    brandCompact: { flexBasis: 55 },
+    logo: {
+      display: 'block',
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain',
     },
     utilities: {
       display: 'flex',
@@ -76,7 +103,7 @@ const useStyles = makeStyles(
         minHeight: 44,
         padding: 10,
       },
-      [theme.breakpoints.down('xs')]: { order: 3 },
+      [theme.breakpoints.down('xs')]: { order: 0 },
     },
   }),
   {
@@ -202,6 +229,17 @@ const AppBarUserMenu = ({ logout }) => {
   )
 }
 
+const HeaderBrand = () => {
+  const classes = useStyles()
+  const open = useSelector((state) => state.admin.ui.sidebarOpen)
+  const mobile = useMediaQuery((theme) => theme.breakpoints.down('xs'))
+  return (
+    <a href="#/" className={clsx(classes.brand, !open && classes.brandCompact)}>
+      <BrandLogo compact={mobile || !open} className={classes.logo} />
+    </a>
+  )
+}
+
 const AppBar = (props) => {
   const classes = useStyles()
   return (
@@ -212,10 +250,11 @@ const AppBar = (props) => {
         color="default"
         elevation={0}
         className={classes.appBar}
-        classes={{ toolbar: classes.toolbar }}
+        classes={{ toolbar: classes.toolbar, menuButton: classes.menuButton }}
         container={Fragment}
         userMenu={<AppBarUserMenu />}
       >
+        <HeaderBrand />
         <PageHeaderSlot
           fallback={<Typography variant="h6" id="react-admin-title" />}
         />
