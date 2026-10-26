@@ -414,6 +414,13 @@
     }
   },
   "ra": {
+    "continuous": {
+      "loading": "Loading more…",
+      "loadMore": "Load more",
+      "retry": "Try again",
+      "error": "Unable to load more results.",
+      "end": "All results loaded"
+    },
     "auth": {
       "welcome1": "Thanks for installing Navidrome!",
       "welcome2": "To start, create an admin user",

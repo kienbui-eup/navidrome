@@ -25,6 +25,7 @@ import NowPlayingPanel from './NowPlayingPanel'
 import UserMenu from './UserMenu'
 import config from '../config'
 import { PageHeaderFrame, PageHeaderSlot } from './PageHeader'
+import BrandLogo from '../common/BrandLogo'
 
 const useStyles = makeStyles(
   (theme) => ({
@@ -46,9 +47,9 @@ const useStyles = makeStyles(
     toolbar: {
       minHeight: 64,
       boxSizing: 'border-box',
-      padding: theme.spacing(1, 2),
+      padding: theme.spacing(0, 2),
       gap: theme.spacing(1),
-      flexWrap: 'wrap',
+      flexWrap: 'nowrap',
       '& > button': {
         width: 44,
         height: 44,
@@ -56,27 +57,92 @@ const useStyles = makeStyles(
         minHeight: 44,
         padding: 10,
         margin: 0,
+        flexShrink: 0,
+        borderRadius: 12,
+        backgroundColor: theme.palette.action.hover,
+      },
+      '& > .app-loader': {
+        width: '44px !important',
+        height: '44px !important',
+        padding: 12,
+        margin: 0,
+        boxSizing: 'border-box',
+        flexShrink: 0,
+      },
+      [theme.breakpoints.down('md')]: {
+        display: 'grid',
+        gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+        padding: theme.spacing(0, 2, 1),
+        '& > .MuiIconButton-root:not($menuButton), & > .app-loader': {
+          gridColumn: 2,
+          gridRow: 1,
+          justifySelf: 'end',
+        },
       },
       [theme.breakpoints.down('xs')]: {
-        padding: theme.spacing(1),
-        gap: theme.spacing(0.5),
-        '& > .MuiIconButton-root, & > .app-loader': { order: 3 },
-        '& > .MuiIconButton-root:first-child': { order: 0 },
+        gridTemplateColumns: '44px minmax(0, 1fr) auto',
+        padding: theme.spacing(0, 1, 1),
+        '& > .MuiIconButton-root:not($menuButton), & > .app-loader': {
+          gridColumn: 1,
+          gridRow: 3,
+          justifySelf: 'start',
+        },
       },
+    },
+    menuButton: {
+      [theme.breakpoints.up('sm')]: { display: 'none' },
+      [theme.breakpoints.down('xs')]: { gridColumn: 1, gridRow: 1 },
+    },
+    brand: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: '0 0 240px',
+      width: 240,
+      height: 64,
+      padding: 0,
+      boxSizing: 'border-box',
+      [theme.breakpoints.down('md')]: { gridColumn: 1, gridRow: 1 },
+      [theme.breakpoints.down('xs')]: {
+        gridColumn: '2 / -1',
+        justifySelf: 'start',
+      },
+      '&:focus-visible': {
+        outline: `2px solid ${theme.palette.primary.main}`,
+        outlineOffset: -3,
+      },
+    },
+    logo: {
+      display: 'block',
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain',
     },
     utilities: {
       display: 'flex',
       alignItems: 'center',
       flexShrink: 0,
-      marginLeft: 'auto',
+      gap: theme.spacing(1),
+      paddingLeft: theme.spacing(1.5),
+      borderLeft: `1px solid ${theme.palette.divider}`,
       '& button': {
         width: 44,
         height: 44,
         minWidth: 44,
         minHeight: 44,
         padding: 10,
+        margin: 0,
+        borderRadius: 12,
+        backgroundColor: theme.palette.action.hover,
       },
-      [theme.breakpoints.down('xs')]: { order: 3 },
+      [theme.breakpoints.down('md')]: { gridColumn: 3, gridRow: 1 },
+      [theme.breakpoints.down('xs')]: {
+        gridColumn: '2 / -1',
+        gridRow: 3,
+        justifySelf: 'end',
+        paddingLeft: 0,
+        borderLeft: 0,
+      },
     },
   }),
   {
@@ -202,6 +268,15 @@ const AppBarUserMenu = ({ logout }) => {
   )
 }
 
+const HeaderBrand = () => {
+  const classes = useStyles()
+  return (
+    <a href="#/" className={classes.brand}>
+      <BrandLogo className={classes.logo} />
+    </a>
+  )
+}
+
 const AppBar = (props) => {
   const classes = useStyles()
   return (
@@ -212,10 +287,11 @@ const AppBar = (props) => {
         color="default"
         elevation={0}
         className={classes.appBar}
-        classes={{ toolbar: classes.toolbar }}
+        classes={{ toolbar: classes.toolbar, menuButton: classes.menuButton }}
         container={Fragment}
         userMenu={<AppBarUserMenu />}
       >
+        <HeaderBrand />
         <PageHeaderSlot
           fallback={<Typography variant="h6" id="react-admin-title" />}
         />
