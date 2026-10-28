@@ -35,9 +35,16 @@ import keyHandlers from './keyHandlers'
 import { calculateGain } from '../utils/calculateReplayGain'
 import { detectBrowserProfile, decisionService } from '../transcode'
 import { APP_NAME } from '../consts'
+import { COMPACT_PLAYER_QUERY, DESKTOP_PLAYER_QUERY } from './layout'
+
+const ThemedMusicPlayer = ({ appearance, ...props }) => {
+  const classes = useStyle(appearance)
+  return <ReactJkMusicPlayer {...props} className={classes.player} />
+}
 
 const Player = () => {
   const theme = useCurrentTheme()
+  const muiTheme = useMemo(() => createMuiTheme(theme), [theme])
   const translate = useTranslate()
   const playerTheme = theme.player?.theme || 'dark'
   const dataProvider = useDataProvider()
@@ -49,7 +56,8 @@ const Player = () => {
   const currentTrackIdRef = useRef(null)
   const stoppedRef = useRef(false)
   const [audioInstance, setAudioInstance] = useState(null)
-  const isDesktop = useMediaQuery('(min-width:810px)')
+  const [playerMode, setPlayerMode] = useState('full')
+  const isDesktop = useMediaQuery(DESKTOP_PLAYER_QUERY)
   const isMobilePlayer =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent,
@@ -128,11 +136,6 @@ const Player = () => {
 
   const visible = authenticated && playerState.queue.length > 0
   const isRadio = playerState.current?.isRadio || false
-  const classes = useStyle({
-    isRadio,
-    visible,
-    enableCoverAnimation: config.enableCoverAnimation,
-  })
   const showNotifications = useSelector(
     (state) => state.settings.notifications || false,
   )
@@ -208,7 +211,7 @@ const Player = () => {
       theme: playerTheme,
       bounds: 'body',
       playMode: playerState.mode,
-      mode: 'full',
+      mode: isDesktop ? 'full' : playerMode,
       loadAudioErrorPlayNext: false,
       autoPlayInitLoadPlayList: true,
       clearPriorAudioLists: false,
@@ -217,6 +220,8 @@ const Player = () => {
       showLyric: true,
       showReload: false,
       toggleMode: !isDesktop,
+      mobileMediaQuery: COMPACT_PLAYER_QUERY,
+      drag: isDesktop,
       glassBg: false,
       showThemeSwitch: false,
       showMediaSession: true,
@@ -237,13 +242,17 @@ const Player = () => {
       locale: locale(translate),
       sortableOptions: { delay: 200, delayOnTouchOnly: true },
     }),
-    [gainInfo, isDesktop, playerTheme, translate, playerState.mode],
+    [gainInfo, isDesktop, playerTheme, translate, playerState.mode, playerMode],
   )
 
   const options = useMemo(() => {
     const current = playerState.current || {}
     return {
       ...defaultOptions,
+      locale: {
+        ...defaultOptions.locale,
+        controllerTitle: current.name || translate('nowPlaying.title'),
+      },
       audioLists: playerState.queue.map((item) => item),
       playIndex: playerState.playIndex,
       autoPlay:
@@ -257,7 +266,7 @@ const Player = () => {
       defaultVolume: isMobilePlayer ? 1 : playerState.volume,
       showMediaSession: !current.isRadio,
     }
-  }, [playerState, defaultOptions, isMobilePlayer])
+  }, [playerState, defaultOptions, isMobilePlayer, translate])
 
   const onAudioListsChange = useCallback(
     (_, audioLists, audioInfo) => dispatch(syncQueue(audioInfo, audioLists)),
@@ -455,10 +464,14 @@ const Player = () => {
   }, [audioInstance])
 
   return (
-    <ThemeProvider theme={createMuiTheme(theme)}>
-      <ReactJkMusicPlayer
+    <ThemeProvider theme={muiTheme}>
+      <ThemedMusicPlayer
         {...options}
-        className={classes.player}
+        appearance={{
+          isRadio,
+          visible,
+          enableCoverAnimation: config.enableCoverAnimation,
+        }}
         onAudioListsChange={onAudioListsChange}
         onAudioVolumeChange={onAudioVolumeChange}
         onAudioProgress={onAudioProgress}
@@ -466,6 +479,7 @@ const Player = () => {
         onAudioPlayTrackChange={onAudioPlayTrackChange}
         onAudioPause={onAudioPause}
         onPlayModeChange={(mode) => dispatch(setPlayMode(mode))}
+        onModeChange={setPlayerMode}
         onAudioEnded={onAudioEnded}
         onCoverClick={onCoverClick}
         onAudioError={onAudioError}

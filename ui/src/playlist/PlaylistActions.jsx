@@ -32,7 +32,22 @@ import config from '../config'
 import { ToggleFieldsMenu } from '../common'
 
 const useStyles = makeStyles({
-  toolbar: { display: 'flex', justifyContent: 'space-between', width: '100%' },
+  toolbar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
+    width: '100%',
+    minWidth: 0,
+    '& > div:first-child': {
+      display: 'flex',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: 8,
+      minWidth: 0,
+    },
+    '& button': { minWidth: 44, minHeight: 44, margin: 0 },
+  },
 })
 
 const PlaylistActions = ({ className, ids, data, record, ...rest }) => {

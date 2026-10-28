@@ -6,45 +6,24 @@ import stylesheet from './trolyPlay.css.js'
 // For Album, Playlist
 const musicListActions = {
   alignItems: 'center',
-  '@global': {
-    'button:first-child:not(:only-child)': {
-      '@media screen and (max-width: 720px)': {
-        transform: 'scale(1.5)',
-        margin: '1rem',
-        '&:hover': {
-          transform: 'scale(1.6) !important',
-        },
-      },
-      transform: 'scale(2)',
-      margin: '1.5rem',
-      minWidth: 0,
-      padding: 5,
-      transition: 'transform .3s ease',
-      backgroundColor: '#FF6B4A !important',
-      color: '#111322',
-      '& .MuiButton-label, & .MuiIconButton-label': { color: '#111322' },
-      borderRadius: 500,
-      border: 0,
-      '&:hover': {
-        transform: 'scale(2.1)',
-        backgroundColor: '#FF6B4A !important',
-        border: 0,
-      },
+  '& > div > div:first-child > button:first-child': {
+    width: 56,
+    height: 56,
+    minWidth: 56,
+    padding: 12,
+    margin: 0,
+    backgroundColor: '#FF6B4A !important',
+    color: '#111322',
+    borderRadius: '50%',
+    '& .MuiButton-label, & .MuiIconButton-label': { color: '#111322' },
+    '& .MuiButton-label > span': { display: 'none' },
+    '@media (max-width:959px)': {
+      width: 48,
+      height: 48,
+      minWidth: 48,
     },
-    'button:only-child': {
-      margin: '1.5rem',
-    },
-    'button:first-child>span:first-child': {
-      padding: 0,
-    },
-    'button:first-child>span:first-child>span': {
-      display: 'none',
-    },
-    'button>span:first-child>span, button:not(:first-child)>span:first-child>svg':
-      {
-        color: 'rgba(255, 255, 255, 0.8)',
-      },
   },
+  '& button:not(:first-child)': { color: '#F3F4FC' },
 }
 
 export default {
