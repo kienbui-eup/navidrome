@@ -24,13 +24,13 @@ import subsonic from '../subsonic'
 const useStyles = makeStyles(
   (theme) => ({
     root: {
+      minWidth: 0,
+      boxSizing: 'border-box',
       [theme.breakpoints.down('xs')]: {
         padding: '0.7em',
-        minWidth: '20em',
       },
       [theme.breakpoints.up('sm')]: {
         padding: '1em',
-        minWidth: '32em',
       },
     },
     cardContents: {
@@ -39,15 +39,20 @@ const useStyles = makeStyles(
     details: {
       display: 'flex',
       flexDirection: 'column',
+      flex: 1,
+      minWidth: 0,
+      overflowWrap: 'anywhere',
     },
     content: {
-      flex: '2 0 auto',
+      flex: '1 1 auto',
+      minWidth: 0,
+      [theme.breakpoints.down('xs')]: { padding: theme.spacing(0, 0, 0, 1.5) },
     },
     coverParent: {
       [theme.breakpoints.down('xs')]: {
-        height: '8em',
-        width: '8em',
-        minWidth: '8em',
+        height: 'clamp(88px, 28vw, 128px)',
+        width: 'clamp(88px, 28vw, 128px)',
+        minWidth: 'clamp(88px, 28vw, 128px)',
       },
       [theme.breakpoints.up('sm')]: {
         height: '10em',

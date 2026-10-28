@@ -14,10 +14,12 @@ import Notification from './Notification'
 import useCurrentTheme from '../themes/useCurrentTheme'
 import { useSearchRefocus } from '../common'
 import { PageHeaderProvider } from './PageHeader'
+import { PLAYER_HEIGHT } from '../audioplayer/layout'
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    '--troly-player-height': (props) => (props.addPadding ? '80px' : '0px'),
+    '--troly-player-height': (props) =>
+      props.addPadding ? PLAYER_HEIGHT : '0px',
     paddingBottom: 'var(--troly-player-height)',
     '&&': {
       height: '100dvh',

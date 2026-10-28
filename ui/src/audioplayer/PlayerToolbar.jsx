@@ -9,6 +9,7 @@ import { LoveButton, useToggleLove } from '../common'
 import { openSaveQueueDialog } from '../actions'
 import { keyMap } from '../hotkeys'
 import { makeStyles } from '@material-ui/core/styles'
+import { DESKTOP_PLAYER_QUERY } from './layout'
 
 const useStyles = makeStyles((theme) => ({
   toolbar: {
@@ -28,19 +29,19 @@ const useStyles = makeStyles((theme) => ({
     listStyle: 'none',
     padding: theme.spacing(0.5),
     margin: 0,
-    height: 24,
+    minHeight: 44,
   },
   button: {
-    width: '2.5rem',
-    height: '2.5rem',
+    width: 44,
+    height: 44,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 0,
   },
   mobileButton: {
-    width: 24,
-    height: 24,
+    width: 44,
+    height: 44,
     padding: 0,
     margin: 0,
     display: 'flex',
@@ -59,7 +60,7 @@ const PlayerToolbar = ({ id, isRadio }) => {
   const dispatch = useDispatch()
   const { data, loading } = useGetOne('song', id, { enabled: !!id && !isRadio })
   const [toggleLove, toggling] = useToggleLove('song', data)
-  const isDesktop = useMediaQuery('(min-width:810px)')
+  const isDesktop = useMediaQuery(DESKTOP_PLAYER_QUERY)
   const classes = useStyles()
 
   const handlers = {
